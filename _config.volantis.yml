@@ -292,23 +292,23 @@ sidebar:
   position: left # left right
   # 主页、分类、归档等独立页面
   
-  for_page: [repos, qgroup, category, guide]
+  for_page: [blogger, repos, qgroup, category, guide]
   # layout: docs/post 这类文章页面
   for_post: [toc]
   # 侧边栏组件库
   widget_library:
     # ---------------------------------------
     # blogger info widget
-    # blogger:
-      # class: blogger
-      # display: [desktop, mobile] # [desktop, mobile]
-      # avatar: /imgs/icon.png
-      # shape: circle # circle, rectangle
-      # url: /about/
-      # title: 科普区
-      # subtitle: 开卷有益
-      # jinrishici: false # Poetry Today. You can set a string, and it will be displayed when loading fails.
-      # social:
+    blogger:
+      class: blogger
+      display: [desktop, mobile] # [desktop, mobile]
+      avatar: /imgs/icon.jpg
+      shape: circle # circle, rectangle
+      url: /about/
+      title: 科普区
+      subtitle: 开卷有益
+      jinrishici: true # Poetry Today. You can set a string, and it will be displayed when loading fails.
+      social:
         # - icon: fa-solid fa-rss
           # url: /atom.xml
         # - icon: fa-solid fa-envelope
