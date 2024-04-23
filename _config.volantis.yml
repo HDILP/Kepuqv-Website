@@ -60,7 +60,7 @@ navbar:
   visiable: always # always, auto
   logo: # choose [img] or [icon + title]
     img: #　volantis-static/media/org.volantis/blog/Logo-NavBar@3x.png # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-NavBar@3x.png
-    icon: /imgs/icon.png
+    icon: /imgs/icon.jpg
     title: 科普区
   menu:
     - name: 文章
@@ -989,7 +989,7 @@ seo:
 # https://ogp.me/
 # https://hexo.io/zh-cn/docs/helpers#open-graph
 open_graph:
-  image: /imgs/icon.png # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/favicon/android-chrome-192x192.png
+  image: /imgs/icon.jpg # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/favicon/android-chrome-192x192.png
   twitter_card: summary # summary_large_image , summary
   #twitter_id:
   #twitter_site:
