@@ -316,7 +316,16 @@ sidebar:
           # url: https://github.com/volantis-x/
         # - icon: fa-solid fa-headphones-alt
           # url: /
-    # ---------------------------------------
+      
+    repos:
+      class: text
+      display: [ desktop, mobile ]
+      header:
+        icon: fa-solid fa-bullhorn
+        title: 公告
+        url:
+      content:
+        - '**施工重地，闲人免进🏗！**'    # ---------------------------------------
     # toc widget (valid only in articles)
     toc:
       class: toc
