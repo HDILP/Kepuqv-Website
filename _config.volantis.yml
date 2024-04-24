@@ -258,7 +258,7 @@ article:
       tags:
         icon: fa-solid fa-hashtag
       # 分享
-      # share:
+      share:
         # - id: qq
           # img:  volantis-static/media/org.volantis/logo/128/qq.png #  https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/logo/128/qq.png
         # - id: qzone
