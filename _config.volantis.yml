@@ -63,7 +63,7 @@ navbar:
     icon: /imgs/icon.jpg
     title: 科普区
   menu:
-    - name: 文章
+    - name: 主页
       icon: fa-solid fa-rss
       url: /
     - name: 分类
@@ -72,7 +72,7 @@ navbar:
     - name: 标签
       icon: fa-solid fa-tags
       url: tags/
-    - name: 归档
+    - name: 所有文章
       icon: fa-solid fa-archive
       url: archives/
     - name: 科普区成员
@@ -81,6 +81,9 @@ navbar:
     - name: 关于&自介
       icon: fa-solid fa-info-circle
       url: about/
+    - name: 暗黑模式
+      icon: fa-solid fa-moon
+      toggle: darkmode
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
 
