@@ -863,6 +863,7 @@ color_scheme:
 
     # 版权卡片背景色
     copyright_bkg: '#f5f5f5
+    brightness: 90%
   # ------------
   # 暗色主题
   # https://www.maijisheji.com/2094.html
@@ -870,7 +871,7 @@ color_scheme:
     # 网站最深底色            # Dark Grey 1
     site_bd: '#121212' 
     # 网站背景色              # Dark Grey 2
-    site_bg: '#1f1f1f' 
+    # site_bg: '#1f1f1f' 
     # 卡片背景色              # Dark Grey 3
     card: '#262626'
     # 网站背景上的文字
