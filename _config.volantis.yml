@@ -95,8 +95,8 @@ cover:
   background: https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg
   # background: https://bing.ioliu.cn/v1/rand?w=1920&h=1200
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
-  title: 'Welcome to Kepuqv!'
-  subtitle: '欢迎来到科普区！'
+  title: '<font><span>Welcome to</span> <span>Kepuqv!</span></font>'
+  subtitle: <div id="binft"></div>
   search: 搜索... # search bar placeholder
   features:
     # - name: 文章

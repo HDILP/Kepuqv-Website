@@ -10,6 +10,7 @@ keywords:
 author: HDILP
 language: zh-CN
 timezone: ''
+favicon: /imgs/icon.jpg
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
@@ -102,3 +103,7 @@ theme: volantis
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: ''
+
+# layout文件替换
+theme_plus:
+  custom_path: source/_layout

@@ -1,0 +1,23 @@
+/* 此处调节字体大小
+.top .title font{
+    font-size: 1em;
+}
+*/
+.top .title span{
+    transition: 0.5s;
+}
+.top .title:hover span:nth-child(1){
+    margin-right: 10px;
+}
+.top .title:hover span:nth-child(2){
+    margin-left: 10px;
+}
+.top .title:hover span{
+    color: #fff;
+    text-shadow: 0 0 10px #fff,
+                 0 0 20px #fff,
+                 0 0 40px #fff,
+                 0 0 80px #fff,
+                 0 0 120px #fff,
+                 0 0 160px #fff;
+}
