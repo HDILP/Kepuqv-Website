@@ -66,12 +66,6 @@ navbar:
     - name: 主页
       icon: fa-solid fa-rss
       url: /
-    - name: 分类
-      icon: fa-solid fa-folder-open
-      url: categories/
-    - name: 标签
-      icon: fa-solid fa-tags
-      url: tags/
     - name: 所有文章
       icon: fa-solid fa-archive
       url: archives/
@@ -81,9 +75,20 @@ navbar:
     - name: 关于&自介
       icon: fa-solid fa-info-circle
       url: about/
-    - name: 暗黑模式
-      icon: fa-solid fa-moon
-      toggle: darkmode
+    - name: 更多
+      icon: fa-duotone fa-ellipsis-v
+      rows:
+        - name: 暗黑模式
+          icon: fa-solid fa-moon
+          toggle: darkmode     
+        - name: hr
+        - name: 分类
+          icon: fa-solid fa-folder-open
+          url: categories/
+        - name: 标签
+          icon: fa-solid fa-tags
+          url: tags/
+
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
 
