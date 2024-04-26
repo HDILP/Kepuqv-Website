@@ -862,7 +862,7 @@ color_scheme:
     meta: '#888'
 
     # 版权卡片背景色
-    copyright_bkg: '#f5f5f5
+    copyright_bkg: '#f5f5f5'
     brightness: 90%
   # ------------
   # 暗色主题
