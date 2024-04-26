@@ -78,10 +78,10 @@ navbar:
     - name: 更多
       icon: fa-duotone fa-ellipsis-v
       rows:
-        - name: 暗黑模式
-          icon: fa-solid fa-moon
-          toggle: darkmode     
-        - name: hr
+        # - name: 暗黑模式
+          # icon: fa-solid fa-moon
+          # toggle: darkmode     
+        # - name: hr
         - name: 分类
           icon: fa-solid fa-folder-open
           url: categories/
@@ -871,7 +871,7 @@ color_scheme:
     # 网站最深底色            # Dark Grey 1
     site_bd: '#121212' 
     # 网站背景色              # Dark Grey 2
-    # site_bg: '#1f1f1f' 
+    site_bg: '#1f1f1f' 
     # 卡片背景色              # Dark Grey 3
     card: '#262626'
     # 网站背景上的文字
