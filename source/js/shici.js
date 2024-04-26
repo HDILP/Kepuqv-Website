@@ -30,7 +30,7 @@ var binft = function (r) {
         ].map(function (r) {
     return r + ""
     }),
-    showTotalWordDelayTime = 2,
+    showTotalWordDelayTime = 4,
     refreshDelayTime = 1,
     maxLength = 1,
     d = 75,
