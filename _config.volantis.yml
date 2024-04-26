@@ -317,8 +317,8 @@ sidebar:
       subtitle: 开卷有益
       jinrishici: true # Poetry Today. You can set a string, and it will be displayed when loading fails.
       social:
-        # - icon: fa-solid fa-rss
-          # url: /atom.xml
+        - icon: /imgs/fkst.jpg
+          url: https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=60E7962CD40287923E9FECAF154370D5&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=2&mid=18367744&nid=2644956&os_v=33&platform_id=2&rom=EMUI&sid=19673&timestamp=1714147241424&wid=16969
         # - icon: fa-solid fa-envelope
           # url: mailto:me@xxx.com
         # - icon: fab fa-github
