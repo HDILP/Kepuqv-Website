@@ -76,7 +76,7 @@ navbar:
       icon: fa-solid fa-info-circle
       url: about/
     - name: 更多
-      icon: fa-duotone fa-ellipsis-v
+      icon: fa-duotone fa-bars
       rows:
         - name: 暗黑模式
           icon: fa-solid fa-moon
