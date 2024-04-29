@@ -64,29 +64,29 @@ navbar:
     title: 科普区
   menu:
     - name: 主页
-      icon: fa-solid fa-rss
+      icon: fa-duotone fa-rss
       url: /
     - name: 所有文章
-      icon: fa-solid fa-archive
+      icon: fa-duotone fa-archive
       url: archives/
     - name: 科普区成员
-      icon: fa-solid fa-link
+      icon: fa-duotone fa-link
       url: friends/
     - name: 关于&自介
-      icon: fa-solid fa-info-circle
+      icon: fa-duotone fa-info-circle
       url: about/
     - name: 更多
-      icon: fa-solid fa-bars
+      icon: fa-duotone fa-bars
       rows:
         - name: 暗黑模式
           icon: fa-solid fa-moon
           toggle: darkmode     
         - name: hr
         - name: 分类
-          icon: fa-solid fa-folder-open
+          icon: fa-duotone fa-folder-open
           url: categories/
         - name: 标签
-          icon: fa-solid fa-tags
+          icon: fa-duotone fa-tags
           url: tags/
 
   search: 搜索...   # Search bar placeholder
@@ -778,7 +778,7 @@ rightmenus:
   # 基础项设置
   options:
     # 图标前缀 fa-solid, fa-regular, fa-light, fa-thin, fa-duotone, fa-brands
-    iconPrefix: fa-solid
+    iconPrefix: fa-duotone
     # 例外，在 articlePage 组显示时（文章页）时依旧显示含 link 属性的菜单项
     articleShowLink: true
     # 当设定全局音乐播放器时，是否一直显示音乐控制菜单。false：仅当音乐播放时启用
@@ -788,48 +788,48 @@ rightmenus:
     # 导航组件
     # 横向排列，共用一行，仅显示图标 (原则上支持的数量不限)
     navigation:
-      - {id: 'left', name: '转到上一页', icon: 'fa-solid fa-arrow-left', event: 'history.back()', group: 'navigation'}
-      - {id: 'right', name: '转到下一页', icon: 'fa-solid fa-arrow-right', event: 'history.forward()', group: 'navigation'}
-      - {id: 'redo', name: '刷新当前页面', icon: 'fa-solid fa-redo', event: 'window.location.reload()', group: 'navigation'}
-      - {id: 'up', name: '回到顶部', icon: 'fa-solid fa-arrow-up', event: 'VolantisApp.scrolltoElement(volantis.dom.bodyAnchor)', group: 'navigation'}
-      #- {id: 'home', name: '回到首页', icon: 'fa-solid fa-home', link: '/', group: 'navigation'}
+      - {id: 'left', name: '转到上一页', icon: 'fa-duotone fa-arrow-left', event: 'history.back()', group: 'navigation'}
+      - {id: 'right', name: '转到下一页', icon: 'fa-duotone fa-arrow-right', event: 'history.forward()', group: 'navigation'}
+      - {id: 'redo', name: '刷新当前页面', icon: 'fa-duotone fa-redo', event: 'window.location.reload()', group: 'navigation'}
+      - {id: 'up', name: '回到顶部', icon: 'fa-duotone fa-arrow-up', event: 'VolantisApp.scrolltoElement(volantis.dom.bodyAnchor)', group: 'navigation'}
+      #- {id: 'home', name: '回到首页', icon: 'fa-duotone fa-home', link: '/', group: 'navigation'}
     # 文本输入框相关组件
     # 生效于 input/textarea，粘贴、剪切、全选
     inputBox:
-      - {id: 'copyPaste', name: '粘贴文本', icon: 'fa-solid fa-paste', event: 'copyPaste', group: 'inputBox'}
-      - {id: 'copyAll', name: '全选文本', icon: 'fa-solid fa-object-ungroup', event: 'copyAll', group: 'inputBox'}
-      - {id: 'copyCut', name: '剪切文本', icon: 'fa-solid fa-cut', event: 'copyCut', group: 'inputBox'}
+      - {id: 'copyPaste', name: '粘贴文本', icon: 'fa-duotone fa-paste', event: 'copyPaste', group: 'inputBox'}
+      - {id: 'copyAll', name: '全选文本', icon: 'fa-duotone fa-object-ungroup', event: 'copyAll', group: 'inputBox'}
+      - {id: 'copyCut', name: '剪切文本', icon: 'fa-duotone fa-cut', event: 'copyCut', group: 'inputBox'}
     # 文本选中类组件
     # 生效于右键选中文本，__text__ 为选中的文本。
     seletctText:
-      - {id: 'copyText', name: '复制文本', icon: 'fa-solid fa-copy', event: 'copyText', group: 'seletctText'}
-      - {id: 'searchWord', name: '站内搜索', icon: 'fa-solid fa-search', event: 'OpenSearch(__text__)', group: 'seletctText'}
-      - {id: 'bingSearch', name: '必应搜索', icon: 'fa-solid fa-search', event: 'window.open(`https://cn.bing.com/search?q=${__text__}`)', group: 'seletctText'}
-      #- {id: 'googleSearch', name: '谷歌搜索', icon: 'fa-solid fa-search', event: 'window.open(`https://www.google.com/search?q=${__text__}`)', group: 'seletctText'}
+      - {id: 'copyText', name: '复制文本', icon: 'fa-duotone fa-copy', event: 'copyText', group: 'seletctText'}
+      - {id: 'searchWord', name: '站内搜索', icon: 'fa-duotone fa-search', event: 'OpenSearch(__text__)', group: 'seletctText'}
+      - {id: 'bingSearch', name: '必应搜索', icon: 'fa-duotone fa-search', event: 'window.open(`https://cn.bing.com/search?q=${__text__}`)', group: 'seletctText'}
+      #- {id: 'googleSearch', name: '谷歌搜索', icon: 'fa-duotone fa-search', event: 'window.open(`https://www.google.com/search?q=${__text__}`)', group: 'seletctText'}
     # 链接判断组件
     # 生效于链接处的右键行为，__link__ 为链接地址
     elementCheck:
-      - {id: 'openTab', name: '新标签页打开', icon: 'fa-solid fa-external-link-square-alt', event: 'window.open(__link__)', group: 'elementCheck'}
-      - {id: 'copyLink', name: '复制链接地址', icon: 'fa-solid fa-link', event: 'copyLink', group: 'elementCheck'}
+      - {id: 'openTab', name: '新标签页打开', icon: 'fa-duotone fa-external-link-square-alt', event: 'window.open(__link__)', group: 'elementCheck'}
+      - {id: 'copyLink', name: '复制链接地址', icon: 'fa-duotone fa-link', event: 'copyLink', group: 'elementCheck'}
     # 图片判断类组件
     # 生效于图片类的右键行为，__link__ 为链接地址
     elementImage:
-      - {id: 'copyImg', name: '复制图片', icon: 'fa-solid fa-image', event: 'copyImg', group: 'elementImage'}
-      - {id: 'googleImg', name: '谷歌识图', icon: 'fa-solid fa-images', event: 'window.open(`https://www.google.com.hk/searchbyimage?image_url=${__link__}`)', group: 'elementImage'}
+      - {id: 'copyImg', name: '复制图片', icon: 'fa-duotone fa-image', event: 'copyImg', group: 'elementImage'}
+      - {id: 'googleImg', name: '谷歌识图', icon: 'fa-duotone fa-images', event: 'window.open(`https://www.google.com.hk/searchbyimage?image_url=${__link__}`)', group: 'elementImage'}
     # 文章页面组件
     # 生效于 post.article 页面
     articlePage:
-      - {id: 'printMode', name: '打印页面', icon: 'fa-solid fa-print', event: 'printMode', group: 'articlePage'}
-      - {id: 'readMode', name: '阅读模式', icon: 'fa-solid fa-book-open', event: 'readMode', group: 'articlePage'}
+      - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
+      - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
   # 右键自定义菜单区域
   menus:
     # link:
-      # - {id: 'help', name: '常见问题', icon: 'fa-solid fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
-      # - {id: 'examples', name: '示例博客', icon: 'fa-solid fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
-      # - {id: 'contributors', name: '加入社区', icon: 'fa-solid fa-fan', link: 'https://volantis.js.org/contributors/', group: 'link'}
+      # - {id: 'help', name: '常见问题', icon: 'fa-duotone fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
+      # - {id: 'examples', name: '示例博客', icon: 'fa-duotone fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
+      # - {id: 'contributors', name: '加入社区', icon: 'fa-duotone fa-fan', link: 'https://volantis.js.org/contributors/', group: 'link'}
       # - hr
-      # - {id: 'source_docs', name: '本站源码', icon: 'fa-solid fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
-      # - {id: 'source_theme', name: '主题源码', icon: 'fa-solid fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
+      # - {id: 'source_docs', name: '本站源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
+      # - {id: 'source_theme', name: '主题源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
     darkMode:
       - {id: 'darkMode', name: '暗黑模式', icon: 'fa-solid fa-moon', event: 'volantis.dark.toggle()', group: 'darkMode'}
 ##########
