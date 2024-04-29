@@ -310,7 +310,7 @@ sidebar:
     blogger:
       class: blogger
       display: [desktop, mobile] # [desktop, mobile]
-      avatar: '/imgs/icon.jpg'
+      avatar: /imgs/icon.jpg
       shape: circle # circle, rectangle
       url: /about/
       title: 科普区
@@ -437,7 +437,7 @@ tag_plugins:
   note: # style for default note:
     icon: '\f054'
     color: ''
-    iconfont: 'Font Awesome 6 Free'
+    iconfont: 'Font Awesome 6
   # {% checkbox %}
   checkbox:
     interactive: false # enable interactive for user
