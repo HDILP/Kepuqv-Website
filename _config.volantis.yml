@@ -107,13 +107,13 @@ cover:
   subtitle: <div id="binft"></div>
   search: 搜索... # search bar placeholder
   features:
-    # - name: 文章
-      # icon: #
-      # img: volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
-      # url: /archives/
-    # - name: 成员
-      # icon: fa-duotone fa-heart
-      # url: /friends/
+    - name: 文章
+      icon: #
+      img: volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
+      url: /archives/
+    - name: 成员
+      icon: fa-duotone fa-heart
+      url: /friends/
 ############################### Cover ############################### > end
 
 pages:
@@ -146,7 +146,7 @@ article:
   body:
     # 文章顶部信息
     # 从 meta_library 中取
-    top_meta: [author, category, date, counter] #启用评论数量需在此添加
+    top_meta: [author, category, date, counter, wordcount] #启用评论数量需在此添加
     # 文章底部信息
     # 从 meta_library 中取
     bottom_meta: [updated, tags, share]
@@ -166,13 +166,13 @@ article:
       # ----------------
       # 相关文章，需要安装插件 (for layout: post)
       # npm i hexo-related-popular-posts
-      # related_posts:
-        # enable: false
-        # title: 相关文章
-        # icon: fa-duotone fa-bookmark
-        # max_count: 5
+      related_posts:
+        enable: false
+        title: 相关文章
+        icon: fa-duotone fa-bookmark
+        max_count: 5
         # 设为空则不使用文章头图
-        # placeholder_img: https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg
+        placeholder_img: true
       # ----------------
 
       # 版权声明组件 (for layout: post)
@@ -300,7 +300,7 @@ sidebar:
   position: right # left right
   # 主页、分类、归档等独立页面
   
-  for_page: [blogger, repos, category, guide, tagcloud, lastupdate, webinfo, music]
+  for_page: [blogger, repos, category, guide, tagcloud, lastupdate, webinfo]
   # layout: docs/post 这类文章页面
   for_post: [toc]
   # 侧边栏组件库
@@ -660,7 +660,7 @@ plugins:
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
     type: song    # song, playlist, album, search, artist
-    id: 2104298692 # chillhop: 4865548839    # song id / playlist id / album id / search keyword
+    id: 2104298692 q# chillhop: 4865548839    # song id / playlist id / album id / search keyword
     # Optional
     fixed: false      # enable fixed mode
     theme: '#FFAAB2'  # main color
