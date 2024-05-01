@@ -109,10 +109,10 @@ cover:
   features:
     - name: 文章
       icon: #
-      img: volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
+      img: # volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
       url: /archives/
     - name: 成员
-      icon: fa-duotone fa-heart
+      icon: # fa-duotone fa-heart
       url: /friends/
 ############################### Cover ############################### > end
 
@@ -563,8 +563,8 @@ plugins:
 
   ######## Plugins for SEO:
   # npm i hexo-wordcount
-  # wordcount:
-    # enable: #true
+  wordcount:
+    enable: true
 
   ######## Plugins for ...
   # Button Ripple Effect
