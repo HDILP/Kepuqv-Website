@@ -281,7 +281,7 @@ article:
 
 ############################### Comments ############################### > start
 comments:
-  title: <i class='fa-duotone fa-comments'></i> 评论
+  title: <i class='fa-duotone fa-comments'></i> 评论区
   subtitle:
   service: twikoo
   # 可选评论系统 #
