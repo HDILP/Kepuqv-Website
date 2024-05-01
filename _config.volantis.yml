@@ -79,7 +79,7 @@ navbar:
       icon: fa-duotone fa-bars
       rows:
         - name: 暗黑模式
-          icon: fa-solid fa-moon
+          icon: fa-duotone fa-moon
           toggle: darkmode     
         - name: hr
         - name: 分类
@@ -157,7 +157,7 @@ article:
       # 参考资料、相关资料等 (for layout: post/docs)
       references:
         title: 参考资料
-        icon: fa-solid fa-quote-left
+        icon: fa-duotone fa-quote-left
         # 在 front-matter 中:
         #   references:
         #     - title: 某篇文章
@@ -169,7 +169,7 @@ article:
       # related_posts:
         # enable: false
         # title: 相关文章
-        # icon: fa-solid fa-bookmark
+        # icon: fa-duotone fa-bookmark
         # max_count: 5
         # 设为空则不使用文章头图
         # placeholder_img: https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg
@@ -235,36 +235,36 @@ article:
         url: /
       # 文章创建日期
       date:
-        icon: fa-solid fa-calendar-alt
+        icon: fa-duotone fa-calendar-alt
         title: '发布于：'
         format: 'll' # 日期格式 http://momentjs.com/docs/
       # 文章更新日期
       updated:
-        icon: fa-solid fa-edit
+        icon: fa-duotone fa-edit
         title: '更新于：'
         format: 'll' # 日期格式 http://momentjs.com/docs/
       # 文章分类
       category:
-        icon: fa-solid fa-folder-open
+        icon: fa-duotone fa-folder-open
       # 文章浏览计数
       counter:
-        icon: fa-solid fa-eye
+        icon: fa-duotone fa-eye
         unit: '次浏览'
       # waline 文章评论数量
       walinecount:
-        icon: fa-solid fa-comment-dots
+        icon: fa-duotone fa-comment-dots
         desc: '条评论' # 条评论
       # artalk 文章评论数量
       artalkcount:
-        icon: fa-solid fa-comment-dots
+        icon: fa-duotone fa-comment-dots
         desc: '条评论' # 条评论
       # 文章字数和阅读时长
       wordcount:
-        icon_wordcount: fa-solid fa-keyboard
-        icon_duration: fa-solid fa-hourglass-half
+        icon_wordcount: fa-duotone fa-keyboard
+        icon_duration: fa-duotone fa-hourglass-half
       # 文章标签
       tags:
-        icon: fa-solid fa-hashtag
+        icon: fa-duotone fa-hashtag
       # 分享
       share:
         # - id: qq
@@ -281,7 +281,7 @@ article:
 
 ############################### Comments ############################### > start
 comments:
-  title: <i class='fa-solid fa-comments'></i> 评论
+  title: <i class='fa-duotone fa-comments'></i> 评论
   subtitle:
   service: twikoo
   # 可选评论系统 #
@@ -300,7 +300,7 @@ sidebar:
   position: right # left right
   # 主页、分类、归档等独立页面
   
-  for_page: [blogger, repos, qgroup, category, guide]
+  for_page: [blogger, repos, category, guide, tagcloud, lastupdate, webinfo, music]
   # layout: docs/post 这类文章页面
   for_post: [toc]
   # 侧边栏组件库
@@ -317,20 +317,20 @@ sidebar:
       subtitle: 开卷有益
       jinrishici: true # Poetry Today. You can set a string, and it will be displayed when loading fails.
       social:
-        - icon: /imgs/fkst.jpg
+        - icon: '/imgs/fkst.jpg'
           url: https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=770507658422C37512CA9E180837365B&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=2&mid=18367744&nid=2682363&os_v=33&platform_id=2&rom=EMUI&timestamp=1714147406679
-        # - icon: fa-solid fa-envelope
+        # - icon: fa-duotone fa-envelope
           # url: mailto:me@xxx.com
         # - icon: fab fa-github
           # url: https://github.com/volantis-x/
-        # - icon: fa-solid fa-headphones-alt
+        # - icon: fa-duotone fa-headphones-alt
           # url: /
       
     repos:
       class: text
       display: [ desktop, mobile ]
       header:
-        icon: fa-solid fa-bullhorn
+        icon: fa-duotone fa-bullhorn
         title: 公告
         url:
       content:
@@ -341,7 +341,7 @@ sidebar:
       display: [desktop, mobile] # [desktop, mobile]
       sticky: true
       header:
-        icon: fa-solid fa-list
+        icon: fa-duotone fa-list
         title: 本文目录
       list_number: false
       min_depth: 2
@@ -358,16 +358,15 @@ sidebar:
       class: category
       display: [desktop] # [desktop, mobile]
       header:
-        icon: fa-solid fa-folder-open
+        icon: fa-duotone fa-folder-open
         title: 文章分类
-        url: /blog/categories/
     # ---------------------------------------
     # tagcloud widget
     tagcloud:
       class: tagcloud
       display: [desktop, mobile] # [desktop, mobile]
       header:
-        icon: fa-solid fa-tags
+        icon: fa-duotone fa-tags
         title: 热门标签
         url: /blog/tags/
       min_font: 14
@@ -390,7 +389,7 @@ sidebar:
       class: webinfo
       display: [desktop]
       header:
-        icon: fa-solid fa-award
+        icon: fa-duotone fa-award
         title: 站点信息
       type:
         article:
@@ -426,7 +425,7 @@ sidebar:
       class: lastupdate
       display: [desktop, mobile]
       header:
-        icon: fa-solid fa-clock WISTERIA
+        icon: fa-duotonfa-clock WISTERIA
         title: 最近更新
 ############################### Sidebar ############################### > end
 
@@ -452,7 +451,7 @@ site_footer:
   # layout of footer: [aplayer, social, license, info, copyright]
   layout: [aplayer, social, license, info, copyright]
   # social:
-    # - icon: #fa-solid fa-rss
+    # - icon: #fa-duotone fa-rss
       # url:
     # or
     # - img:
@@ -464,8 +463,8 @@ site_footer:
   source: https://github.com/volantis-x/volantis-docs/
   # analytics using leancloud
   # analytics: >
-    # <span id="lc-sv">本站总访问量为 <span id='number'><i class="fa-solid fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 次</span>
-    # <span id="lc-uv">访客数为 <span id='number'><i class="fa-solid fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 人</span>
+    # <span id="lc-sv">本站总访问量为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 次</span>
+    # <span id="lc-uv">访客数为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 人</span>
   # site copyright
   copyright: '[Copyright © since 2024 科普区](/)'
   # You can add your own property here. (Support markdown, for example: br: '<br>')
@@ -582,7 +581,7 @@ plugins:
 
   # Typing Effects
   comment_typing:
-    enable: #true
+    enable: true
     js: volantis-static/libs/comment_typing/comment_typing.js # https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@2/js/comment_typing.js
 
   # 视差滚动效果 Slide Background
@@ -660,8 +659,8 @@ plugins:
     css: volantis-static/libs/aplayer/dist/APlayer.min.css # https://unpkg.com/aplayer@1.10/dist/APlayer.min.css
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
-    type: playlist    # song, playlist, album, search, artist
-    id: 4865548839    # song id / playlist id / album id / search keyword
+    type: song    # song, playlist, album, search, artist
+    id: 2104298692# chillhop: 4865548839    # song id / playlist id / album id / search keyword
     # Optional
     fixed: false      # enable fixed mode
     theme: '#FFAAB2'  # main color
@@ -680,7 +679,7 @@ plugins:
     cover: true          # 封面是否pjax处理 false：每次切换页面封面都重载，适合封面较少的情况 true：封面经过Pjax处理，适合封面较多的情况
     timeout: 5000        # The timeout in milliseconds for the XHR requests. Set to 0 to disable the timeout.
     cacheBust: false     # When set to true, Pjax appends a timestamp  to skip the browser cache.
-    animation: false # false, nprogress, circle
+    animation: nprogress # false, nprogress, circle
     nprogress: volantis-static/libs/nprogress/nprogress.js # https://unpkg.com/nprogress@0.2.0/nprogress.min.js
     banUrl:              # 被屏蔽的 url 地址将不启用 pjax 跳转，可以在控制台下使用 window.location.pathname 获取
       # - '/artitalk/'   # artitalk 不支持 pjax
@@ -689,7 +688,7 @@ plugins:
   # 暗黑模式 darkmode
   # 开关按钮：在 navbar.menu 中添加：
   # - name: 暗黑模式 # 可自定义
-  #   icon: fa-solid fa-moon # 可自定义
+  #   icon: fa-duotone fa-moon # 可自定义
   #   toggle: darkmode
   darkmode:
     enable: true
@@ -713,8 +712,8 @@ plugins:
     css: volantis-static/libs/izitoast/dist/css/iziToast.min.css
     js: volantis-static/libs/izitoast/dist/js/iziToast.min.js
     icon:     # 默认图标，支持对图标添加颜色，可选值：see：/source/css/_style/_plugins/fontcolor.styl
-      default: fa-solid fa-info-circle pink
-      quection: fa-solid fa-question-circle pink
+      default: fa-duotone fa-info-circle pink
+      quection: fa-duotone fa-question-circle pink
     time:     # 默认持续时间
       default: 5000
       quection: 20000
@@ -732,8 +731,8 @@ plugins:
       icon: 'far fa-copyright pink'
     aplayer:                              # 是否开启音乐通知；播放、暂停、失败 时的图标
       enable: true
-      play: fa-solid fa-play
-      pause: fa-solid fa-pause
+      play: fa-duotone fa-play pink
+      pause: fa-duotone fa-pause pink
     rightmenu:
       enable: true                        # 是否开启右键模块的消息通知
       notice: true                        # 唤醒原右键菜单的通知
@@ -777,7 +776,7 @@ rightmenus:
   ###########################
   # 基础项设置
   options:
-    # 图标前缀 fa-solid, fa-regular, fa-light, fa-thin, fa-duotone, fa-brands
+    # 图标前缀 fa-duotone, fa-regular, fa-light, fa-thin, fa-duotone, fa-brands
     iconPrefix: fa-duotone
     # 例外，在 articlePage 组显示时（文章页）时依旧显示含 link 属性的菜单项
     articleShowLink: true
@@ -831,7 +830,7 @@ rightmenus:
       # - {id: 'source_docs', name: '本站源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
       # - {id: 'source_theme', name: '主题源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
     darkMode:
-      - {id: 'darkMode', name: '暗黑模式', icon: 'fa-solid fa-moon', event: 'volantis.dark.toggle()', group: 'darkMode'}
+      - {id: 'darkMode', name: '暗黑模式', icon: 'fa-duotone fa-moon', event: 'volantis.dark.toggle()', group: 'darkMode'}
 ##########
 
 ############################### Rightmenu ############################### > end
