@@ -476,7 +476,7 @@ site_footer:
 plugins:
   ################ required plugins ################
   # jquery
-  globalJquery: true # 全局引入 jquery
+  globalJquery: false # 全局引入 jquery
   jquery: volantis-static/libs/jquery/dist/jquery.min.js # https://unpkg.com/jquery@3.6.0/dist/jquery.min.js
   # fontawesome Pro 版本：https://cdn.jsdelivr.net/gh/inkss/fontawesome@6.0.0/css/all.min.css
   fontawesome: volantis-static/libs/@fortawesome/fontawesome-pro/css/all.min.css # https://unpkg.com/@fortawesome/fontawesome-free@6.1/css/all.min.css
@@ -491,20 +491,18 @@ plugins:
   markdown: volantis-static/libs/github-markdown-css/github-markdown.css # https://unpkg.com/github-markdown-css@5.1.0/github-markdown.min.css
   # marked@4.0.10
   marked: volantis-static/libs/marked/marked.min.js # https://unpkg.com/marked@4.0.10/marked.min.js
-  # hls.js@1.1.3
-  hlsjs: volantis-static/libs/hls.js/dist/hls.min.js # https://unpkg.com/hls.js@1.1.3
   # @fancyapps/ui@4.0.12
   fancybox:
     css: volantis-static/libs/@fancyapps/ui/dist/fancybox.css # https://unpkg.com/@fancyapps/ui@4.0.12/dist/fancybox.css
     js: volantis-static/libs/@fancyapps/ui/dist/fancybox.umd.js # https://unpkg.com/@fancyapps/ui@4.0.12/dist/fancybox.umd.js
   ################ optional plugins ################
   # issues api
-  sitesjs:
-    enable: true
-  friendsjs:
-    enable: true
-  contributorsjs:
-    enable: true
+  # sitesjs:
+    # enable: true
+  # friendsjs:
+    # enable: true
+  # contributorsjs:
+    # enable: true
 
   ######## Plugins to improve loading speed:
   # 预加载
@@ -541,16 +539,16 @@ plugins:
   # prismjs
   # https://prismjs.com/
   # https://hexo.io/zh-cn/docs/syntax-highlight#PrismJS
-  prismjs:
-    copy_code: true
+  # prismjs:
+    # copy_code: true
     # Please set hexo.config.highlight.enable = false !!! set hexo.config.prismjs.enable = true !!!
-    js:
-      - https://unpkg.com/prismjs/components/prism-core.min.js
-      - https://unpkg.com/prismjs/plugins/autoloader/prism-autoloader.min.js
-      - https://unpkg.com/prismjs/plugins/line-numbers/prism-line-numbers.min.js
-    css:
-      - https://unpkg.com/prismjs/themes/prism-dark.css
-      - https://unpkg.com/prismjs/plugins/line-numbers/prism-line-numbers.css
+    # js:
+      # - https://unpkg.com/prismjs/components/prism-core.min.js
+      # - https://unpkg.com/prismjs/plugins/autoloader/prism-autoloader.min.js
+      # - https://unpkg.com/prismjs/plugins/line-numbers/prism-line-numbers.min.js
+    # css:
+      # - https://unpkg.com/prismjs/themes/prism-dark.css
+      # - https://unpkg.com/prismjs/plugins/line-numbers/prism-line-numbers.css
 
   # https://scrollrevealjs.org/api/reveal.html
   scrollreveal:
@@ -569,7 +567,7 @@ plugins:
   ######## Plugins for ...
   # Button Ripple Effect
   nodewaves:
-    enable: #true
+    enable: true
     css: volantis-static/libs/node-waves/dist/waves.min.css # https://unpkg.com/node-waves@0.7.6/dist/waves.min.css
     js: volantis-static/libs/node-waves/dist/waves.min.js # https://unpkg.com/node-waves@0.7.6/dist/waves.min.js
 
@@ -822,13 +820,13 @@ rightmenus:
       - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
   # 右键自定义菜单区域
   menus:
-    # link:
-      # - {id: 'help', name: '常见问题', icon: 'fa-duotone fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
-      # - {id: 'examples', name: '示例博客', icon: 'fa-duotone fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
-      # - {id: 'contributors', name: '加入社区', icon: 'fa-duotone fa-fan', link: 'https://volantis.js.org/contributors/', group: 'link'}
-      # - hr
-      # - {id: 'source_docs', name: '本站源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
-      # - {id: 'source_theme', name: '主题源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
+    link:
+      - {id: 'help', name: '常见问题', icon: 'fa-duotone fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
+      - {id: 'examples', name: '示例博客', icon: 'fa-duotone fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
+      - {id: 'contributors', name: '加入社区', icon: 'fa-duotone fa-fan fa-spin', link: 'https://volantis.js.org/contributors/', group: 'link'}
+      - hr
+      - {id: 'source_docs', name: '本站源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
+      - {id: 'source_theme', name: '主题源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
     darkMode:
       - {id: 'darkMode', name: '暗黑模式', icon: 'fa-duotone fa-moon', event: 'volantis.dark.toggle()', group: 'darkMode'}
 ##########
