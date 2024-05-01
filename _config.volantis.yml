@@ -34,7 +34,7 @@ cdn:
 cdn_version: false
 # volantis static 静态资源文件 npm 包 CDN 地址 (后面加 "/" )
 # https://github.com/volantis-x/volantis-static
-volantis_static_cdn: https://unpkg.com/volantis-static@0.0.1654736714924/
+volantis_static_cdn: /volantis-static/
 ########################################################################
 #  https://web.dev/content-visibility/
 #  https://www.caniuse.com/?search=content-visibility
@@ -131,9 +131,9 @@ article:
     # pin icon for post
     pin_icon: volantis-static/media/twemoji/assets/svg/1f4cc.svg # https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4cc.svg
     # auto generate title if not exist
-    auto_title: true # false, true
+    auto_title: false # false, true
     # auto generate excerpt if not exist
-    auto_excerpt: true # false, true
+    auto_excerpt: false # false, true
     # hide excerpt
     hide_excerpt: false
     # show split line or not
