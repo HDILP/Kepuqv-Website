@@ -660,7 +660,7 @@ plugins:
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
     type: song    # song, playlist, album, search, artist
-    id: 2104298692 q# chillhop: 4865548839    # song id / playlist id / album id / search keyword
+    id: 2104298692 # chillhop: 4865548839    # song id / playlist id / album id / search keyword
     # Optional
     fixed: false      # enable fixed mode
     theme: '#FFAAB2'  # main color
