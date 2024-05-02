@@ -63,18 +63,18 @@ navbar:
     icon: /imgs/icon.jpg
     title: 科普区
   menu:
-    - name: 主页
-      icon: fa-duotone fa-rss
-      url: /
     - name: 所有文章
       icon: fa-duotone fa-archive
       url: archives/
-    - name: 科普区成员
-      icon: fa-duotone fa-link
-      url: friends/
-    - name: 关于&自介
-      icon: fa-duotone fa-info-circle
       url: about/
+    - name: 分类
+      icon: fa-duotone fa-folder-open
+      url: categories/
+    - name: 标签
+      icon: fa-duotone fa-tags
+      url: tags/ 
+    - name: 关于&自介
+      icon: fa-duotone fa-info-circle  
     - name: 更多
       icon: fa-duotone fa-bars
       rows:
@@ -82,12 +82,9 @@ navbar:
           icon: fa-duotone fa-moon
           toggle: darkmode     
         - name: hr
-        - name: 分类
-          icon: fa-duotone fa-folder-open
-          url: categories/
-        - name: 标签
-          icon: fa-duotone fa-tags
-          url: tags/
+        - name: 科普区成员
+          icon: fa-duotone fa-link
+          url: friends/
 
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
