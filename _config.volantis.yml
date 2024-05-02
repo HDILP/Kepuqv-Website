@@ -850,7 +850,7 @@ color_scheme:
   # 通用颜色
   common:
     # 主题色
-    theme: 's'
+    theme: '#FFAAB2'
     # 链接色
     link: '#FFAAB2'
     # 按钮色
