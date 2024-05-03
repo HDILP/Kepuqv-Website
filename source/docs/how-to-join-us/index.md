@@ -3,7 +3,7 @@ layout: docs
 title: 如何加入科普区？
 bottom_meta: false
 group: docs
-order: 1
+order: 2
 sidebar: [docs,toc]
 comments: false
 ---
