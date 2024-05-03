@@ -72,9 +72,9 @@ navbar:
     - name: 标签
       icon: fa-duotone fa-tags
       url: tags/ 
-    - name: 关于&自介
-      icon: fa-duotone fa-info-circle  
-      url: about/      
+    - name: 文档
+      url: /docs/how-to-join-us/
+      icon: fa-duotone fa-list-alt  
     - name: 更多
       icon: fa-duotone fa-bars
       rows:
@@ -85,6 +85,9 @@ navbar:
         - name: 科普区成员
           icon: fa-duotone fa-link
           url: friends/
+        - name: 留言区
+          icon: fa-duotone fa-info-circle  
+          url: about/    
 
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
@@ -104,13 +107,17 @@ cover:
   subtitle: <div id="binft"></div>
   search: 搜索... # search bar placeholder
   features:
+    - name: 首页
+      url: /
     - name: 文章
       icon: #
       img: # volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
       url: /archives/
     - name: 成员
       icon: # fa-duotone fa-heart
-      url: /friends/
+      url: /friends/'
+    - name: 文档
+      url: /docs/how-to-join-us/
 ############################### Cover ############################### > end
 
 pages:
@@ -424,6 +431,15 @@ sidebar:
       header:
         icon: fa-duotonfa-clock WISTERIA
         title: 最近更新
+
+    docs:
+      class: group
+      display: [desktop, mobile]
+      header:
+        icon: fa-duotone fa-list-alt
+        title: 科普区文档导航
+
+
 ############################### Sidebar ############################### > end
 
 ############################### Tag Plugins ############################### > start
