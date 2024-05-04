@@ -2,7 +2,7 @@ name: Python application
 
 on: 
   issues:
-    types: [opened]
+    types: [opened,edited]
   workflow_dispatch:
 
 jobs:
