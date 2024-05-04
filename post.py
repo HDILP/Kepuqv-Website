@@ -49,9 +49,9 @@ def getIssues():
 url = getIssues()
 post = getPost(url)
 posts , title , headimg = post
-print(posts)
-print(title)
-print(headimg)
+print(posts.encode("utf-8"))
+print(title.encode("utf-8"))
+print(headimg.encode("utf-8"))
 
 '''
 ---
