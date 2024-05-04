@@ -1,10 +1,14 @@
 name: Python application
 
-on: [push,workflow_dispatch]
+on: 
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: checkout actions
@@ -31,3 +35,9 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Close issue
+      uses: actions-cool/issues-helper@v3
+      with:
+        actions: 'close-issue'
+        token: ${{ secrets.GITHUB_TOKEN }}

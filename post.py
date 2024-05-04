@@ -2,6 +2,7 @@
 import requests
 import re
 import json
+import sys
 
 def getPost(url):
     # url = input('url:') 
@@ -14,15 +15,16 @@ def getPost(url):
     post = (''.join(post))
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title))
-    headimg ＝ (re.findall(r'<img class="fill-img" src="(.*?)">',code))
-    headimg ＝ headimg[0]
+    headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
+    headimg = headimg[0]
+
     post = post.replace('<br/>','\n')
     post = post.replace("<span class='prohibited-word'>",'')
     post = post.replace("</span>",'')
 
     # print(post)
     # print(title)
-    return post , title
+    return post , title , headimg
 
 def getIssues():
     url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
@@ -33,19 +35,24 @@ def getIssues():
     }
     response = requests.get(url, headers=headers)
     code = response.text
-
-    code = json.loads(code)
-    # print((code))
-    code = code[0]
-    body = code["body"]
-    print(body)
-    return body
+    if len(code) == 2:
+        sys.exit(0)
+    else:
+        print(code)
+        code = json.loads(code)
+        # print((code))
+        code = code[0]
+        body = code["body"]
+        print(body)
+        return body
 
 url = getIssues()
 post = getPost(url)
-posts , title = post
+posts , title , headimg = post
 print(posts)
 print(title)
+print(headimg)
+
 '''
 ---
 title: 
@@ -58,7 +65,7 @@ headimg:
 author: 
 ---
 '''
-f = open(r'source/_posts/'+ title +'.md' , 'w' ,  encoding='utf-8')
+f = open(r'source\\_posts\\'+ title +'.md' , 'x' ,  encoding='utf-8')
 f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: \n---\n'+posts)
 
 f.close()
