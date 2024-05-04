@@ -58,11 +58,6 @@ author:
 ---
 '''
 f = open(r'source/_posts/'+ title +'.md' , 'w' ,  encoding='utf-8')
-f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: 
-categories: 
-tags:
-date: 
-headimg: 
-author: )
-# todo
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: \nauthor: \n---\n'+posts)
+
 f.close()
