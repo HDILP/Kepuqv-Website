@@ -35,15 +35,11 @@ jobs:
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Get Issue
-      uses: actions-cool/issues-helper@v3
-      with:
-        actions: 'get-issue'
-        token: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Close issue
       uses: actions-cool/issues-helper@v3
       with:
         actions: 'close-issue'
         token: ${{ secrets.GITHUB_TOKEN }}
+        issue-number: ${{ github.event.issue.number }}
