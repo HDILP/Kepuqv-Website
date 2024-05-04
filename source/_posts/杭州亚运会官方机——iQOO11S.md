@@ -1,12 +1,15 @@
 ---
 title: 杭州亚运会官方机——iQOO11S
 description: 
-keywords: 
+keywords: 手机 数码
 categories: 
-tags: 
+- 数码
+- 手机
+tags:
+- 手机
 date: 
 headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/05/02/1714658675_18475581_2016.jpg
-author: 
+author: ycj
 ---
 iQOO 11S是一款功能强大且性能卓越的智能手机，自2023年7月4日上市以来，便以其出色的性能和先进的技术吸引了众多消费者的关注。以下是对iQOO 11S的详细介绍：
 
