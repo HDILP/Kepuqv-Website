@@ -11,7 +11,7 @@ jobs:
     - name: checkout actions
     - uses: actions/checkout@v4.1.4
 
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v5.1.0
       with:
         python-version: 3.8
@@ -19,7 +19,7 @@ jobs:
     - name: Update paper list
       run: |
         cd Kepuqv-Website
-        python generate_tables.py
+        python post.py
         
     - name: commit
       run: |
