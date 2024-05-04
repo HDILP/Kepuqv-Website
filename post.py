@@ -58,8 +58,11 @@ author:
 ---
 '''
 f = open(r'source/_posts/'+ title +'.md' , 'w' ,  encoding='utf-8')
-f.writelines('---')
-f.writelines('title: ' + title)
-f.writelines('description: ')
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: 
+categories: 
+tags:
+date: 
+headimg: 
+author: )
 # todo
 f.close()
