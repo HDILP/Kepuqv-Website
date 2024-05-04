@@ -17,9 +17,7 @@ jobs:
         python-version: 3.8
         
     - name: Update paper list
-      run: |
-        cd Kepuqv-Website
-        python post.py
+      run: python post.py
         
     - name: commit
       run: |
