@@ -1,16 +1,17 @@
 name: 添加文章
 about: auto
+labels: []
 body:
   - type: input
     id: url
     attributes:
-      label: share url:
+      label: share url
       description: 请输入您的分享地址。
       placeholder: ""
   - type: input
     id: author
     attributes:
-      label: share url:
+      label: share url
       description: 请输入作者。
       placeholder: ""
 
