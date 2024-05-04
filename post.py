@@ -14,7 +14,8 @@ def getPost(url):
     post = (''.join(post))
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title))
-
+    headimg ＝ (re.findall(r'<img class="fill-img" src="(.*?)">',code))
+    headimg ＝ headimg[0]
     post = post.replace('<br/>','\n')
     post = post.replace("<span class='prohibited-word'>",'')
     post = post.replace("</span>",'')
@@ -58,6 +59,6 @@ author:
 ---
 '''
 f = open(r'source/_posts/'+ title +'.md' , 'w' ,  encoding='utf-8')
-f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: \nauthor: \n---\n'+posts)
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: \n---\n'+posts)
 
 f.close()
