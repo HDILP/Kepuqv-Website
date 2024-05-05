@@ -1,11 +1,11 @@
 ---
-title: [传记]OpenAI:当下即未来
+title: 【传记】OpenAI:当下即未来
 description: 
 keywords: 
 categories: 
 tags: 
 date: 
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/02/25/1708830569_12009103_6961.jpg
+headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/02/25/1708830569_12009103_6961.jpg
 author: 
 ---
 如果让我们更深入地探讨OpenAI的发展历程，我们会发现，OpenAI的创立源于对人工智能（AI）快速发展的担忧和机遇。其创始人Sam Altman和Elon Musk等人在2015年认为，随着AI技术的进步，超级智能AI可能成为现实，这有可能给世界带来威胁。因此，他们希望创建一个开源的AI研究机构，旨在推动AI技术的发展，并确保其利益最大化地服务于全人类，而不是单一公司或个体。
