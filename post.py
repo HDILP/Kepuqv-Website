@@ -17,6 +17,7 @@ def getPost(url):
     title = (''.join(title))
     headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
     headimg = headimg[0]
+    headimg.replace(http , https)
 
     post = post.replace('<br/>','\n')
     post = post.replace("<span class='prohibited-word'>",'')
