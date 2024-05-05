@@ -107,7 +107,3 @@ deploy:
 # layout文件替换
 theme_plus:
   custom_path: source/_layout
-  
-
-popularPosts:
-  eyeCatchImageAttributeName: headimg
