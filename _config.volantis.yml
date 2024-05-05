@@ -115,7 +115,7 @@ cover:
       url: /archives/
     - name: 成员
       icon: # fa-duotone fa-heart
-      url: /friends/'
+      url: /friends/
     - name: 文档
       url: /docs/how-to-join-us/
 ############################### Cover ############################### > end
