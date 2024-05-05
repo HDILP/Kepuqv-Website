@@ -1,12 +1,12 @@
 ---
-title: [一科小树]初代iPhone:重新定义手机
+title: 【一科小树】初代iPhone:重新定义手机
 description: 
 keywords: 
 categories: 
 tags: 
 date: 
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587853_12009103_4417.jpg
-author: 
+headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587853_12009103_4417.jpg
+author: bst
 ---
 初代iPhone，于2007年6月29日发布。
 从设计与外观上看，屏幕尺寸为3.5英寸，分辨率为320×480像素。虽然现在看来着实不算高，顶多是标清的水平，但是在当时，这个分辨率相对较高，特别是在智能手机市场上。当时，许多手机仍然使用较小的屏幕和较低的分辨率。例如，当时诺基亚的旗舰机型，如N95和N96在2007年仍然使用320x240的分辨率，这明显低于初代iPhone。同时，安卓手机在2008年，才开始逐渐兴起，而且初期的安卓手机屏幕分辨率也相对而言较低一些。可以说，初代iPhone的分辨率，在当时是领先的，为用户提供了更清晰与更细腻的屏幕体验
