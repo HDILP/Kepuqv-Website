@@ -15,10 +15,16 @@ def getPost(url):
     post = (''.join(post))
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title))
-    headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
-    print(headimg)
-    headimg = headimg[0]
-    headimg.replace('http' , 'https')
+    try:
+        headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
+        print(headimg)
+        headimg = headimg[0]
+        headimg.replace('http' , 'https')
+    except:
+        headimg = (re.findall(r"<img src='(.*?)'>"))
+        print(headimg)
+        headimh.replace('http','https')
+                              
 
     post = post.replace('<br/>','\n')
     post = post.replace("<span class='prohibited-word'>",'')
