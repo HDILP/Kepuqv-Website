@@ -16,6 +16,7 @@ def getPost(url):
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title))
     headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
+    print(headimg)
     headimg = headimg[0]
     headimg.replace('http' , 'https')
 
