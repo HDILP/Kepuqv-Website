@@ -8,7 +8,7 @@ categories:
 tags:
 - 手机
 date: 
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/04/29/1714394727_18475581_9347.jpg
+headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/04/29/1714394727_18475581_9347.jpg
 author: ycj
 ---
 红魔9 Pro是一款电竞手机，它搭载了高通第三代骁龙8移动平台，配备了满血版LPDDR5X和UFS4.0储存组合，为用户提供了出色的性能表现。在测试中，红魔9 Pro的安兔兔跑分超过了220万，3DMark Wild Life Exterme Stress Test稳定性达到了94.3%，Geekbench的单核和多核成绩也表现优异。
