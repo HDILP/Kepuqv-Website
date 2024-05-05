@@ -44,6 +44,7 @@ content_visibility: false
 replace:
   - https://cdn.jsdelivr.net/npm/ => https://unpkg.com/
   - https://cdn.jsdelivr.net/gh/ => https://gcore.jsdelivr.net/gh/
+  - http => https
 
 
 # dns-prefetch preconnect x-dns-prefetch-control
