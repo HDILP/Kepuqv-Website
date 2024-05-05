@@ -23,6 +23,7 @@ def getPost(url):
     except:
         headimg = (re.findall(r"<img src='(.*?)'>",code))
         print(headimg)
+        headimg = headimg[0]
         headimg.replace('http','https')
                               
 
