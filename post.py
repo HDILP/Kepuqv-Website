@@ -65,7 +65,7 @@ headimg:
 author: 
 ---
 '''
-f = open(r'source\\_posts\\'+ title +'.md' , 'x' ,  encoding='utf-8')
+f = open(r'source\\_posts\\'+ title +'.md' , 'w' ,  encoding='utf-8')
 f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: \n---\n'+posts)
 
 f.close()
