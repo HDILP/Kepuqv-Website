@@ -39,7 +39,6 @@ def getIssues():
     if len(code) == 2:
         sys.exit(0)
     else:
-        print(code)
         code = json.loads(code)
         # print((code))
         code = code[0]
