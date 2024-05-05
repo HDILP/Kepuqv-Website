@@ -5,7 +5,7 @@ keywords:
 categories: 
 tags: 
 date: 
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/05/04/1714786722_12009103_2674.jpg
+headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/05/04/1714786722_12009103_2674.jpg
 author: bst
 ---
 “稳住发热，就是胜利！”这是每一代骁龙旗舰处理器成功的八字箴言。
