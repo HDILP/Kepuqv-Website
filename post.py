@@ -19,12 +19,12 @@ def getPost(url):
         headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
         print(headimg)
         headimg = headimg[0]
-        headimg.replace('http' , 'https')
+        headimg = headimg.replace('http' , 'https')
     except:
         headimg = (re.findall(r"<img src='(.*?)'>",code))
         print(headimg)
         headimg = headimg[0]
-        headimg.replace('http','https')
+        headimg = headimg.replace('http','https')
                               
 
     post = post.replace('<br/>','\n')
