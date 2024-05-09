@@ -39,7 +39,7 @@ def getIssues():
     url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
     # url = 'https://api.github.com/repos/HDILP/friends/issues'
     headers = {
-        "Authorization" : "token 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",
+        "Authorization" : "token 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",
         "Accept" : "application/vnd.github+json",
     }
     response = requests.get(url, headers=headers)
@@ -48,7 +48,7 @@ def getIssues():
         sys.exit(0)
     else:
         code = json.loads(code)
-        # print((code))
+        print((code))
         code = code[0]
         body = code["body"]
         print(body)
