@@ -52,6 +52,7 @@ def getIssues():
         code = code[0]
         body = code["body"]
         body = re.findall('<url: (.*?)> , body')
+        author = re.findall('<author: (.*?)> , body')
         print(body)
         return body
 
@@ -75,6 +76,6 @@ author:
 ---
 '''
 f = open(r'source/_posts/'+ title + ".md" , 'w' , encoding='utf-8')
-f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: \n---\n'+posts)
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n'+posts)
 
 f.close()
