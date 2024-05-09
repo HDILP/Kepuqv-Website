@@ -51,6 +51,7 @@ def getIssues():
         print((code))
         code = code[0]
         body = code["body"]
+        body = re.findall('<url: (.*?)> , body')
         print(body)
         return body
 
