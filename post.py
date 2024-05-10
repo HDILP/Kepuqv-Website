@@ -51,12 +51,12 @@ def getIssues():
         print((code))
         code = code[0]
         body = code["body"]
-        body = re.findall('<url: (.*?)> , body')
-        author = re.findall('<author: (.*?)> , body')
+        body = re.findall('<url: (.*?)>' , body)
+        author = re.findall('<author: (.*?)>' , body)
         print(body)
-        return body
+        return body , author
 
-url = getIssues()
+url , author = getIssues()
 post = getPost(url)
 posts , title , headimg = post
 print(posts.encode("utf-8"))
