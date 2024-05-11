@@ -51,12 +51,11 @@ def getIssues():
         print((code))
         code = code[0]
         body = code["body"]
-        body = re.findall('<url: (.*?)>' , body)
+        url1 = re.findall('<url: (.*?)>' , body)
         author = re.findall('<author: (.*?)>' , body)
-        body = body[0]
+        url1 = url1[0]
         author = author[0]
-        print(body)
-        return body , author
+        return url1 , author
 
 url , author = getIssues()
 posts , title , headimg = getPost(url)
