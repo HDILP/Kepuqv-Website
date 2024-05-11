@@ -3,6 +3,7 @@ import requests
 import re
 import json
 import sys
+import time
 
 def getPost(url):
     # url = input('url:') 
@@ -76,8 +77,9 @@ print(headimg.encode("utf-8"))
 # author: 
 # ---
 # '''
-
+posttime = time.strftime('%Y-%m-%d')
+print(posttime)
 f = open(r'source/_posts/'+ title + ".md" , 'w' , encoding='utf-8')
-f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n'+posts)
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: ' + posttime +'\nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n'+posts)
 
 f.close()
