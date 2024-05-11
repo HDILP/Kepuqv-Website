@@ -53,6 +53,8 @@ def getIssues():
         body = code["body"]
         body = re.findall('<url: (.*?)>' , body)
         author = re.findall('<author: (.*?)>' , body)
+        body = body[0]
+        author = author[0]
         print(body)
         return body , author
 
