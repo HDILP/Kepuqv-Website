@@ -57,24 +57,25 @@ def getIssues():
         return body , author
 
 url , author = getIssues()
-post = getPost(url)
-posts , title , headimg = post
+posts , title , headimg = getPost(url)
+
 print(posts.encode("utf-8"))
 print(title.encode("utf-8"))
 print(headimg.encode("utf-8"))
 
-'''
----
-title: 
-description: 
-keywords: 
-categories: 
-tags:
-date: 
-headimg: 
-author: 
----
-'''
+# '''
+# ---
+# title: 
+# description: 
+# keywords: 
+# categories: 
+# tags:
+# date: 
+# headimg: 
+# author: 
+# ---
+# '''
+
 f = open(r'source/_posts/'+ title + ".md" , 'w' , encoding='utf-8')
 f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: \nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n'+posts)
 
