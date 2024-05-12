@@ -11,11 +11,14 @@ def getPost(url):
     resp = requests.get(url)
     code = (resp.text)
     resp.close()
-
+    FkNTFS = ['<' , '>' , '/' ,'\\' ,'|',':','"','*','?']
+    print(FkNTFS)
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title))
+    for i in FkNTFS:
+        title = title.replace(i , '')  
     try:
         headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
         print(headimg)

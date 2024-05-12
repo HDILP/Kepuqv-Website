@@ -1,3 +1,13 @@
 {
+    "workbench.colorTheme": "Default Dark Modern",
+    "git.confirmSync": false,
+    "python.languageServer": "Pylance",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+
+    "[python]": {
+
+        "diffEditor.ignoreTrimWhitespace": false,
+
+    },
     "python.analysis.typeCheckingMode": "basic"
 }
