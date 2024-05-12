@@ -16,9 +16,11 @@ def getPost(url):
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
-    title = (''.join(title))
-    for i in FkNTFS:
-        title = title.replace(i , '')  
+    title = (''.join(title)) 
+    title = title.replace('[' , '【')
+    title = title.replace(']' , '】')
+        for i in FkNTFS:
+        title = title.replace(i , '') 
     try:
         headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
         print(headimg)
@@ -52,11 +54,13 @@ def getIssues():
         sys.exit(0)
     else:
         code = json.loads(code)
-        print((code))
+        # print((code))
         code = code[0]
         body = code["body"]
+        print(body)
         url1 = re.findall('<url: (.*?)>' , body)
         author = re.findall('<author: (.*?)>' , body)
+        print(url1)
         url1 = url1[0]
         author = author[0]
         return url1 , author
