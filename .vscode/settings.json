@@ -1,7 +1,7 @@
 {
     "workbench.colorTheme": "Default Dark Modern",
     "git.confirmSync": false,
-    "python.languageServer": "Pylance",
+    "python.languageServer": "Jedi",
     "python.defaultInterpreterPath": "/usr/bin/python3",
 
     "[python]": {

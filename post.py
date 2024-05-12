@@ -11,7 +11,7 @@ def getPost(url):
     resp = requests.get(url)
     code = (resp.text)
     resp.close()
-    FkNTFS = ['<' , '>' , '/' ,'\\' ,'|',':','"','*','?']
+    FkNTFS = ['<','>','/','\\','|',':','"','*','?']
     print(FkNTFS)
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
@@ -19,7 +19,7 @@ def getPost(url):
     title = (''.join(title)) 
     title = title.replace('[' , '【')
     title = title.replace(']' , '】')
-        for i in FkNTFS:
+    for i in FkNTFS:
         title = title.replace(i , '') 
     try:
         headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
@@ -32,7 +32,7 @@ def getPost(url):
         headimg = headimg[0]
         headimg = headimg.replace('http','https')
                               
-
+    
     post = post.replace('<br/>','\n')
     post = post.replace("<span class='prohibited-word'>",'')
     post = post.replace("</span>",'')
