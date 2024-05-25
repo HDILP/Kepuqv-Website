@@ -73,7 +73,7 @@ navbar:
       icon: fa-duotone fa-tags
       url: tags/ 
     - name: 文档
-      url: /docs/how-to-join-us/
+      url: /docs/what-is-kepuqv/
       icon: fa-duotone fa-list-alt  
     - name: 更多
       icon: fa-duotone fa-bars
@@ -117,7 +117,7 @@ cover:
       icon: # fa-duotone fa-heart
       url: /friends/
     - name: 文档
-      url: /docs/how-to-join-us/
+      url: /docs/what-is-kepuqv/
 ############################### Cover ############################### > end
 
 pages:
