@@ -60,12 +60,14 @@ def getIssues():
         print(body)
         url1 = re.findall('<url: (.*?)>' , body)
         author = re.findall('<author: (.*?)>' , body)
+        data = re.findall('<data: (.*?)>' , body)
         print(url1)
         url1 = url1[0]
         author = author[0]
-        return url1 , author
+        data = data[0]
+        return url1 , author , data
 
-url , author = getIssues()
+url , author , data = getIssues()
 posts , title , headimg = getPost(url)
 
 print(posts.encode("utf-8"))
