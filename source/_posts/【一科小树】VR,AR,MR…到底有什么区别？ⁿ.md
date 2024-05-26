@@ -4,9 +4,9 @@ description:
 keywords: 
 categories: 
 tags: 
-date: 
+date: 2024-03-09
 headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/03/09/1709969148_12009103_6774.jpg
-author: 
+author: bst
 ---
 今天，科技日益发展，虚拟现实（VR）、增强现实（AR）和混合现实（MR）已经成为了备受瞩目的技术。它们以各自独特的方式改变了我们与世界的互动方式，为我们带来了前所未有的沉浸式体验。那么，这三种技术到底有什么不同？
 
