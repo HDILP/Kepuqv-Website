@@ -2,7 +2,6 @@
 layout: docs
 title: 我们如何保障创作者版权
 top_meta: false
-description: 
 group: docs
 order: 3
 sidebar: [docs,toc]

@@ -1,9 +1,8 @@
 ---
 layout: friends # 必须
 title: 科普区成员 # 可选，这是友链页的标题
+top_meta: false
 ---
-
-这里写友链上方的内容。
 
 <!-- more -->
 
