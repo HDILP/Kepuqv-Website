@@ -1,15 +1,30 @@
-- group: 科普区成员 # 分组标题
+- group: 科普区成员（无先后顺序） # 分组标题
   description:  # 分组描述
   items: 
     - title: 皙子 # 名称
       avatar: /avatar/3665510.jpg # 头像
-      url:  # 链接
-      # keywords: 科普区创始人 # 关键词
-      # description: 科普区创始人 # 描述    
+      url:  /friends/ # 链接
     
-    - title: # 名称
-      avatar: # 头像
-      url: # 链接
-      screenshot: # 截图
-      keywords: # 关键词
-      description: # 描述
+    - title: 必刷禵 # 名称
+      avatar: /avatar/12009103.jpg # 头像
+      url: /friends/ # 链接
+
+    - title: 洋葱君
+      avatar: /avatar/18475581.jpg
+      url: /friends/
+
+    - title: 凝风
+      avatar: /avatar/15572939.jpg
+      url: /friends/
+
+    - title: 联合化学实验室
+      avatar: /avatar/18029286.jpg
+      url: /friends/
+
+    - title: freezing
+      avatar: /avatar/18113641.jpg
+      url: /friends/
+
+    - title: 
+      avatar: /avatar/
+      url: /friends/
