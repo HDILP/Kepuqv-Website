@@ -3,9 +3,9 @@
   items: 
     - title: 皙子 # 名称
       avatar: /avatar/3665510.jpg # 头像
-      url: / # 链接
-      keywords: 科普区创始人 # 关键词
-      description: 科普区创始人 # 描述    
+      # url: / # 链接
+      # keywords: 科普区创始人 # 关键词
+      # description: 科普区创始人 # 描述    
     
     - title: # 名称
       avatar: # 头像

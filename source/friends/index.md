@@ -5,5 +5,5 @@ top_meta: false
 ---
 
 <!-- more -->
-
-这里可以写友链页面下方的文字备注，例如自己的友链规范、示例等。
+{% note info::关于如何加入科普区，请查看文档： %}
+{% link 如何加入科普区::https://kepuqv.hdilp.top/docs/how-to-join-us/ %}
