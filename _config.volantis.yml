@@ -670,8 +670,9 @@ plugins:
     css: volantis-static/libs/aplayer/dist/APlayer.min.css # https://unpkg.com/aplayer@1.10/dist/APlayer.min.css
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
-    type: song    # song, playlist, album, search, artist
-    id: 2104298692 # chillhop: 4865548839    # song id / playlist id / album id / search keyword
+    type: playlist    # song, playlist, album, search, artist
+    # id: 2104298692 # chillhop: 4865548839      # song id / playlist id / album id / search keyword
+    id: 4865548839
     # Optional
     fixed: false      # enable fixed mode
     theme: '#FFAAB2'  # main color
@@ -767,7 +768,7 @@ rightmenus:
     - menus.link
     - hr
     - menus.darkMode
-    - plugins.articlePage
+    - menus.print
     - music
   ############################
   # - {id: '', name: '', icon: '', link: '', event: '', group: ''}
@@ -828,11 +829,14 @@ rightmenus:
       - {id: 'googleImg', name: '谷歌识图', icon: 'fa-duotone fa-images', event: 'window.open(`https://www.google.com.hk/searchbyimage?image_url=${__link__}`)', group: 'elementImage'}
     # 文章页面组件
     # 生效于 post.article 页面
-    articlePage:
-      - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
-      - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
+    # articlePage:
+    #   - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
+    #   - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
   # 右键自定义菜单区域
   menus:
+    print:
+      - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
+      - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
     link:
       - {id: 'help', name: '常见问题', icon: 'fa-duotone fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
       - {id: 'examples', name: '示例博客', icon: 'fa-duotone fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
