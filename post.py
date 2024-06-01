@@ -22,14 +22,14 @@ def getPost(url):
     for i in FkNTFS:
         title = title.replace(i , '') 
     try:
-        headimg = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
-        print(headimg)
-        headimg = headimg[0]
+        pictures = (re.findall(r'<img class="fill-img" src="(.*?)">',code))
+        print(pictures)
+        headimg = pictures[0]
         headimg = headimg.replace('http' , 'https')
     except:
-        headimg = (re.findall(r"<img src='(.*?)'>",code))
-        print(headimg)
-        headimg = headimg[0]
+        pictures = (re.findall(r"<img src='(.*?)'>",code))
+        print(pictures)
+        headimg = pictures[0]
         headimg = headimg.replace('http','https')
                               
     
@@ -39,7 +39,7 @@ def getPost(url):
 
     # print(post)
     # print(title)
-    return post , title , headimg
+    return post , title , headimg , pictures
 
 def getIssues():
     url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
@@ -68,11 +68,7 @@ def getIssues():
         return url1 , author , data
 
 url , author , data = getIssues()
-posts , title , headimg = getPost(url)
-
-print(posts.encode("utf-8"))
-print(title.encode("utf-8"))
-print(headimg.encode("utf-8"))
+posts , title , headimg , pictures = getPost(url)
 
 # '''
 # ---
@@ -86,9 +82,29 @@ print(headimg.encode("utf-8"))
 # author: 
 # ---
 # '''
+
 posttime = time.strftime('%Y-%m-%d')
 print(posttime)
 f = open(r'source/_posts/'+ title + ".md" , 'w' , encoding='utf-8')
-f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: ' + posttime +'\nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n'+posts)
+
+# front-matter
+if data == 'yyyy-mm-dd':
+    data = time.strftime('%Y-%m-%d')
+else:
+    data = data
+
+f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: ' + data +'\nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n\n') 
+
+# pictures
+f.write('{%% gallery stretch::6::two %}\n')
+
+for i in pictures:
+    j = i.replace('http','https')
+    f.write('![](%s)\n' %j)
+
+f.write('{%% endgallery %}\n')
+
+# 正文
+f.write(posts + '\n')
 
 f.close()
