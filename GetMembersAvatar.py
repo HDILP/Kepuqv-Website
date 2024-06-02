@@ -31,7 +31,7 @@ for member in code:
 for i, url in zip(uids, logo_url):  # 假设uids和logo_url长度相同，一一对应
     response = requests.get(url)
     if response.status_code == 200:
-        file_path = f"./source/test/{i}.jpg"
+        file_path = f"./source/avatar/{i}.jpg"
         with open(file_path, 'wb') as f:
             f.write(response.content)
         print(f"图片已成功保存至 {file_path}")
