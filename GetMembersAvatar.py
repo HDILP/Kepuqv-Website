@@ -28,20 +28,12 @@ for member in code:
     logo = member['logo']
     logo_url.append(logo)
 
-for i in uids:
-    for url in logo_url:
-        response = requests.get(url)
-        if response.status_code == 200:
-            # 指定保存图片的路径和文件名
-            file_path = f"./source/test/{i}.jpg"
-            
-            # 将响应内容写入文件
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
-                f.close()
-
-            print(f"图片已成功保存至 {file_path}")
-            break
-        else:
-            print("图片下载失败，HTTP状态码：", response.status_code)
-            break
+for i, url in zip(uids, logo_url):  # 假设uids和logo_url长度相同，一一对应
+    response = requests.get(url)
+    if response.status_code == 200:
+        file_path = f"./source/test/{i}.jpg"
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+        print(f"图片已成功保存至 {file_path}")
+    else:
+        print(f"为UID {i} 下载图片失败，HTTP状态码：{response.status_code}")
