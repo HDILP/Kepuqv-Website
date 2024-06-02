@@ -17,7 +17,7 @@ headers = {
 response = requests.post(url, data=payload, headers=headers)
 
 code = json.loads(response.text)
-code = code['buddies']
+code = code['buddies'] # code now is 列表，列表里面是字典[{},{},{}]
 
 uids = []
 logo_url = []
