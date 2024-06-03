@@ -96,7 +96,7 @@ else:
 f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: ' + data +'\nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n\n') 
 
 # pictures
-f.write('{%% gallery stretch::6::two %}\n')
+f.write('{% gallery stretch::6::two %}\n')
 
 for i in pictures:
     j = i.replace('http','https')
