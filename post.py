@@ -102,7 +102,7 @@ for i in pictures:
     j = i.replace('http','https')
     f.write('![](%s)\n' %j)
 
-f.write('{%% endgallery %}\n')
+f.write('{% endgallery %}\n')
 
 # 正文
 f.write(posts + '\n')
