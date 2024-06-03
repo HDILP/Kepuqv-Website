@@ -1,0 +1,6 @@
+- group: 科普区成员（无先后顺序）
+  description: ''
+  items:
+  - title: 皙子
+    avatar: /avatar/3665510.jpg
+    url: /friends/
