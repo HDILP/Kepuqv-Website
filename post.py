@@ -15,10 +15,11 @@ def getPost(url):
     print(FkNTFS)
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
-
+    print(post)
     if post == '': # 新文章
-        post = (re.findall(r"<div class='note-content img-wrap'>(.+?)</div>", code))
+        post = (re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code))
         post = (''.join(post))
+
 
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title)) 
