@@ -15,6 +15,11 @@ def getPost(url):
     print(FkNTFS)
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
+
+    if post == '': # 新文章
+        post = (re.findall(r"<div class='note-content img-wrap'>(.+?)</div>", code))
+        post = (''.join(post))
+
     title = (re.findall(r'<div class="note-title">(.+?)</div>',code))
     title = (''.join(title)) 
     title = title.replace('[' , '【')
@@ -83,6 +88,7 @@ posts , title , headimg , pictures = getPost(url)
 # ---
 # '''
 
+# ======Front-matter======
 posttime = time.strftime('%Y-%m-%d')
 print(posttime)
 f = open(r'source/_posts/'+ title + ".md" , 'w' , encoding='utf-8')
@@ -94,6 +100,7 @@ else:
     data = data
 
 f.write('---\ntitle: ' + title + '\ndescription: \nkeywords: \ncategories: \ntags: \ndate: ' + data +'\nheadimg: '+headimg+'\nauthor: '+ author + '\n---\n\n') 
+# ======END======
 
 # pictures
 f.write('{% gallery stretch::6::two %}\n')
