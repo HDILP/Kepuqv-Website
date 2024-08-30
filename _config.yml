@@ -99,6 +99,16 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: volantis
 
+plugins:
+  - hexo-generator-feed
+
+feed:
+  type: atom # 或 'rss'，选择生成的订阅源类型，默认为atom
+  path: atom.xml # RSS或Atom文件保存的路径及文件名，默认为atom.xml
+  limit: 20 # 订阅源中显示的文章数量限制，默认是20
+
+rss: /atom.xml
+
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
