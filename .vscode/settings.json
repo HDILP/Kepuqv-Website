@@ -1,7 +1,7 @@
 {
     "workbench.colorTheme": "Winter is Coming (Dark Blue)",
     "git.confirmSync": false,
-    "python.languageServer": "Jedi",
+    "python.languageServer": "Pylance",
     "python.defaultInterpreterPath": "/usr/bin/python3",
 
     "[python]": {
