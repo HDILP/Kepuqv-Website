@@ -1,7 +1,7 @@
 import asyncio
 from pyppeteer import launch
 
-async def scroll_and_capture(url, path):
+async def scroll_and_capture(url, path, name):
     browser = await launch({
                     'headless':True,
                     'executablePath':'/data/data/com.termux/files/usr/bin/chromium-browser',
@@ -21,7 +21,7 @@ async def scroll_and_capture(url, path):
     position = 0
     i = 1
     while position + viewport_height < full_height:
-        screenshot = f'{path}_part_{i}.png'
+        screenshot = f'{path}{name}_part_{i}.png'
         await page.evaluate(f'window.scrollTo(0, {position});')
         await asyncio.sleep(2)  # 等待页面滚动加载完成
         position += scroll_step
@@ -34,10 +34,7 @@ async def scroll_and_capture(url, path):
 
     return images
 
-async def main():
-    url = 'https://kepuqv.hdilp.top/'  # 目标网页地址
-    path = './screenshots'  # 图片保存路径
-    await scroll_and_capture(url, path)
-
-if __name__ == '__main__':
-    asyncio.run(main())
+async def main(url,name):
+    # url = 'https://kepuqv.hdilp.top/'  # 目标网页地址
+    path = '/data/data/com.termux/files/home/storage/shared/Pictures/kepuqv'  # 图片保存路径
+    await scroll_and_capture(url, path, name)

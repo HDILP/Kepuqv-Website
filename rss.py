@@ -3,13 +3,15 @@ import schedule
 import time
 from datetime import datetime
 
+import screenshot, asyncio
+
 # RSS源的URL，请替换为你想要订阅的RSS地址
 rss_url = 'https://kepuqv.hdilp.top/atom.xml'
 
 # 用于存储上一次检查时的条目链接
 previous_entries_links = set()
 
-def check_for_updates():
+async def check_for_updates():
     global previous_entries_links
     
     # 解析RSS源
@@ -29,6 +31,8 @@ def check_for_updates():
             print(f"标题：{entry.title}")
             print(f"链接：{entry.link}")
             print(f"发布日期：{entry.published}\n")
+            await screenshot.main(entry.link, entry.title)
+
     else:
         print(f"{datetime.now()}: 没有新的更新。\n")
 
@@ -46,10 +50,13 @@ except FileNotFoundError:
 
 # 安排每天检查一次
 # schedule.every().day.at("10:00").do(check_for_updates)  # 例如，设置为每天10点检查
-
-# 主循环
 # while True:
 #     schedule.run_pending()
 #     time.sleep(60)  # 每分钟检查一次是否有待执行的任务
 
-check_for_updates()
+async def main():
+    await check_for_updates()  # 使用 await 来等待异步函数完成
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())  # 启动异步程序
