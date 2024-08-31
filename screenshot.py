@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, os
 from pyppeteer import launch
 
 async def scroll_and_capture(url, path, name):
@@ -36,5 +36,7 @@ async def scroll_and_capture(url, path, name):
 
 async def main(url,name):
     # url = 'https://kepuqv.hdilp.top/'  # 目标网页地址
-    path = '/data/data/com.termux/files/home/storage/shared/Pictures/kepuqv'  # 图片保存路径
+    path = '/data/data/com.termux/files/home/storage/shared/DCIM/kepuqv'  # 图片保存路径
+    if not os.path.exists(path):  # 如果路径不存在，则创建路径
+        os.makedirs(path)
     await scroll_and_capture(url, path, name)
