@@ -12,8 +12,6 @@ def getPost(url):
     resp = requests.get(url)
     code = resp.text
     resp.close()
-    FkNTFS = ['<', '>', '/', '\\', '|', ':', '"', '*', '?']
-    print(FkNTFS)
     post = (re.findall(r"<p>(.+?)</p>", code))
     post = (''.join(post))
     print(post)
@@ -25,6 +23,7 @@ def getPost(url):
     title = (''.join(title))
     title = title.replace('[', '【')
     title = title.replace(']', '】')
+    FkNTFS = ['<', '>', '/', '\\', '|', ':', '"', '*', '?']
     for i in FkNTFS:
         title = title.replace(i, '')
     try:
