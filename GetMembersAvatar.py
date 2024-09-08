@@ -1,5 +1,5 @@
 import requests
-import re
+import re, os
 import json
 
 url = "https://api.yaerxing.com/GetSTBuddies"
@@ -31,7 +31,9 @@ for member in code:
 for i, url in zip(uids, logo_url):  # 假设uids和logo_url长度相同，一一对应
     response = requests.get(url)
     if response.status_code == 200:
-        file_path = f"./source/avatar/{i}.jpg"
+        print(os.getcwd())
+        # file_path = f"./source/avatar/{i}.jpg"
+        file_path = os.path.join('.', 'source', 'avatar', f'{i}.jpg')
         with open(file_path, 'wb') as f:
             f.write(response.content)
         print(f"图片已成功保存至 {file_path}")
