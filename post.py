@@ -31,13 +31,14 @@ def getPost(url):
         print(pictures)
         headimg = pictures[0]
         headimg = headimg.replace('http', 'https')
-    except IndexError:
-        pictures = (re.findall(r"<img src='(.*?)'>", code))
-        print(pictures)
-        headimg = pictures[0]
-        headimg = headimg.replace('http', 'https')
     except:
-        headimg = ''
+        try:
+            pictures = (re.findall(r"<img src='(.*?)'>", code))
+            print(pictures)
+            headimg = pictures[0]
+            headimg = headimg.replace('http', 'https')
+        except:
+            headimg = ''
 
     post = post.replace('<br/>', '\n')
     post = post.replace("<span class='prohibited-word'>", '')
