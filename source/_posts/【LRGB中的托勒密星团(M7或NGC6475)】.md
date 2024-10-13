@@ -5,7 +5,7 @@ keywords:
 categories: 
 tags: 
 date: 2024-09-05
-headimg: 
+headimg: https://imgcdn.yaerxing.com/resize_2000x2000/upimage/stupnote/2024/09/05/1725549648_17975317_2407.jpg
 author: jb
 ---
 
