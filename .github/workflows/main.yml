@@ -20,6 +20,8 @@ jobs:
         python-version: 3.8
         
     - name: Update paper list
+      env:
+        GITHUB_TOKEN : ${{ secrets.GITHUB_API_KEY }}  # 从 GitHub Secrets 获取 API
       run: |
         python -m pip install requests        
         python post.py

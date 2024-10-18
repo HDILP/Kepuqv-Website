@@ -4,7 +4,6 @@ import re
 import json
 import sys, os
 import time
-from dotenv import load_dotenv
 
 def getPost(url):
     # url = input('url:') 
@@ -47,9 +46,6 @@ def getPost(url):
 
 
 def getIssues():
-    # 加载环境变量
-    load_dotenv()
-
     # 从环境变量中获取 GitHub API 密钥
     github_token = os.getenv("GITHUB_TOKEN")
     api_url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
