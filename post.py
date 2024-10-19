@@ -60,7 +60,7 @@ def getIssues():
         sys.exit(0)
     else:
         code = json.loads(code)
-        # print((code))
+        print((code))
         code = code[0]
         body = code["body"]
         print(body)
