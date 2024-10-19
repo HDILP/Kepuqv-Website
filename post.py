@@ -48,6 +48,7 @@ def getPost(url):
 def getIssues():
     # 从环境变量中获取 GitHub API 密钥
     github_token = os.getenv("GITHUB_TOKEN")
+    print(github_token)
     api_url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
     # url = 'https://api.github.com/repos/HDILP/friends/issues'
     headers = {
