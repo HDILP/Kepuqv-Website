@@ -11,12 +11,9 @@ def getPost(url):
     resp = requests.get(url)
     code = resp.text
     resp.close()
-    post = re.findall(r"<p>(.+?)</p>", code)
-    print (post)
-    post = post[0]
-    if post == '':  # 新文章
-        post = (re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code))
-        post = (''.join(post))
+    post = re.findall(r"<p>(.+?)</p>", code)[0]
+    if not post:  # 新文章
+        post = re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code)[0]
 
     title = re.findall(r'<div class="note-title">(.+?)</div>', code)[0]
     title = title.replace('[', '【')
