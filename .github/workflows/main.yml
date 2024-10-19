@@ -21,7 +21,7 @@ jobs:
         
     - name: Update paper list
       env:
-        GITHUB_TOKEN : ${{ secrets.GH_TOKEN }}  # 从 GitHub Secrets 获取 API
+        GH_TOKEN : ${{ secrets.GH_TOKEN }}  # 从 GitHub Secrets 获取 API
       run: |
         python -m pip install requests        
         python post.py
