@@ -23,8 +23,16 @@
 
     - title: 寒澈
       avatar: /avatar/12804388.jpg
-      url: /friends/
+      url: https://www.hdilp.top/
 
     - title: 金币
       avatar: /avatar/17975317.jpg
       url: /friends/
+
+    - title: 阿棱 # 名称
+      avatar: /avatar/17532079.jpg # 头像
+      url:  /friends/ # 链接
+
+    - title: 枫晴 # 名称
+      avatar: /avatar/18814490.jpg # 头像
+      url:  /friends/ # 链接
