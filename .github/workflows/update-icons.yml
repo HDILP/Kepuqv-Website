@@ -19,7 +19,7 @@ jobs:
     - name: Update Icon
       run: |
         python -m pip install requests        
-        python post.py
+        python GetMembersAvatar.py
         
     - name: commit
       run: |
