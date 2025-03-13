@@ -4,20 +4,69 @@ import re
 import json
 import sys, os
 import time
+from bs4 import BeautifulSoup
 
+def parse_html(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    result = {
+        "note_title": "",
+        "note_content": "",
+        "image_links": []
+    }
+
+    # 提取标题
+    if title_div := soup.find('div', class_='note-title'):
+        result["note_title"] = title_div.get_text(strip=True)
+
+    # 提取内容（优先所有<p>标签）
+    content_parts = []
+    p_tags = soup.find_all('p')
+    
+    if p_tags:
+        # 提取所有<p>内容（包括div内的）
+        for p_tag in p_tags:
+            for br in p_tag.find_all('br'):
+                br.replace_with('\n')
+            p_text = p_tag.get_text(strip=False).strip()
+            if p_text:
+                content_parts.append(p_text)
+    else:
+        # 无<p>时提取div.note-content
+        if content_div := soup.find('div', class_='note-content'):
+            for br in content_div.find_all('br'):
+                br.replace_with('\n')
+            div_text = content_div.get_text(strip=False).strip()
+            if div_text:
+                content_parts.append(div_text)
+
+    # 合并内容
+    result["note_content"] = '\n\n'.join(content_parts) if content_parts else ""
+
+    # 提取图片（仅限swiper容器）
+    if swiper_container := soup.find(class_='swiper-container'):
+        result["image_links"] = [
+            img["src"] for img in swiper_container.find_all("img", class_="fill-img")
+            if img.has_attr("src")
+        ]
+
+    return result
 def getPost(url):
     # url = input('url:') 
     # url = 'https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=5CE39E6A6E184BE1022D22C01DD0D022&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=3&mid=12804388&nid=2726448&os_v=33&platform_id=2&rom=EMUI&timestamp=1714651507853'
     resp = requests.get(url)
     code = resp.text
     resp.close()
-    post = re.findall(r"<p>(.+?)</p>", code)
-    if not post:  # 新文章
-        post = re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code)[0]
-    else:
-        post = post[0]
+    parse = parse_html(code)
+    # post = re.findall(r"<p>(.+?)</p>", code)
+    # if not post:  # 新文章
+    #     post = re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code)[0]
+    # else:
+    #     post = post[0]
 
-    title = re.findall(r'<div class="note-title">(.+?)</div>', code)[0]
+    # title = re.findall(r'<div class="note-title">(.+?)</div>', code)[0]
+    title = parse['note_title']
+
     title = title.replace('[', '【')
     title = title.replace(']', '】')
     FkNTFS = ['<', '>', '/', '\\', '|', ':', '"', '*', '?']
@@ -62,7 +111,7 @@ def getIssues():
         sys.exit(0)
     else:
         code = json.loads(code)
-        print((code))
+        print(code)
         code = code[0]
         body = code["body"]
         print(body)
