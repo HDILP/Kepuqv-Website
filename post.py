@@ -7,50 +7,87 @@ import time
 from bs4 import BeautifulSoup
 
 def parse_html(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    
+    '''
     result = {
         "note_title": "",
         "note_content": "",
         "image_links": []
     }
 
+    '''
+
+
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # === 第一步：清理禁止词标签（保留内容）===
+    for prohibited in soup.find_all('span', class_='prohibited-word'):
+        prohibited.unwrap()  # 移除外层span标签，保留内部所有内容    
+    
+    result = {
+        "note_title": "",
+        "note_content": "",
+        "headimg": "",
+        "image_links": [],
+    }
+
     # 提取标题
     if title_div := soup.find('div', class_='note-title'):
-        result["note_title"] = title_div.get_text(strip=True)
+        raw_title = title_div.get_text(strip=True)
+        # 内联字符过滤逻辑
+        title = raw_title.replace('[', '【').replace(']', '】')
+        for char in ['<', '>', '/', '\\', '|', ':', '"', '*', '?']:
+            title = title.replace(char, '')
+        result["note_title"] = title.strip().replace('  ', ' ')
 
-    # 提取内容（优先所有<p>标签）
+    # 内容提取策略
     content_parts = []
-    p_tags = soup.find_all('p')
     
-    if p_tags:
-        # 提取所有<p>内容（包括div内的）
-        for p_tag in p_tags:
+    # 策略1：优先提取note-content中的第一个<p>文本
+    if (note_content := soup.find('div', class_='note-content')) and (first_p := note_content.find('p')):
+        # 提取第一个<p>内容
+        for br in first_p.find_all('br'):
+            br.replace_with('\n')
+        p_text = first_p.get_text(strip=False).strip()
+        if p_text:
+            content_parts.append(p_text)
+    # 策略2：无有效<p>时提取整个note-content
+    elif note_content := soup.find('div', class_='note-content'):
+        # 处理整个div内容
+        for br in note_content.find_all('br'):
+            br.replace_with('\n')
+        div_text = note_content.get_text(strip=False).strip()
+        if div_text:
+            content_parts.append(div_text)
+    # 策略3：提取其他<p>标签
+    else:
+        for p_tag in soup.find_all('p'):
+            # 跳过包含图片的<p>
+            if p_tag.find('img'):
+                continue
+            # 处理文本内容
             for br in p_tag.find_all('br'):
                 br.replace_with('\n')
             p_text = p_tag.get_text(strip=False).strip()
             if p_text:
                 content_parts.append(p_text)
-    else:
-        # 无<p>时提取div.note-content
-        if content_div := soup.find('div', class_='note-content'):
-            for br in content_div.find_all('br'):
-                br.replace_with('\n')
-            div_text = content_div.get_text(strip=False).strip()
-            if div_text:
-                content_parts.append(div_text)
 
     # 合并内容
     result["note_content"] = '\n\n'.join(content_parts) if content_parts else ""
 
-    # 提取图片（仅限swiper容器）
+    # 提取图片（严格限定swiper容器）
     if swiper_container := soup.find(class_='swiper-container'):
         result["image_links"] = [
             img["src"] for img in swiper_container.find_all("img", class_="fill-img")
             if img.has_attr("src")
         ]
 
+    if result["image_links"]:
+        result["headimg"] = result["image_links"][0]
+    else:
+        result["headimg"] = ''
+
     return result
+
 def getPost(url):
     # url = input('url:') 
     # url = 'https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=5CE39E6A6E184BE1022D22C01DD0D022&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=3&mid=12804388&nid=2726448&os_v=33&platform_id=2&rom=EMUI&timestamp=1714651507853'
@@ -58,40 +95,14 @@ def getPost(url):
     code = resp.text
     resp.close()
     parse = parse_html(code)
-    # post = re.findall(r"<p>(.+?)</p>", code)
-    # if not post:  # 新文章
-    #     post = re.findall(r'<div class="note-content img-wrap">(.+?)</div>', code)[0]
-    # else:
-    #     post = post[0]
 
-    # title = re.findall(r'<div class="note-title">(.+?)</div>', code)[0]
     title = parse['note_title']
-
-    title = title.replace('[', '【')
-    title = title.replace(']', '】')
-    FkNTFS = ['<', '>', '/', '\\', '|', ':', '"', '*', '?']
-    for i in FkNTFS:
-        title = title.replace(i, '')
-    try:
-        pictures = (re.findall(r'<img class="fill-img" src="(.*?)">', code))
-        print(pictures)
-        headimg = pictures[0]
-        headimg = headimg.replace('http', 'https')
-    except:
-        try:
-            pictures = (re.findall(r"<img src='(.*?)'>", code))
-            print(pictures)
-            headimg = pictures[0]
-            headimg = headimg.replace('http', 'https')
-        except:
-            headimg = ''
-
-    post = post.replace('<br/>', '\n')
-    post = post.replace("<span class='prohibited-word'>", '')
-    post = post.replace("</span>", '')
+    post = parse['note_content']
+    pictures = parse['image_links']
 
     # print(post)
     # print(title)
+
     return post, title, headimg, pictures
 
 
