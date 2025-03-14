@@ -99,6 +99,7 @@ def getPost(url):
     title = parse['note_title']
     post = parse['note_content']
     pictures = parse['image_links']
+    headimg = parse['headimg']
 
     # print(post)
     # print(title)
