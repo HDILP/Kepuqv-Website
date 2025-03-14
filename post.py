@@ -114,22 +114,39 @@ def getIssues():
     # url = 'https://api.github.com/repos/HDILP/friends/issues'
     headers = {
         "Authorization": f"token {github_token}",
-        "Accept": "application/vnd.github+json",
+        "Accept": "application/vnd.github.v3+json",
     }
-    response = requests.get(api_url, headers=headers)
-    code = response.text
-    if len(code) == 2:
-        sys.exit(0)
+    response = requests.get(api_url, params={
+        'sort': 'created',
+        'direction': 'desc',
+        'per_page': 1
+    }, headers=headers)
+
+    if response.status_code == 200:
+        issues = response.json()
+        if issues:
+            latest_issue = issues[0]
+            print("最新 Issue 标题:", latest_issue['title'])
+            print("正文内容:", latest_issue['body'])
+            post_url = re.findall('<url: (.*?)>', latest_issue['body'])[0]
+            author = re.findall('<author: (.*?)>', latest_issue['body'])[0]
+            data = re.findall('<data: (.*?)>', latest_issue['body'])[0]
+            return post_url, author, data
+        else:
+            print("该仓库没有 Issue。")
     else:
-        code = json.loads(code)
-        print(code)
-        code = code[0]
-        body = code["body"]
-        print(body)
-        post_url = re.findall('<url: (.*?)>', body)[0]
-        author = re.findall('<author: (.*?)>', body)[0]
-        data = re.findall('<data: (.*?)>', body)[0]
-        return post_url, author, data
+        print(f"请求失败，状态码: {response.status_code}")
+    # code = response.text
+    # if len(code) == 2:
+    #     sys.exit(0)
+    # else:
+    #     code = json.loads(code)
+    #     print(code)
+    #     code = code[0]
+    #     body = code["body"]
+    #     print(body)
+        
+    #     
 
 
 url, author, data = getIssues()
