@@ -31,13 +31,6 @@ async def check_for_updates():
             print(f"标题：{entry.title}")
             print(f"链接：{entry.link}")
             print(f"发布日期：{entry.published}\n")
-            title = entry.title.replace(" ", "")
-            title = title.replace('[', '【')
-            title = title.replace(']', '】')
-            FkNTFS = ['<', '>', '/', '\\', '|', ':', '"', '*', '?']
-            for i in FkNTFS:
-                title = title.replace(i, '')
-            await screenshot.main(entry.link, title)
 
     else:
         print(f"{datetime.now()}: 没有新的更新。\n")
