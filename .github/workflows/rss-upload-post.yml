@@ -1,13 +1,6 @@
 name: Web Screenshot via CLI
 on:
   workflow_dispatch:
-    inputs:
-      url:
-        description: '目标网页URL'
-        required: true
-      device:
-        description: '模拟设备（如 iPhone 11）'
-        required: false
 
 jobs:
   screenshot:
@@ -32,8 +25,7 @@ jobs:
           npx playwright screenshot \
             --wait-for-timeout 5000 \  # 等待5秒加载
             --full-page \              # 截取完整页面
-            --device "${{ github.event.inputs.device }}" \  # 设备模拟
-            "${{ github.event.inputs.url }}" \
+            https://kepuqv.hdilp.top
             screenshot.png
 
       - name: Upload Artifact
