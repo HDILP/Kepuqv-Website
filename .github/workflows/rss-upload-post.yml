@@ -25,7 +25,7 @@ jobs:
           npx playwright screenshot \
             --wait-for-timeout 5000 \  # 等待5秒加载
             --full-page \              # 截取完整页面
-            https://kepuqv.hdilp.top
+            https://kepuqv.hdilp.top \
             screenshot.png
 
       - name: Upload Artifact
