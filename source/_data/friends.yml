@@ -9,7 +9,7 @@
       avatar: /avatar/12009103.jpg # 头像
       url: /friends/ # 链接
 
-    - title: 洋葱君
+    - title: 科普君噬菌体
       avatar: /avatar/18475581.jpg
       url: /friends/
 
@@ -36,3 +36,7 @@
     - title: 枫晴 # 名称
       avatar: /avatar/18814490.jpg # 头像
       url:  /friends/ # 链接
+
+    - title: TB-SYSTEM
+      avater: /avatar/20760506.jpg
+      url: #
