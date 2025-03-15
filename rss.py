@@ -1,61 +1,59 @@
 import feedparser
-# import schedule
-import time
 from datetime import datetime
-import asyncio
-# import screenshot
+import os
 
-# RSS源的URL，请替换为你想要订阅的RSS地址
-rss_url = 'https://kepuqv.hdilp.top/atom.xml'
+# 配置常量
+RSS_URL = 'https://kepuqv.hdilp.top/atom.xml'
+HISTORY_FILE = "previous_entries.txt"
 
-# 用于存储上一次检查时的条目链接
-previous_entries_links = set()
+def load_history():
+    """加载历史访问记录"""
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r") as f:
+            return set(line.strip() for line in f if line.strip())
+    return set()
 
-async def check_for_updates():
-    global previous_entries_links
-    
-    # 解析RSS源
-    feed = feedparser.parse(rss_url)
-    
-    # 获取新条目
+def save_history(links):
+    """保存最新访问记录"""
+    with open(HISTORY_FILE, "w") as f:
+        for link in links:
+            f.write(f"{link}\n")
+
+def check_rss_updates():
+    """执行单次RSS更新检查"""
+    existing_links = load_history()
     new_entries = []
-    for entry in feed.entries:
-        if entry.link not in previous_entries_links:
-            new_entries.append(entry)
-            previous_entries_links.add(entry.link)
     
-    # 打印新条目
+    try:
+        # 解析RSS源数据
+        feed = feedparser.parse(RSS_URL)
+        if feed.bozo:  # 检查解析错误
+            print(f"[错误] RSS解析失败: {feed.bozo_exception}")
+            return
+    except Exception as e:
+        print(f"[错误] 无法获取RSS内容: {str(e)}")
+        return
+
+    # 检测新条目
+    for entry in feed.entries:
+        if entry.link not in existing_links:
+            new_entries.append(entry)
+            existing_links.add(entry.link)
+
+    # 输出结果
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     if new_entries:
-        print(f"{datetime.now()}: 新的更新：")
-        for entry in new_entries:
-            print(f"标题：{entry.title}")
-            print(f"链接：{entry.link}")
-            print(f"发布日期：{entry.published}\n")
-
+        print(f"\n{timestamp} 发现 {len(new_entries)} 条新内容")
+        for idx, entry in enumerate(new_entries, 1):
+            print(f"{idx}. {entry.title}")
+            print(f"   链接：{entry.link}")
+            print(f"   发布时间：{entry.get('published', '未知时间')}\n")
     else:
-        print(f"{datetime.now()}: 没有新的更新。\n")
+        print(f"{timestamp} 当前没有发现新内容")
 
-    # 保存当前的条目链接为下次比较的基准
-    with open("previous_entries.txt", "w") as file:
-        for link in previous_entries_links:
-            file.write("%s\n" % link)
-
-# 初始加载已知的条目链接
-try:
-    with open("previous_entries.txt", "r") as file:
-        previous_entries_links.update(line.strip() for line in file)
-except FileNotFoundError:
-    pass  # 文件不存在，这是第一次运行
-
-# 安排每天检查一次
-# schedule.every().day.at("10:00").do(check_for_updates)  # 例如，设置为每天10点检查
-# while True:
-#     schedule.run_pending()
-#     time.sleep(60)  # 每分钟检查一次是否有待执行的任务
-
-async def main():
-    await check_for_updates()  # 使用 await 来等待异步函数完成
+    # 更新历史记录
+    if new_entries:
+        save_history(existing_links)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())  # 启动异步程序
+    check_rss_updates()
