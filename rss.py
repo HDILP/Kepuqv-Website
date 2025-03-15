@@ -2,8 +2,8 @@ import feedparser
 # import schedule
 import time
 from datetime import datetime
-
-import screenshot, asyncio
+import asyncio
+# import screenshot
 
 # RSS源的URL，请替换为你想要订阅的RSS地址
 rss_url = 'https://kepuqv.hdilp.top/atom.xml'
