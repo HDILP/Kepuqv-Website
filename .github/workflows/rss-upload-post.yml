@@ -22,7 +22,7 @@ jobs:
 
       - name: Capture Screenshot
         run: |
-          npx playwright run scroll-screenshot.js https://kepuqv.hdilp.top/
+          node scroll-screenshot.js https://kepuqv.hdilp.top/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
