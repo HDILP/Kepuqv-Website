@@ -1,39 +1,43 @@
-name: RSS Upload fkst post
-
-on: 
-  issues:
-    types: [opened,edited]
+name: Web Screenshot via CLI
+on:
   workflow_dispatch:
+    inputs:
+      url:
+        description: '目标网页URL'
+        required: true
+      device:
+        description: '模拟设备（如 iPhone 11）'
+        required: false
 
 jobs:
-  build:
-
+  screenshot:
     runs-on: ubuntu-latest
-
     steps:
-    - name: checkout actions
-      uses: actions/checkout@v4.1.4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v5.1.0
-      with:
-        python-version: 3.8
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Update paper list
-      env:
-        GH_TOKEN : ${{ secrets.GH_TOKEN }}  # 从 GitHub Secrets 获取 API
-      run: |
-        # python -m pip install requests bs4      
-        python rss.py
-        
-    - name: commit
-      run: |
-        git config --global user.email awm31415@163.com
-        git config --global user.name HDILP
-        git add .
-        git commit -m "update rss list" -a
-        
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Playwright
+        run: npm install -g playwright
+
+      - name: Install Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture Screenshot
+        run: |
+          npx playwright screenshot \
+            --wait-for-timeout 5000 \  # 等待5秒加载
+            --full-page \              # 截取完整页面
+            --device "${{ github.event.inputs.device }}" \  # 设备模拟
+            "${{ github.event.inputs.url }}" \
+            screenshot.png
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: webpage-screenshot
+          path: screenshot.png
