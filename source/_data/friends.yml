@@ -4,7 +4,7 @@
     - title: 皙子 # 名称
       avatar: /avatar/3665510.jpg # 头像
       url:  /friends/ # 链接
-    
+
     - title: 必刷禵 # 名称
       avatar: /avatar/12009103.jpg # 头像
       url: /friends/ # 链接
@@ -37,6 +37,6 @@
       avatar: /avatar/18814490.jpg # 头像
       url:  /friends/ # 链接
 
-    - title: TB-SYSTEM
+    - title: TB_SYSTEM
       avater: /avatar/20760506.jpg
       url: /friends/
