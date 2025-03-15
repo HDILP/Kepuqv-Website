@@ -22,7 +22,7 @@ jobs:
 
       - name: Capture Screenshot
         run: |
-          npx playwright screenshot --wait-for-timeout 5000 --full-page https://kepuqv.hdilp.top/%E3%80%90%E9%9D%9E%E5%8E%9F%E5%88%9B%E3%80%91%E5%BE%95%E5%8D%A1%20SE4%20%E5%8D%AB%E6%98%9F%E9%80%9A%E8%AE%AF%E4%B8%AD%E7%AB%AF%E2%80%94%E5%B0%8F%E7%B1%B315Ultra/ screenshot.png
+          npx playwright screenshot --wait-for-timeout 5000 --viewport-size 1080,1920 https://kepuqv.hdilp.top/%E3%80%90%E9%9D%9E%E5%8E%9F%E5%88%9B%E3%80%91%E5%BE%95%E5%8D%A1%20SE4%20%E5%8D%AB%E6%98%9F%E9%80%9A%E8%AE%AF%E4%B8%AD%E7%AB%AF%E2%80%94%E5%B0%8F%E7%B1%B315Ultra/ screenshot.png
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
