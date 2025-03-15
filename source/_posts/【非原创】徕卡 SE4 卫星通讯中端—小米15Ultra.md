@@ -6,7 +6,7 @@ categories:
 tags: 
 date: 2025-03-15
 headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2025/03/15/1742025922_18475581_3365.jpg
-author: K
+author: ycj
 ---
 
 {% gallery stretch::6::two %}
