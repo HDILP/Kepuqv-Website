@@ -1,0 +1,22 @@
+name: rss test
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout actions
+      uses: actions/checkout@v4.1.4
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.8
+        
+    - name: Update paper list
+      run:      
+        python post.py
