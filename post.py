@@ -89,20 +89,14 @@ def parse_html(html_content):
     return result
 
 def getPost(url):
-    # url = input('url:') 
-    # url = 'https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=5CE39E6A6E184BE1022D22C01DD0D022&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=3&mid=12804388&nid=2726448&os_v=33&platform_id=2&rom=EMUI&timestamp=1714651507853'
-    resp = requests.get(url)
-    code = resp.text
-    resp.close()
+    code = requests.get(url).text
+
     parse = parse_html(code)
 
     title = parse['note_title']
     post = parse['note_content']
     pictures = parse['image_links']
     headimg = parse['headimg']
-
-    # print(post)
-    # print(title)
 
     return post, title, headimg, pictures
 
@@ -112,7 +106,6 @@ def getIssues():
     github_token = os.getenv("GH_TOKEN")
     print(github_token)
     api_url = 'https://api.github.com/repos/HDILP/Kepuqv-Website/issues'
-    # url = 'https://api.github.com/repos/HDILP/friends/issues'
     headers = {
         "Authorization": f"token {github_token}",
         "Accept": "application/vnd.github.v3+json",
@@ -137,17 +130,6 @@ def getIssues():
             print("该仓库没有 Issue。")
     else:
         print(f"请求失败，状态码: {response.status_code}")
-    # code = response.text
-    # if len(code) == 2:
-    #     sys.exit(0)
-    # else:
-    #     code = json.loads(code)
-    #     print(code)
-    #     code = code[0]
-    #     body = code["body"]
-    #     print(body)
-        
-    #     
 
 
 url, author, data = getIssues()
@@ -167,15 +149,10 @@ posts, title, headimg, pictures = getPost(url)
 # '''
 
 # ======Creat New File======
-posttime = time.strftime('%Y-%m-%d')
-print(posttime)
+
 f = open(r'source/_posts/' + title + ".md", 'w', encoding='utf-8')
 
 # =====Front-Matter=====
-if data == 'yyyy-mm-dd':
-    data = time.strftime('%Y-%m-%d')
-else:
-    data = data
 
 f.write('---\n' + \
         'title: ' + title + \
