@@ -22,7 +22,7 @@ jobs:
 
       - name: Capture Screenshot
         run: |
-          npx playwright screenshot --wait-for-timeout 5000 --full-page https://kepuqv.hdilp.top screenshot.png
+          npx playwright run scroll-screenshot.js https://kepuqv.hdilp.top/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
