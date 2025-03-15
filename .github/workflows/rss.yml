@@ -20,4 +20,4 @@ jobs:
     - name: Update paper list
       run: |
         python -m pip install feedparser
-        python post.py
+        python rss.py
