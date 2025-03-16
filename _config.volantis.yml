@@ -321,8 +321,8 @@ sidebar:
       subtitle: 开卷有益
       jinrishici: true # Poetry Today. You can set a string, and it will be displayed when loading fails.
       social:
-        - img: /imgs/fkst.jpg
-          url: https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=770507658422C37512CA9E180837365B&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=2&mid=18367744&nid=2682363&os_v=33&platform_id=2&rom=EMUI&timestamp=1714147406679
+        # - img: /imgs/fkst.jpg
+          # url: https://www.yaerxing.com/shuati/verifyShareNote?adolescent_model=0&api_key=7f7c1aa0c0658b227985268159d50a3e&api_sig=770507658422C37512CA9E180837365B&app_v=141&appid=wx2bd42ba7f4c547f5&channel=none&font_size=2&mid=18367744&nid=2682363&os_v=33&platform_id=2&rom=EMUI&timestamp=1714147406679
         # - icon: fa-duotone fa-envelope
           # url: mailto:me@xxx.com
         # - icon: fab fa-github
@@ -338,7 +338,7 @@ sidebar:
         title: 公告
         url:
       content:
-        - '** 网站已基本搭建完成 awa **'    # ---------------------------------------
+        - '科普区自动化已完成闭环 2025-03-15'    # ---------------------------------------
     # toc widget (valid only in articles)
     toc:
       class: toc
