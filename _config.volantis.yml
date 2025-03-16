@@ -153,7 +153,7 @@ article:
     top_meta: [author, category, date, counter, wordcount] #启用评论数量需在此添加
     # 文章底部信息
     # 从 meta_library 中取
-    bottom_meta: [updated, tags]
+    bottom_meta: [tags]
     # ----------------
     # 文章页脚组件
     footer_widget:
