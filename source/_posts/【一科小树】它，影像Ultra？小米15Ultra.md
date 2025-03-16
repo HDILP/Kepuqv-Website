@@ -6,7 +6,7 @@ categories:
 tags: 
 date: 2025-03-16
 headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2025/03/01/1740789513_12009103_3395.jpg
-author: 必刷禵
+author: bst
 ---
 
 {% gallery stretch::6::two %}
