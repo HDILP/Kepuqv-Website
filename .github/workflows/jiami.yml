@@ -1,0 +1,20 @@
+name: 科普区文章 to 疯狂刷题
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout actions
+      uses: actions/checkout@v4.1.4
+
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: Install Playwright
+      run: npm install --save hexo-blog-encrypt
