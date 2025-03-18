@@ -7,6 +7,7 @@ tags:
 date: 2025-03-15
 headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2025/02/06/1738816163_20760506_5482.jpg
 author: tbs
+password: hello
 ---
 
 {% gallery stretch::6::two %}
