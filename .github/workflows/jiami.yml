@@ -1,4 +1,4 @@
-name: 科普区文章 to 疯狂刷题
+name: 安装加密模块
 
 on: 
   workflow_dispatch:
@@ -18,3 +18,15 @@ jobs:
 
     - name: Install Playwright
       run: npm install --save hexo-blog-encrypt
+
+    - name: commit
+      run: |
+        git config --global user.email awm31415@163.com
+        git config --global user.name HDILP
+        git add .
+        git commit -m "update" -a
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
