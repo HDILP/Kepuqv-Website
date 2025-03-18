@@ -119,7 +119,7 @@ updated: '2025-03-18T21:54:04.216+08:00'
                           `<author: ${document.getElementById('author').value}>\n\n` +
                           `<data: ${document.getElementById('date').value}>`;
 
-            const response = await fetch('/api/create-issue', {
+            const response = await fetch('https://new.kepuqv.hdilp.top/api/create-issue', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ updated: '2025-03-18T21:54:04.216+08:00'
                 result.textContent = '✅ 提交成功！文章已进入处理队列，通常会在30秒内完成处理。';
                 result.style.color = '#16a34a';
                 result.style.backgroundColor = '#f0fdf4';
-          
+  
                 // 保存当前日期值并重置表单
                 const dateValue = document.getElementById('date').value;
                 form.reset();
