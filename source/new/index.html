@@ -2,9 +2,145 @@
 date: '2025-03-18T21:54:02.074344+08:00'
 layout: page
 title: 科普区文章自助添加
-updated: '2025-03-18T21:54:04.216+08:00'
+password: kpqkpq
 ---
-```
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科普区文章自助添加</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --surface: #ffffff;
+            --background: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: var(--text-primary);
+        }
+
+        .container {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 560px;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+
+        h1 {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.75rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        h1 .material-icons {
+            color: var(--primary);
+            font-size: 2.25rem;
+        }
+
+        .intro-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            padding-left: 0.5rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            background: var(--background);
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
         button:active {
@@ -68,7 +204,7 @@ updated: '2025-03-18T21:54:04.216+08:00'
             <span class="material-icons">science</span>
             科普文章自助发布
         </h1>
-  
+        
         <p class="intro-text">
             您提交的科普文章会在12小时内同步至疯狂刷题平台科普账号。
         </p>
@@ -110,10 +246,10 @@ updated: '2025-03-18T21:54:04.216+08:00'
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-  
+        
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<span class="material-icons loading">autorenew</span> 提交中...`;
-  
+        
         try {
             const bodyContent = `<url: ${document.getElementById('url').value}>\n\n` +
                           `<author: ${document.getElementById('author').value}>\n\n` +
@@ -134,7 +270,7 @@ updated: '2025-03-18T21:54:04.216+08:00'
                 result.textContent = '✅ 提交成功！文章已进入处理队列，通常会在30秒内完成处理。';
                 result.style.color = '#16a34a';
                 result.style.backgroundColor = '#f0fdf4';
-  
+                
                 // 保存当前日期值并重置表单
                 const dateValue = document.getElementById('date').value;
                 form.reset();
@@ -161,4 +297,3 @@ updated: '2025-03-18T21:54:04.216+08:00'
 </script>
 </body>
 </html>
-```
