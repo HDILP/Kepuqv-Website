@@ -1,14 +1,15 @@
 ---
-title: 【一科小树】初代iPhone重新定义手机
-description: 
-keywords: 
-categories: 
-tags: 
-date: 2007-076-29
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587853_12009103_4417.jpg
+abbrlink: ''
 author: bst
+categories: []
+date: '2007-06-29'
+description: null
+headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587853_12009103_4417.jpg
+keywords: null
+tags: []
+title: 【一科小树】初代iPhone重新定义手机
+updated: ''
 ---
-
 {% gallery stretch::6::two %}
 ![](https://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587853_12009103_4417.jpg)
 ![](https://imgcdn.yaerxing.com/upimage/stupnote/2024/02/22/1708587854_12009103_7384.jpg)
