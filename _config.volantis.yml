@@ -493,7 +493,7 @@ site_footer:
     # <span id="lc-sv">本站总访问量为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 次</span>
     # <span id="lc-uv">访客数为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 人</span>
   # site copyright
-  copyright: '[Copyright © since 2024 科普区](/)'
+  copyright: '[Copyright © since 2025 科普区](/)'
   # You can add your own property here. (Support markdown, for example: br: '<br>')
   br: '<br>'
 ############################### Site Footer ############################### > end
@@ -678,17 +678,12 @@ plugins:
   # APlayer config: https://github.com/metowolf/MetingJS
   aplayer:
     enable: true
-    js:
-      aplayer: volantis-static/libs/aplayer/dist/APlayer.min.js # https://unpkg.com/aplayer@1.10/dist/APlayer.min.js
-      meting: https://unpkg.com/meting@2.0.1/dist/Meting.min.js # https://unpkg.com/meting@2.0/dist/Meting.min.js
-    css: volantis-static/libs/aplayer/dist/APlayer.min.css # https://unpkg.com/aplayer@1.10/dist/APlayer.min.css
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
     type: playlist    # song, playlist, album, search, artist
-    # id: 2104298692 # chillhop: 4865548839      # song id / playlist id / album id / search keyword
-    id: 1956596535  # wet cat step
+    id: 4865548839    # song id / playlist id / album id / search keyword
     # Optional
-    fixed: false      # enable fixed mode
+    fixed: true      # enable fixed mode
     theme: '#FFAAB2'  # main color
     autoplay: true   # audio autoplay
     order: random       # player play order, values: 'list', 'random'
