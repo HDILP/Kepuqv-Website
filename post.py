@@ -161,6 +161,7 @@ f.write('---\n' + \
         '\ncategories: ' + \
         '\ntags: ' + \
         '\ndate: ' + data + \
+        '\nupdated: ' + data + \
         '\nheadimg: ' + headimg + \
         '\nauthor: ' + author + \
         '\n---\n\n')
