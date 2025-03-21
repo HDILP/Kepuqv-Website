@@ -680,7 +680,7 @@ plugins:
     enable: true
     js:
       aplayer: volantis-static/libs/aplayer/dist/APlayer.min.js # https://unpkg.com/aplayer@1.10/dist/APlayer.min.js
-      meting: volantis-static/libs/meting/dist/Meting.min.js # https://unpkg.com/meting@2.0/dist/Meting.min.js
+      meting: https://unpkg.com/meting@2.0.1/dist/Meting.min.js # https://unpkg.com/meting@2.0/dist/Meting.min.js
     css: volantis-static/libs/aplayer/dist/APlayer.min.css # https://unpkg.com/aplayer@1.10/dist/APlayer.min.css
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
