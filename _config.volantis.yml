@@ -602,7 +602,7 @@ plugins:
   # fontawesome animation for fontawesome V5
   fontawesome_animation:
     enable: true
-    css: volantis-static/libs/font-awesome-animation/font-awesome-animation.min.css # https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css
+    css: volantis-static/libs/font-awesome-animation/css/font-awesome-animation.min.css # https://cdn.jsdelivr.net/gh/l-lin/font-awesome-animation/dist/font-awesome-animation.min.css
 
   # Typing Effects
   comment_typing:
