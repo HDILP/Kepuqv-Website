@@ -35,9 +35,9 @@ def parse_html(html_content):
         raw_title = title_div.get_text(strip=True)
         # 内联字符过滤逻辑
         title = raw_title.replace('[', '【').replace(']', '】')
-        for char in ['<', '>', '/', '\\', '|', ':', '"', '*', '?']:
+        for char in ['<', '>', '/', '\\', '|', ':', '"', '*', '?', ' ']:
             title = title.replace(char, '')
-        result["note_title"] = title.strip().replace('  ', ' ')
+        result["note_title"] = title.strip().replace('  ', '')
 
     # 内容提取策略
     content_parts = []
