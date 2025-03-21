@@ -85,9 +85,9 @@ navbar:
           icon: fa-duotone fa-magnifying-glass
           rows:
             - name: 百度
-            - url: https://www.baidu.com/
+            - url: www.baidu.com
             - name: 必应
-            - url: https://cn.bing.com/
+            - url: cn.bing.com
         - name: hr
         - name: 投稿
           icon: fa-duotone fa-grid-2-plus
