@@ -75,19 +75,21 @@ navbar:
     - name: 文档
       url: /docs/what-is-kepuqv/
       icon: fa-duotone fa-list-alt  
-    - name: 搜索引擎
-      icon: fa-duotone fa-magnifying-glass
-      rows:
-        - name: 百度
-        - url: https://www.baidu.com
-        - name: 必应
-        - url: https://cn.bing.com
     - name: 更多
       icon: fa-duotone fa-bars
       rows:
         - name: 暗黑模式
           icon: fa-duotone fa-moon
           toggle: darkmode
+        - name: 搜索引擎
+          icon: fa-duotone fa-magnifying-glass
+          rows:
+            - name: 百度
+              icon: fa-duotone fa-paw
+              url: https://www.baidu.com
+            - name: 必应
+              icon: fa-duotone fa-b
+              url: https://cn.bing.com
         - name: hr
         - name: 投稿
           icon: fa-duotone fa-grid-2-plus
@@ -97,7 +99,9 @@ navbar:
           url: friends/
         - name: 留言区
           icon: fa-duotone fa-info-circle  
-          url: about/    
+          url: about/
+        - name: 背景音乐
+          icon: fa-solid fa-compact-disc    
 
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
