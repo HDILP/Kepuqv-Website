@@ -125,3 +125,8 @@ encrypt: # hexo-blog-encrypt
   theme: xray
   wrong_pass_message: 抱歉, 这个密码看着不太对, 请再试试(´-﹏-`；)
   wrong_hash_message: 抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.
+
+
+# 跳过渲染 source 目录下的某个文件夹
+skip_render:
+  - "volantis-static/**"
