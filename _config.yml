@@ -128,5 +128,4 @@ encrypt: # hexo-blog-encrypt
 
 
 # 跳过渲染 source 目录下的某个文件夹
-skip_render:
-  - "volantis-static/**"
+skip_render: "volantis-static/**/*"
