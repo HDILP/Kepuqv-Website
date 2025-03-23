@@ -5,6 +5,8 @@ import json
 import sys, os
 import time
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+
 
 def parse_html(html_content):
     '''
@@ -75,19 +77,23 @@ def parse_html(html_content):
     result["note_content"] = '\n\n'.join(content_parts) if content_parts else ""
 
     # 提取图片（严格限定swiper容器）
+    # 提取图片并替换HTTP为HTTPS
     if swiper_container := soup.find(class_='swiper-container'):
-        result["image_links"] = [
-            img["src"] for img in swiper_container.find_all("img", class_="fill-img")
-            if img.has_attr("src")
-        ]
+        image_links = []
+        for img in swiper_container.find_all("img", class_="fill-img"):
+            if not img.has_attr("src"):
+                continue
+            src = img["src"]
+            # 解析URL并替换协议
+            parsed = urlparse(src)
+            if parsed.scheme == 'http':
+                parsed = parsed._replace(scheme='https')
+                src = parsed.geturl()
+            image_links.append(src)
+        result["image_links"] = image_links
 
-    if result["image_links"]:
-        result["headimg"] = result["image_links"][0]
-    else:
-        result["headimg"] = ''
-
-    return result
-
+    # 设置头图
+    result["headimg"] = result["image_links"][0] if result["image_links"] else ''
 def getPost(url):
     code = requests.get(url).text
 
