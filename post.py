@@ -94,6 +94,8 @@ def parse_html(html_content):
 
     # 设置头图
     result["headimg"] = result["image_links"][0] if result["image_links"] else ''
+    return result
+
 def getPost(url):
     code = requests.get(url).text
 
