@@ -3,23 +3,23 @@
   items: 
     - title: 皙子 # 名称
       avatar: /avatar/3665510.jpg # 头像
-      url: none
+      url: '#'
 
     - title: 必刷禵 # 名称
       avatar: /avatar/12009103.jpg # 头像
-      url: none
+      url: '#'
 
     - title: 科普菌噬菌体
       avatar: /avatar/18475581.jpg
-      url: none
+      url: '#'
 
     - title: 凝风
       avatar: /avatar/15572939.jpg
-      url: none
+      url: '#'
 
     - title: 联合化学实验室
       avatar: /avatar/18029286.jpg
-      url: none
+      url: '#'
 
     - title: 寒澈
       avatar: /avatar/12804388.jpg
@@ -27,20 +27,20 @@
 
     - title: 金币
       avatar: /avatar/17975317.jpg
-      url: none
+      url: '#'
 
     - title: 阿棱 # 名称
       avatar: /avatar/17532079.jpg # 头像
-      url: none
+      url: '#'
 
     - title: 枫晴 # 名称
       avatar: /avatar/18814490.jpg # 头像
-      url: none
+      url: '#'
 
     - title: TB—SYSTEM
       avatar: /avatar/20760506.jpg
-      url: none
+      url: '#'
       
     - title: UN爱火车的焦焦
       avatar: /avatar/18217931.jpg
-      url: none
+      url: '#'
