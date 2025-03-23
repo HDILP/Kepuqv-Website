@@ -101,9 +101,6 @@ navbar:
         - name: 留言区
           icon: fa-duotone fa-info-circle  
           url: about/
-        - name: 背景音乐
-          icon: fa-solid fa-compact-disc    
-
   search: 搜索...   # Search bar placeholder
 ############################### Navigation Bar ############################### > end
 
