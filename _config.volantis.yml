@@ -716,6 +716,9 @@ plugins:
   busuanzi:
     enable: true
 
+  chat_service: gitter # tidio or gitter
+    room: #kepuqv:gitter.im
+
   # 旧版 Internet Explorer 淘汰行动
   # https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support
   # 本主题不支持Internet Explorer的任何版本!!!
