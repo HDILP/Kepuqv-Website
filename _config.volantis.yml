@@ -51,6 +51,8 @@ replace:
 dns_prefetch:
   - https://unpkg.com
 
+analytics:
+  busuanzi: 
 
 # 平滑滚动效果
 scroll_smooth: true
