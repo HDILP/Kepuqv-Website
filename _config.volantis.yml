@@ -476,7 +476,7 @@ tag_plugins:
 ############################### Site Footer ############################### > start
 site_footer:
   # layout of footer: [aplayer, social, license, info, copyright]
-  layout: [aplayer, license, info, copyright]
+  layout: [aplayer, license, info, copyright, analytics]
   # social:
     # - icon: #fa-duotone fa-rss
       # url:
@@ -780,6 +780,7 @@ rightmenus:
     - hr
     - menus.darkMode
     - menus.print
+    - hr
     - music
   ############################
   # - {id: '', name: '', icon: '', link: '', event: '', group: ''}
