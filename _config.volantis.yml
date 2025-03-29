@@ -710,6 +710,9 @@ plugins:
   #   toggle: darkmode
   darkmode:
     enable: true
+    
+  busuanzi:
+    enable: true
 
   # 旧版 Internet Explorer 淘汰行动
   # https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support
