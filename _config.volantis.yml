@@ -52,7 +52,7 @@ dns_prefetch:
   - https://unpkg.com
 
 analytics:
-  busuanzi: 
+  busuanzi: /libs/busuanzi/js/busuanzi.pure.mini.js
 
 # 平滑滚动效果
 scroll_smooth: true
