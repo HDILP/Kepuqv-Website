@@ -5,7 +5,7 @@ date: 2025-03-26
 updated: 2025-03-26
 headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2025/03/26/1742993274_20760506_4233.jpg
 description: 
-categories: [技术与未来]
+categories: [科技与未来]
 tags: 
 keywords: 
 ---
