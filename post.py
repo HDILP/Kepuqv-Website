@@ -171,7 +171,7 @@ updated: {date}
 headimg: {headimg}
 description: 
 categories: {categories}
-tags: {tags}
+tags: 
 keywords: 
 ---\n\n''')
 # ======END======
