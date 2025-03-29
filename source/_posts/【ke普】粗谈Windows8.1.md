@@ -1,13 +1,13 @@
 ---
 title: 【ke普】粗谈Windows8.1
-description: 
-keywords: 
-categories: 
-tags: 
+author: tbs
 date: 2025-03-26
 updated: 2025-03-26
 headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2025/03/26/1742993274_20760506_4233.jpg
-author: tbs
+description: 
+categories: [技术与未来]
+tags: 
+keywords: 
 ---
 
 {% gallery stretch::6::two %}
