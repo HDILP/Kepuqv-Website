@@ -169,10 +169,10 @@ author: {author}
 date: {date}
 updated: {date}
 headimg: {headimg}
-description: {description}
+description: 
 categories: {categories}
 tags: {tags}
-keywords: {keywords}
+keywords: 
 ---\n\n''')
 # ======END======
 
