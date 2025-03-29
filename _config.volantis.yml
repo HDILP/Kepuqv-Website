@@ -716,8 +716,7 @@ plugins:
   busuanzi:
     enable: true
 
-  chat_service: gitter # tidio or gitter
-    enable: true
+  gitter:
     room: #kepuqv:gitter.im
 
   # 旧版 Internet Explorer 淘汰行动
