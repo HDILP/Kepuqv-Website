@@ -717,6 +717,7 @@ plugins:
     enable: true
 
   chat_service: gitter # tidio or gitter
+    enable: true
     room: #kepuqv:gitter.im
 
   # 旧版 Internet Explorer 淘汰行动
