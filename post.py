@@ -132,7 +132,7 @@ def getIssues():
             print("正文内容:", latest_issue['body'])
             post_url = re.findall('<url: (.*?)>', latest_issue['body'])[0]
             author = re.findall('<author: (.*?)>', latest_issue['body'])[0]
-            date = re.findall('<data: (.*?)>', latest_issue['body'])[0]
+            date = re.findall('<date: (.*?)>', latest_issue['body'])[0]
             categories = re.findall('<data: (.*?)>', latest_issue['category'])[0]
             categories = f'[{categories}]'
             return post_url, author, data, categories
