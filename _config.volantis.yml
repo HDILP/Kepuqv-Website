@@ -476,7 +476,7 @@ tag_plugins:
 ############################### Site Footer ############################### > start
 site_footer:
   # layout of footer: [aplayer, social, license, info, copyright]
-  layout: [aplayer, license, info, copyright, analytics]
+  layout: [aplayer, license, info, copyright]
   # social:
     # - icon: #fa-duotone fa-rss
       # url:
