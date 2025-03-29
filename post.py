@@ -132,10 +132,10 @@ def getIssues():
             print("正文内容:", latest_issue['body'])
             post_url = re.findall('<url: (.*?)>', latest_issue['body'])[0]
             author = re.findall('<author: (.*?)>', latest_issue['body'])[0]
-            data = re.findall('<data: (.*?)>', latest_issue['body'])[0]
-            category = re.findall('<data: (.*?)>', latest_issue['category'])[0]
-            category = f'[{category}]'
-            return post_url, author, data, category
+            date = re.findall('<data: (.*?)>', latest_issue['body'])[0]
+            categories = re.findall('<data: (.*?)>', latest_issue['category'])[0]
+            categories = f'[{categories}]'
+            return post_url, author, data, categories
         else:
             print("该仓库没有 Issue。")
     else:
@@ -163,19 +163,17 @@ posts, title, headimg, pictures = getPost(url)
 f = open(r'source/_posts/' + title + ".md", 'w', encoding='utf-8')
 
 # =====Front-Matter=====
-
-f.write('---\n' + \
-        'title: ' + title + \
-        '\ndescription: ' + \
-        '\nkeywords: ' + \
-        '\ncategories: ' + \
-        '\ntags: ' + \
-        '\ndate: ' + data + \
-        '\nupdated: ' + data + \
-        '\nheadimg: ' + headimg + \
-        '\ncategories: ' + category + \
-        '\nauthor: ' + author + \
-        '\n---\n\n')
+f.write(f'''---
+title: {title}
+author: {author}
+date: {date}
+updated: {date}
+headimg: {headimg}
+description: {description}
+categories: {categories}
+tags: {tags}
+keywords: {keywords}
+---\n\n''')
 # ======END======
 
 # pictures
