@@ -2,11 +2,7 @@
 title: 新一代游戏手机——红魔9pro
 description: 
 keywords: 手机 数码
-categories: 
-- 数码
-- 手机
-tags:
-- 手机
+categories: 科技与未来
 date: 2024-04-29
 headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/04/29/1714394727_18475581_9347.jpg
 author: ycj
