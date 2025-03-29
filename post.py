@@ -133,14 +133,16 @@ def getIssues():
             post_url = re.findall('<url: (.*?)>', latest_issue['body'])[0]
             author = re.findall('<author: (.*?)>', latest_issue['body'])[0]
             data = re.findall('<data: (.*?)>', latest_issue['body'])[0]
-            return post_url, author, data
+            category = re.findall('<data: (.*?)>', latest_issue['category'])[0]
+            category = f'[{category}]'
+            return post_url, author, data, category
         else:
             print("该仓库没有 Issue。")
     else:
         print(f"请求失败，状态码: {response.status_code}")
 
 
-url, author, data = getIssues()
+url, author, data, category = getIssues()
 posts, title, headimg, pictures = getPost(url)
 
 # '''
@@ -171,6 +173,7 @@ f.write('---\n' + \
         '\ndate: ' + data + \
         '\nupdated: ' + data + \
         '\nheadimg: ' + headimg + \
+        '\ncategories: ' + category + \
         '\nauthor: ' + author + \
         '\n---\n\n')
 # ======END======
