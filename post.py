@@ -135,7 +135,7 @@ def getIssues():
             date = re.findall('<date: (.*?)>', latest_issue['body'])[0]
             categories = re.findall('<category: (.*?)>', latest_issue['body'])[0]
             categories = f'[{categories}]'
-            return post_url, author, data, categories
+            return post_url, author, date, categories
         else:
             print("该仓库没有 Issue。")
     else:
