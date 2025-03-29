@@ -2,11 +2,7 @@
 title: 杭州亚运会官方机——iQOO11S
 description: 
 keywords: 手机 数码
-categories: 
-- 数码
-- 手机
-tags:
-- 手机
+categories: 科技与未来
 date: 2024-05-02
 headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/05/02/1714658675_18475581_2016.jpg
 author: ycj
