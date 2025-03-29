@@ -52,7 +52,7 @@ dns_prefetch:
   - https://unpkg.com
 
 analytics:
-  busuanzi: /libs/busuanzi/js/busuanzi.pure.mini.js
+  busuanzi: volantis-static/libs/busuanzi/bsz.pure.mini.js
 
 # 平滑滚动效果
 scroll_smooth: true
@@ -1045,13 +1045,13 @@ custom_css:
     bodyfont:
       fontfamily: 'MapleMono CN, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'MapleMono CN'
-      url: https://chinese-fonts-cdn.deno.dev/packages/maple-mono-cn/dist/MapleMono-CN-Regular/result.css  # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/UbuntuMono/UbuntuMono-Regular.ttf
+      url: font/MapleMono-CN-Regular.ttf  # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/UbuntuMono/UbuntuMono-Regular.ttf
       weight: normal
       style: normal
     codefont:
       fontfamily: 'MapleMono CN, UbuntuMono, Monaco'
-      # name: 'MapleMono CN'
-      # url: volantis-static/media/fonts/Monaco/Monaco.ttf # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/Monaco/Monaco.ttf
+      name: 'MapleMono CN'
+      url: font/MapleMono-CN-Regular.ttf # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/Monaco/Monaco.ttf
       # weight: normal
       # style: normal
 ############################### Custom css ############################### > end
