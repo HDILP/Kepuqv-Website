@@ -142,7 +142,7 @@ def getIssues():
         print(f"请求失败，状态码: {response.status_code}")
 
 
-url, author, date, category = getIssues()
+url, author, date, categories = getIssues()
 posts, title, headimg, pictures = getPost(url)
 
 # '''
