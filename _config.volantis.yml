@@ -1045,7 +1045,7 @@ custom_css:
     bodyfont:
       fontfamily: '"MapleMono CN", "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'MapleMono CN'
-      url: font/MapleMono-CN-BoldItalic.ttf  # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/UbuntuMono/UbuntuMono-Regular.ttf
+      url: /font/MapleMono-CN-BoldItalic.ttf  # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/UbuntuMono/UbuntuMono-Regular.ttf
       weight: normal
       style: normal
     codefont:
