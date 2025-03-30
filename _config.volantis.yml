@@ -34,7 +34,7 @@ cdn:
 cdn_version: false
 # volantis static 静态资源文件 npm 包 CDN 地址 (后面加 "/" )
 # https://github.com/volantis-x/volantis-static
-volantis_static_cdn: https://jsd.admincdn.com/npm/volantis-static@0.0.1660614606622
+volantis_static_cdn: https://jsd.admincdn.com/npm/volantis-static@0.0.1660614606622/
 ########################################################################
 #  https://web.dev/content-visibility/
 #  https://www.caniuse.com/?search=content-visibility
