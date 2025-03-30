@@ -17,7 +17,7 @@ default:
 # 默认使用 https://unpkg.com/hexo-theme-volantis@<%- theme.info.theme_version %>/source/js/*.js ，注意版本号对应关系！！可以通过修改以下配置项覆盖
 # 开发者注意 cdn.enable 设置为 false
 cdn:
-  enable: true
+  enable: false
   # CDN 前缀，为空使用默认值，链接最后不加 "/",
   # 例如： https://cdn.jsdelivr.net/gh/volantis-x/volantis-x.github.io@gh-page 填写最后编译生成的源码CDN地址前缀，此路径下应该含有/js与/css目录,
   # 该配置默认值是："https://unpkg.com/hexo-theme-volantis@"+ theme.info.theme_version +"/source"
@@ -31,7 +31,7 @@ cdn:
 # 静态资源版本控制
 # 本地文件使用文件内容的hash值作为版本号(app.8c1e7c88.js)  其他为时间戳 (?time=1648684470140)
 # 建议静态资源设置标头 浏览器缓存一年边缘缓存一个月 cache-control: max-age=86400, s-maxage=31536000 如果有更新记得刷新缓存
-cdn_version: true
+cdn_version: false
 # volantis static 静态资源文件 npm 包 CDN 地址 (后面加 "/" )
 # https://github.com/volantis-x/volantis-static
 volantis_static_cdn: https://jsd.admincdn.com/npm/volantis-static@0.0.1660614606622/
