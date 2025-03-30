@@ -181,7 +181,7 @@ f.write('{% gallery stretch::6::two %}\n')
 
 for i in pictures:
     # j = i.replace('http', 'https')
-    f.write('![](%s)\n' %j)
+    f.write('![](%s)\n' %i)
 
 f.write('{% endgallery %}\n')
 
