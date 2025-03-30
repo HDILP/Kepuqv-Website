@@ -87,7 +87,7 @@ def parse_html(html_content):
             # 解析URL并替换协议
             parsed = urlparse(src)
             if parsed.scheme == 'http':
-                parsed = parsed._replace(scheme='http')  # ？？？？？
+                parsed = parsed._replace(scheme='https')  # ？？？？？
                 src = parsed.geturl()
             image_links.append(src)
         result["image_links"] = image_links
