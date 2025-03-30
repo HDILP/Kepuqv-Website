@@ -29,6 +29,7 @@
     "hexo-tag-aplayer": "^3.0.4",
     "hexo-theme-landscape": "^1.1.0",
     "hexo-theme-volantis": "^5.8.0",
-    "hexo-wordcount": "^6.0.1"
+    "hexo-wordcount": "^6.0.1",
+    "lodash": "^4.17.21"
   }
 }
