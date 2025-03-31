@@ -14,7 +14,7 @@ jobs:
       run: |
         git config --global user.email awm31415@163.com
         git config --global user.name HDILP
-        git reset --hard 81c1e3dd93509959c1791ede13aa848a1cf5d012
+        git reset --hard 81c1e3
         
     - name: Push changes
       uses: ad-m/github-push-action@master
