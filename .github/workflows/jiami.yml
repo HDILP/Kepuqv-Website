@@ -10,21 +10,11 @@ jobs:
     - name: checkout actions
       uses: actions/checkout@v4.1.4
 
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
-
-    - name: Install Playwright
-      run: npm install --save hexo-blog-encrypt
-
     - name: commit
       run: |
         git config --global user.email awm31415@163.com
         git config --global user.name HDILP
-        git add .
-        git commit -m "update" -a
+        git reset --hard 81c1e3dd93509959c1791ede13aa848a1cf5d012
         
     - name: Push changes
       uses: ad-m/github-push-action@master
