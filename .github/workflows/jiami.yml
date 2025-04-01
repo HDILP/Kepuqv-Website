@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:  # 添加权限声明
+      contents: write
+      workflows: write  # 允许修改工作流文件
     steps:
     - name: Checkout
       uses: actions/checkout@v4
