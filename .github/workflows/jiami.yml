@@ -1,4 +1,4 @@
-name: 安装加密模块
+name: 暴力回滚
 
 on: 
   workflow_dispatch:
@@ -7,16 +7,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: checkout actions
-      uses: actions/checkout@v4.1.4
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史记录
 
-    - name: commit
+    - name: Reset to commit
       run: |
         git config --global user.email awm31415@163.com
         git config --global user.name HDILP
         git reset --hard 81c1e3
         
-    - name: Push changes
+    - name: Force Push
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        force: true
+        branch: ${{ github.ref_name }}  # 明确指定分支
