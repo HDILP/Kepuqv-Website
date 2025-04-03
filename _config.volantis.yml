@@ -51,8 +51,8 @@ replace:
 dns_prefetch:
   - https://unpkg.com
 
-analytics:
-  busuanzi: volantis-static/libs/busuanzi/bsz.pure.mini.js
+# analytics:
+#   busuanzi: volantis-static/libs/busuanzi/bsz.pure.mini.js
 
 # 平滑滚动效果
 scroll_smooth: true
@@ -425,11 +425,11 @@ sidebar:
           unit: '字'
         visitcounter:
           siteuv:
-            enable: true
+            enable: false
             text: '本站访客数：'
             unit: '人'
           sitepv:
-            enable: true
+            enable: false
             text: '本站总访问量：'
             unit: '次'
         lastupd:
