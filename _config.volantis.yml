@@ -1037,11 +1037,9 @@ custom_css:
     footnote: .78125rem
   fontfamily:
     logofont:
-      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      fontfamily: 'Maple Mono NF CN, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
     bodyfont:
       fontfamily: '"MapleMono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
-      name: 'MapleMono NF CN'
-      weight: normal
     codefont:
       fontfamily: 'MapleMono NF CN'
 
