@@ -1044,8 +1044,9 @@ custom_css:
       style: normal
     bodyfont:
       fontfamily: '"MapleMono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      name: 'MapleMono NF CN'
       weight: normal
-      style: normal
+      style: italic
     codefont:
       fontfamily: 'MapleMono NF CN, UbuntuMono, Monaco'
       # name: 'MapleMono CN'
