@@ -1037,21 +1037,14 @@ custom_css:
     footnote: .78125rem
   fontfamily:
     logofont:
-      fontfamily: '"Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
-      name: 'Varela Round'
-      url: volantis-static/media/fonts/VarelaRound/VarelaRound-Regular.ttf # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/VarelaRound/VarelaRound-Regular.ttf
-      weight: normal
-      style: normal
+      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
     bodyfont:
       fontfamily: '"MapleMono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'MapleMono NF CN'
       weight: normal
     codefont:
-      fontfamily: 'MapleMono NF CN, UbuntuMono, Monaco'
-      # name: 'MapleMono CN'
-      # url: font/MapleMono-CN-Regular.ttf # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/Monaco/Monaco.ttf
-      # weight: normal
-      # style: normal
+      fontfamily: 'MapleMono NF CN'
+
 ############################### Custom css ############################### > end
 
 ############################### SEO ############################### > start
