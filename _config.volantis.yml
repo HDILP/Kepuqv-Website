@@ -1043,13 +1043,11 @@ custom_css:
       weight: normal
       style: normal
     bodyfont:
-      fontfamily: '"MapleMono CN", "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
-      name: 'MapleMono CN'
-      url: /font/MapleMono-CN-BoldItalic.ttf  # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/UbuntuMono/UbuntuMono-Regular.ttf
+      fontfamily: '"MapleMono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       weight: normal
       style: normal
     codefont:
-      fontfamily: 'MapleMono CN, UbuntuMono, Monaco'
+      fontfamily: 'MapleMono NF CN, UbuntuMono, Monaco'
       # name: 'MapleMono CN'
       # url: font/MapleMono-CN-Regular.ttf # https://cdn.jsdelivr.net/gh/volantis-x/cdn-fonts/Monaco/Monaco.ttf
       # weight: normal
