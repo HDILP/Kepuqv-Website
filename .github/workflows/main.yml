@@ -5,9 +5,11 @@ on:
     types: [opened,edited]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}  # 按分支分组（如 deploy-refs/heads/main）
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
