@@ -352,7 +352,7 @@ sidebar:
         title: 公告
         url:
       content:
-        - '科普区自动化已完成闭环 2025-03-15'    # ---------------------------------------
+        - '科普区自动化已完成闭环<br>2025-03-15'    # ---------------------------------------
     # toc widget (valid only in articles)
     toc:
       class: toc
@@ -435,7 +435,7 @@ sidebar:
         lastupd:
           enable: true
           friendlyShow: true    # 更友好的时间显示
-          text: '网站最后更新时间：'
+          text: '最后更新时间：'
           unit: '日'
     # ---------------------------------------
     # lastupdate widget
