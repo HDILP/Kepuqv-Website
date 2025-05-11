@@ -11,7 +11,7 @@ default:
   link: volantis-static/media/placeholder/link/8f277b4ee0ecd.svg # https://cdn.jsdelivr.net/gh/cdn-x/placeholder@1.0.1/link/8f277b4ee0ecd.svg
   cover: volantis-static/media/placeholder/cover/76b86c0226ffd.svg # https://cdn.jsdelivr.net/gh/cdn-x/placeholder@1.0.1/cover/76b86c0226ffd.svg
   image: volantis-static/media/placeholder/image/2659360.svg # https://cdn.jsdelivr.net/gh/cdn-x/placeholder@1.0.1/image/2659360.svg
-  
+
 ############################### CDN ###############################
 # 本地静态文件使用 CDN 加速
 # 默认使用 https://unpkg.com/hexo-theme-volantis@<%- theme.info.theme_version %>/source/js/*.js ，注意版本号对应关系！！可以通过修改以下配置项覆盖
@@ -242,7 +242,7 @@ article:
           # - volantis-static/media/org.volantis/blog/qrcode/github@volantis.png # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/qrcode/github@volantis.png
           # - volantis-static/media/org.volantis/blog/qrcode/github@volantis.png # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/qrcode/github@volantis.png
 
- 
+
     # meta library
     meta_library:
       # 默认文章作者（可在 _data/author.yaml 中增加其他作者，并在 front-matter 中设置）
@@ -317,7 +317,7 @@ comments:
 sidebar:
   position: right # left right
   # 主页、分类、归档等独立页面
-  
+
   for_page: [blogger, repos, category, webinfo]
   # layout: docs/post 这类文章页面
   for_post: [toc]
@@ -343,7 +343,7 @@ sidebar:
           # url: https://github.com/volantis-x/
         # - icon: fa-duotone fa-headphones-alt
           # url: /
-      
+
     repos:
       class: text
       display: [ desktop, mobile ]
@@ -712,7 +712,7 @@ plugins:
   #   toggle: darkmode
   darkmode:
     enable: true
-    
+
   busuanzi:
     enable: true
 
@@ -807,57 +807,46 @@ rightmenus:
     # 当设定全局音乐播放器时，是否一直显示音乐控制菜单。false：仅当音乐播放时启用
     musicAlwaysShow: true
   # 右键内置组，预置实现
-  plugins:
-    # 导航组件
-    # 横向排列，共用一行，仅显示图标 (原则上支持的数量不限)
-    navigation:
-      - {id: 'left', name: '转到上一页', icon: 'fa-duotone fa-arrow-left', event: 'history.back()', group: 'navigation'}
-      - {id: 'right', name: '转到下一页', icon: 'fa-duotone fa-arrow-right', event: 'history.forward()', group: 'navigation'}
-      - {id: 'redo', name: '刷新当前页面', icon: 'fa-duotone fa-redo', event: 'window.location.reload()', group: 'navigation'}
-      - {id: 'up', name: '回到顶部', icon: 'fa-duotone fa-arrow-up', event: 'VolantisApp.scrolltoElement(volantis.dom.bodyAnchor)', group: 'navigation'}
-      #- {id: 'home', name: '回到首页', icon: 'fa-duotone fa-home', link: '/', group: 'navigation'}
-    # 文本输入框相关组件
-    # 生效于 input/textarea，粘贴、剪切、全选
-    inputBox:
-      - {id: 'copyPaste', name: '粘贴文本', icon: 'fa-duotone fa-paste', event: 'copyPaste', group: 'inputBox'}
-      - {id: 'copyAll', name: '全选文本', icon: 'fa-duotone fa-object-ungroup', event: 'copyAll', group: 'inputBox'}
-      - {id: 'copyCut', name: '剪切文本', icon: 'fa-duotone fa-cut', event: 'copyCut', group: 'inputBox'}
-    # 文本选中类组件
-    # 生效于右键选中文本，__text__ 为选中的文本。
-    seletctText:
-      - {id: 'copyText', name: '复制文本', icon: 'fa-duotone fa-copy', event: 'copyText', group: 'seletctText'}
-      - {id: 'searchWord', name: '站内搜索', icon: 'fa-duotone fa-search', event: 'OpenSearch(__text__)', group: 'seletctText'}
-      - {id: 'bingSearch', name: '必应搜索', icon: 'fa-duotone fa-search', event: 'window.open(`https://cn.bing.com/search?q=${__text__}`)', group: 'seletctText'}
-      #- {id: 'googleSearch', name: '谷歌搜索', icon: 'fa-duotone fa-search', event: 'window.open(`https://www.google.com/search?q=${__text__}`)', group: 'seletctText'}
-    # 链接判断组件
-    # 生效于链接处的右键行为，__link__ 为链接地址
-    elementCheck:
-      - {id: 'openTab', name: '新标签页打开', icon: 'fa-duotone fa-external-link-square-alt', event: 'window.open(__link__)', group: 'elementCheck'}
-      - {id: 'copyLink', name: '复制链接地址', icon: 'fa-duotone fa-link', event: 'copyLink', group: 'elementCheck'}
-    # 图片判断类组件
-    # 生效于图片类的右键行为，__link__ 为链接地址
-    elementImage:
-      - {id: 'copyImg', name: '复制图片', icon: 'fa-duotone fa-image', event: 'copyImg', group: 'elementImage'}
-      - {id: 'googleImg', name: '谷歌识图', icon: 'fa-duotone fa-images', event: 'window.open(`https://www.google.com.hk/searchbyimage?image_url=${__link__}`)', group: 'elementImage'}
-    # 文章页面组件
-    # 生效于 post.article 页面
-    # articlePage:
-    #   - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
-    #   - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
-  # 右键自定义菜单区域
-  menus:
-    print:
-      - {id: 'printMode', name: '打印页面', icon: 'fa-duotone fa-print', event: 'printMode', group: 'articlePage'}
-      - {id: 'readMode', name: '阅读模式', icon: 'fa-duotone fa-book-open', event: 'readMode', group: 'articlePage'}
-    link:
-      - {id: 'help', name: '常见问题', icon: 'fa-duotone fa-question', link: 'https://volantis.js.org/faqs/', group: 'link'}
-      - {id: 'examples', name: '示例博客', icon: 'fa-duotone fa-rss', link: 'https://volantis.js.org/examples/', group: 'link'}
-      - {id: 'contributors', name: '加入社区', icon: 'fa-duotone fa-fan fa-spin', link: 'https://volantis.js.org/contributors/', group: 'link'}
-      - hr
-      - {id: 'source_docs', name: '本站源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
-      - {id: 'source_theme', name: '主题源码', icon: 'fa-duotone fa-code-branch', link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
-    darkMode:
-      - {id: 'darkMode', name: '暗黑模式', icon: 'fa-duotone fa-moon', event: 'volantis.dark.toggle()', group: 'darkMode'}
+    plugins:
+      navigation:
+        - {id: 'left', name: '转到上一页', icon: {name: 'fa-duotone fa-arrow-left', color: '#FFAAB2', secondary-color: '#FFD0D6'}, event: 'history.back()', group: 'navigation'}
+        - {id: 'right', name: '转到下一页', icon: {name: 'fa-duotone fa-arrow-right', color: '#FFAAB2', secondary-color: '#FFD0D6'}, event: 'history.forward()', group: 'navigation'}
+        - {id: 'redo', name: '刷新当前页面', icon: {name: 'fa-duotone fa-redo', color: '#FF7F8F', secondary-color: '#FFB4C0'}, event: 'window.location.reload()', group: 'navigation'}
+        - {id: 'up', name: '回到顶部', icon: {name: 'fa-duotone fa-arrow-up', color: '#FFAAB2', secondary-color: '#FFF9FA'}, event: 'VolantisApp.scrolltoElement(volantis.dom.bodyAnchor)', group: 'navigation'}
+    
+      inputBox:
+        - {id: 'copyPaste', name: '粘贴文本', icon: {name: 'fa-duotone fa-paste', color: '#8BC34A', secondary-color: '#C5E1A5'}, event: 'copyPaste', group: 'inputBox'}
+        - {id: 'copyAll', name: '全选文本', icon: {name: 'fa-duotone fa-object-ungroup', color: '#2196F3', secondary-color: '#90CAF9'}, event: 'copyAll', group: 'inputBox'}
+        - {id: 'copyCut', name: '剪切文本', icon: {name: 'fa-duotone fa-cut', color: '#FF5722', secondary-color: '#FFAB91'}, event: 'copyCut', group: 'inputBox'}
+    
+      seletctText:
+        - {id: 'copyText', name: '复制文本', icon: {name: 'fa-duotone fa-copy', color: '#4CAF50', secondary-color: '#A5D6A7'}, event: 'copyText', group: 'seletctText'}
+        - {id: 'searchWord', name: '站内搜索', icon: {name: 'fa-duotone fa-search', color: '#FFAAB2', secondary-color: '#FFD0D6'}, event: 'OpenSearch(__text__)', group: 'seletctText'}
+        - {id: 'bingSearch', name: '必应搜索', icon: {name: 'fa-duotone fa-search', color: '#F06292', secondary-color: '#F8BBD0'}, event: 'window.open(`https://cn.bing.com/search?q=${__text__}`)', group: 'seletctText'}
+    
+      elementCheck:
+        - {id: 'openTab', name: '新标签页打开', icon: {name: 'fa-duotone fa-external-link-square-alt', color: '#FF9800', secondary-color: '#FFE0B2'}, event: 'window.open(__link__)', group: 'elementCheck'}
+        - {id: 'copyLink', name: '复制链接地址', icon: {name: 'fa-duotone fa-link', color: '#9C27B0', secondary-color: '#CE93D8'}, event: 'copyLink', group: 'elementCheck'}
+    
+      elementImage:
+        - {id: 'copyImg', name: '复制图片', icon: {name: 'fa-duotone fa-image', color: '#00BCD4', secondary-color: '#80DEEA'}, event: 'copyImg', group: 'elementImage'}
+        - {id: 'googleImg', name: '谷歌识图', icon: {name: 'fa-duotone fa-images', color: '#E91E63', secondary-color: '#F48FB1'}, event: 'window.open(`https://www.google.com.hk/searchbyimage?image_url=${__link__}`)', group: 'elementImage'}
+    
+    menus:
+      print:
+        - {id: 'printMode', name: '打印页面', icon: {name: 'fa-duotone fa-print', color: '#607D8B', secondary-color: '#B0BEC5'}, event: 'printMode', group: 'articlePage'}
+        - {id: 'readMode', name: '阅读模式', icon: {name: 'fa-duotone fa-book-open', color: '#795548', secondary-color: '#BCAAA4'}, event: 'readMode', group: 'articlePage'}
+      
+      link:
+        - {id: 'help', name: '常见问题', icon: {name: 'fa-duotone fa-question', color: '#FFAAB2', secondary-color: '#FFD0D6'}, link: 'https://volantis.js.org/faqs/', group: 'link'}
+        - {id: 'examples', name: '示例博客', icon: {name: 'fa-duotone fa-rss', color: '#4CAF50', secondary-color: '#A5D6A7'}, link: 'https://volantis.js.org/examples/', group: 'link'}
+        - {id: 'contributors', name: '加入社区', icon: {name: 'fa-duotone fa-fan fa-spin', color: '#FF5722', secondary-color: '#FFAB91'}, link: 'https://volantis.js.org/contributors/', group: 'link'}
+        - hr
+        - {id: 'source_docs', name: '本站源码', icon: {name: 'fa-duotone fa-code-branch', color: '#2196F3', secondary-color: '#90CAF9'}, link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
+        - {id: 'source_theme', name: '主题源码', icon: {name: 'fa-duotone fa-code-branch', color: '#9C27B0', secondary-color: '#CE93D8'}, link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
+      
+      darkMode:
+        - {id: 'darkMode', name: '暗黑模式', icon: {name: 'fa-duotone fa-moon', color: '#FFF9FA', secondary-color: '#FFD0D6'}, event: 'volantis.dark.toggle()', group: 'darkMode'}
 ##########
 
 ############################### Rightmenu ############################### > end
