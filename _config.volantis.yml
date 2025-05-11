@@ -876,7 +876,7 @@ color_scheme:
     codeblock: '#F7EEE8'  # 更温暖的米白色
     inlinecode: '#D45C67' # 降低明度
     
-    h1: '#FFE6EA'
+    h1: '#6D4247'
     h2: '#7E5358'
     h3: '#8F6469'
     h4: '#A0757A'
