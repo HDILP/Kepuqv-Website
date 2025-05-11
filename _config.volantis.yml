@@ -837,14 +837,6 @@ rightmenus:
         - {id: 'printMode', name: '打印页面', icon: {name: 'fa-duotone fa-print', color: '#607D8B', secondary-color: '#B0BEC5'}, event: 'printMode', group: 'articlePage'}
         - {id: 'readMode', name: '阅读模式', icon: {name: 'fa-duotone fa-book-open', color: '#795548', secondary-color: '#BCAAA4'}, event: 'readMode', group: 'articlePage'}
       
-      link:
-        - {id: 'help', name: '常见问题', icon: {name: 'fa-duotone fa-question', color: '#FFAAB2', secondary-color: '#FFD0D6'}, link: 'https://volantis.js.org/faqs/', group: 'link'}
-        - {id: 'examples', name: '示例博客', icon: {name: 'fa-duotone fa-rss', color: '#4CAF50', secondary-color: '#A5D6A7'}, link: 'https://volantis.js.org/examples/', group: 'link'}
-        - {id: 'contributors', name: '加入社区', icon: {name: 'fa-duotone fa-fan fa-spin', color: '#FF5722', secondary-color: '#FFAB91'}, link: 'https://volantis.js.org/contributors/', group: 'link'}
-        - hr
-        - {id: 'source_docs', name: '本站源码', icon: {name: 'fa-duotone fa-code-branch', color: '#2196F3', secondary-color: '#90CAF9'}, link: 'https://github.com/volantis-x/volantis-docs/', group: 'link'}
-        - {id: 'source_theme', name: '主题源码', icon: {name: 'fa-duotone fa-code-branch', color: '#9C27B0', secondary-color: '#CE93D8'}, link: 'https://github.com/volantis-x/hexo-theme-volantis/', group: 'link'}
-      
       darkMode:
         - {id: 'darkMode', name: '暗黑模式', icon: {name: 'fa-duotone fa-moon', color: '#FFF9FA', secondary-color: '#FFD0D6'}, event: 'volantis.dark.toggle()', group: 'darkMode'}
 ##########
@@ -864,105 +856,68 @@ search:
 # Accessibility: 背景色和前景色要有足够的对比度 https://web.dev/color-contrast/
 # https://ant.design/docs/spec/colors-cn
 color_scheme:
-  # ------------
-  # 通用颜色
   common:
-    # 主题色
-    theme: '#FFAAB2'
-    # 链接色
+    theme: '#FFAAB2'  # 保持樱花粉主题色
     link: '#FFAAB2'
-    # 按钮色
-    button: '#FFAAB2'
-    # 鼠标放到交互元素上时的色
-    hover: '#ff5722'
-    # 主题色块内部的文字颜色
-    inner: '#fff'
-    # 选中区域文字的背景颜色
-    selection: 'alpha(#2196f3, 0.2)'
-  # ------------
-  # 亮色主题（默认）
+    button: '#FFAEB7'  # 略微提亮按钮对比度
+    hover: '#FF7F8F'   # 更柔和的珊瑚粉悬停色
+    inner: '#FFF9FA'   # 更温暖的内部文字
+    selection: 'alpha(#FFAAB2, 0.3)' # 使用主题色系
+
   light:
-    # 网站背景色
-    site_bg: '#eeeeee'
-    # 网站背景上的文字
-    site_inner: '#ffffff'
-    # 网站页脚文字
-    site_footer: '#ffffff'
+    site_bg: '#FFF5F6'   # 浅樱花背景
+    site_inner: '#4A4A4A' # 深灰文字
+    site_footer: '#8B575C' # 深玫瑰色
+    
+    card: 'alpha(#FFF9FA, 0.85)' # 半透明花瓣白
+    text: '#5A5A5A'       # 中灰色
+    
+    block: '#FFF0F2'      # 浅粉区块
+    codeblock: '#FFF3E6'  # 香草奶油色
+    inlinecode: '#E86A6E' # 樱花红
+    
+    h1: '#5B373B'         # 深木色
+    h2: '#7A4C51'
+    h3: '#8B5D62'
+    h4: '#9C6E73'
+    h5: '#AD7F84'
+    h6: '#BE9095'
+    p: '#6B6B6B'
+    
+    list: '#7A7A7A'
+    list_hl: 'mix(#FFAAB2, #5B373B, 70)' # 主题色混合深木色
+    meta: '#9B9B9B'
+    
+    copyright_bkg: '#FFEDEF'
+    brightness: 95%
 
-    # 卡片背景色
-    card: 'alpha(#faf4f4, 0.6)'
-    # 卡片上的普通文字
-    text: '#444'
-
-    # 区块和代码块背景色
-    block: '#f6f6f6'
-    # 代码块高亮时的背景色
-    codeblock: '#FFF7EA'
-    # 行内代码颜色
-    inlinecode: '#c74f00'
-
-    # 文章部分
-    h1: '#3a3a3a'
-    h2: '#3a3a3a'
-    h3: '#333'
-    h4: '#444'
-    h5: '#555'
-    h6: '#666'
-    p: '#444'
-
-    # 列表文字
-    list: '#666'
-    # 列表 hover 时的文字
-    list_hl: 'mix($color-theme, #000, 80)'
-    # 辅助性文字
-    meta: '#888'
-
-    # 版权卡片背景色
-    copyright_bkg: '#f5f5f5'
-    brightness: 90%
-  # ------------
-  # 暗色主题
-  # https://www.maijisheji.com/2094.html
   dark:
-    # 网站最深底色            # Dark Grey 1
-    site_bd: '#121212' 
-    # 网站背景色              # Dark Grey 2
-    site_bg: '#1f1f1f' 
-    # 卡片背景色              # Dark Grey 3
-    card: 'alpha(#262626, 0.6)'
-    # 网站背景上的文字
-    site_inner: '#eeeeeede'
-    # 网站页脚文字
-    site_footer: '#aaaaaade'
-    # 卡片上的普通文字
-    text: '#eeeeeede'
-
-    # 区块和代码块背景色       # Dark Grey 4
-    block: '#434343'
-    # 代码块高亮时的背景色     # Dark Grey 2
-    codeblock: '#1f1f1f'
-    # 行内代码颜色
-    inlinecode: '#D56D28'
-
-    # 文章部分 高强度文本的不透明度应为87％ 中等重点文字适用于60％
-    h1: '#FFFFFFde'            #  Dark Grey 8
-    h2: '#FFFFFFde'
-    h3: '#FFFFFF99'            #  Dark Grey 7
-    h4: '#FFFFFF99'
-    h5: '#FFFFFF99'
-    h6: '#FFFFFF99'
-    p: '#d9d9d9de'           #  Dark Grey 6
-
-    # 列表文字                #  Dark Grey 6
-    list: '#d9d9d9de'
-    # 列表 hover 时的文字
-    list_hl: 'mix($color-theme, #fff, 80)'
-    # 辅助性文字              #  Dark Grey 5
-    meta: '#bfbfbfde'
-    # 版权卡片背景色
-    copyright_bkg: '#21252b'
-    # 夜间图片亮度
-    brightness: 70%
+    site_bd: '#1A1214'    # 深樱桃底色
+    site_bg: '#2B1D20'    # 暗玫瑰色
+    card: 'alpha(#3A282B, 0.9)' # 深粉半透明
+    site_inner: '#E8D6D9' # 浅米粉
+    site_footer: '#B29498' # 灰粉色
+    
+    text: '#E0C4C8'       # 浅樱花粉
+    
+    block: '#422C2F'      # 深酒红
+    codeblock: '#362125'  # 暗樱桃色
+    inlinecode: '#FF8A95' # 亮樱花色
+    
+    h1: '#FFE6EA'         # 浅粉白
+    h2: '#F5DADE'
+    h3: '#EBCED2'
+    h4: '#E1C2C6'
+    h5: '#D7B6BA'
+    h6: '#CDAAAE'
+    p: '#D8C2C6'
+    
+    list: '#C8B2B6'
+    list_hl: 'mix(#FFAAB2, #FFE6EA, 60)'
+    meta: '#A89598'
+    
+    copyright_bkg: '#2E2023'
+    brightness: 75%
 
 ############################### Color Scheme ############################### > end
 
