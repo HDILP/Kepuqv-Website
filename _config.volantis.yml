@@ -856,45 +856,45 @@ search:
 # Accessibility: 背景色和前景色要有足够的对比度 https://web.dev/color-contrast/
 # https://ant.design/docs/spec/colors-cn
 color_scheme:
-  common:
-    theme: '#FFAAB2'  # 保持樱花粉主题色
+  common: # (保持不变)
+    theme: '#FFAAB2'
     link: '#FFAAB2'
-    button: '#FFAEB7'  # 略微提亮按钮对比度
-    hover: '#FF7F8F'   # 更柔和的珊瑚粉悬停色
-    inner: '#FFF9FA'   # 更温暖的内部文字
-    selection: 'alpha(#FFAAB2, 0.3)' # 使用主题色系
+    button: '#FFAEB7'
+    hover: '#E67482'   # 调整为更优雅的灰调樱花粉
+    inner: '#FFF9FA'
+    selection: 'alpha(#FFAAB2, 0.3)'
 
   light:
-    site_bg: '#FFF5F6'   # 浅樱花背景
-    site_inner: '#4A4A4A' # 深灰文字
-    site_footer: '#8B575C' # 深玫瑰色
+    site_bg: '#F8EDED'   # 改为带灰调的米粉色，更柔和
+    site_inner: '#443637' # 暖灰替代纯灰，与主题更协调
+    site_footer: '#7B4D52' # 降低饱和度
     
-    card: 'alpha(#FFF9FA, 0.85)' # 半透明花瓣白
-    text: '#5A5A5A'       # 中灰色
+    card: 'alpha(#FFF9FA, 0.8)'       # 改为不透明但更低饱和的底色
+    text: '#594345'       # 暖灰增加粉调
     
-    block: '#FFF0F2'      # 浅粉区块
-    codeblock: '#FFF3E6'  # 香草奶油色
-    inlinecode: '#E86A6E' # 樱花红
+    block: '#F5E1E4'      # 柔和的粉灰替代纯浅粉
+    codeblock: '#F7EEE8'  # 更温暖的米白色
+    inlinecode: '#D45C67' # 降低明度
     
-    h1: '#5B373B'         # 深木色
-    h2: '#7A4C51'
-    h3: '#8B5D62'
-    h4: '#9C6E73'
-    h5: '#AD7F84'
-    h6: '#BE9095'
-    p: '#6B6B6B'
+    h1: '#6D4247'         # 整体降低明度，增加粉调
+    h2: '#7E5358'
+    h3: '#8F6469'
+    h4: '#A0757A'
+    h5: '#B1868B'
+    h6: '#C2979C'
+    p: '#756567'         # 带粉调的深灰
     
-    list: '#7A7A7A'
-    list_hl: 'mix(#FFAAB2, #5B373B, 70)' # 主题色混合深木色
-    meta: '#9B9B9B'
+    list: '#87797B'      # 暖灰替代中性灰
+    list_hl: '#FFAAB2'
+    meta: '#8E7F82'      # 带粉调的灰色
     
-    copyright_bkg: '#FFEDEF'
-    brightness: 95%
+    copyright_bkg: '#FBE8EA' # 更柔和的底色
+    brightness: 92%      # 微降整体亮度
 
   dark:
     site_bd: '#1A1214'    # 深樱桃底色
     site_bg: '#2B1D20'    # 暗玫瑰色
-    card: 'alpha(#3A282B, 0.9)' # 深粉半透明
+    card: 'alpha(#3A282B, 0.8)' # 深粉半透明
     site_inner: '#E8D6D9' # 浅米粉
     site_footer: '#B29498' # 灰粉色
     
@@ -913,7 +913,7 @@ color_scheme:
     p: '#D8C2C6'
     
     list: '#C8B2B6'
-    list_hl: 'mix(#FFAAB2, #FFE6EA, 60)'
+    list_hl: '#FFAAB2'
     meta: '#A89598'
     
     copyright_bkg: '#2E2023'
