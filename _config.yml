@@ -106,7 +106,8 @@ plugins:
 feed:
   type: atom # 或 'rss'，选择生成的订阅源类型，默认为atom
   path: atom.xml # RSS或Atom文件保存的路径及文件名，默认为atom.xml
-  limit: 10 # 订阅源中显示的文章数量限制，默认是20
+  limit: 0 # 订阅源中显示的文章数量限制，默认是20
+  content: false
 
 rss: /atom.xml
 
