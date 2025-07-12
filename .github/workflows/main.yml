@@ -33,7 +33,7 @@ jobs:
         git config --global user.email awm31415@163.com
         git config --global user.name HDILP
         git add .
-        git commit -m "update" -a
+        git commit -m "update" -a || echo "Nothing to commit"
         
     - name: Push changes
       uses: ad-m/github-push-action@master
