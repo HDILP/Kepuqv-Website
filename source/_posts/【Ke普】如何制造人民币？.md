@@ -1,12 +1,13 @@
 ---
 title: 【Ke普】如何制造人民币？
-description: 
-keywords: 
-categories: 
-tags: 
-date: 2025-3-16
-headimg: http://imgcdn.yaerxing.com/upimage/stupnote/2024/11/23/1732346195_12009103_1028.jpg
 author: bst
+date: 2025-07-12
+updated: 2025-07-12
+headimg: https://imgcdn.yaerxing.com/upimage/stupnote/2024/11/23/1732346195_12009103_1028.jpg
+description: 
+categories: [趣味科普]
+tags: 
+keywords: 
 ---
 
 {% gallery stretch::6::two %}
