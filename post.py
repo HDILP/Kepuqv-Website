@@ -177,7 +177,7 @@ keywords:
 # ======END======
 
 # pictures
-f.write('{% gallery stretch::6::two %}\n')
+f.write('{% gallery stretch::3::two %}\n')
 
 for i in pictures:
     # j = i.replace('http', 'https')
