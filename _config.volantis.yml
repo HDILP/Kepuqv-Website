@@ -46,6 +46,7 @@ replace:
   - https://cdn.jsdelivr.net/gh/ => https://gcore.jsdelivr.net/gh/
   - http:// => https://
   - httpss => https
+  - stretch::6::two => stretch::3::two
 
 
 # dns-prefetch preconnect x-dns-prefetch-control
