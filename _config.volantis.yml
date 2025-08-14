@@ -187,7 +187,7 @@ article:
       # 相关文章，需要安装插件 (for layout: post)
       # npm i hexo-related-popular-posts
       related_posts:
-        enable: true
+        enable: false
         title: 相关文章
         icon: fa-duotone fa-bookmark
         max_count: 5
