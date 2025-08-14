@@ -65,7 +65,7 @@ navbar:
   visiable: auto # always, auto
   logo: # choose [img] or [icon + title]
     img: #　volantis-static/media/org.volantis/blog/Logo-NavBar@3x.png # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-NavBar@3x.png
-    icon: /imgs/icon.jpg
+    icon: /favicon.ico
     title: 科普区
   menu:
     - name: 所有文章
