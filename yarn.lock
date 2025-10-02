@@ -1265,10 +1265,10 @@ hexo-tag-aplayer@^3.0.4:
     hexo-util "^0.1.7"
     meting "^1.2.0"
 
-hexo-theme-volantis@^5.8.0:
-  version "5.8.0"
-  resolved "https://registry.npmmirror.com/hexo-theme-volantis/-/hexo-theme-volantis-5.8.0.tgz#5a4f739605767959a1cb5a1a90b08b22e90199c2"
-  integrity sha512-Ap8xHssnfEj6eNIoGMVJNiGUza0azPlXcnMaoVa+N69981W9VQ4QSWiylw4kyhE7uu21nCUWxFH7RptyLzDxkw==
+hexo-theme-volantis@^5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-5.8.1.tgz#25cf56cbfddc4f6888707a0b6e55c40eb482834f"
+  integrity sha512-xl+fIMdu29en456CtC1FW4zb1AAS9v8a+azIwwUn/HyDykCHpjMMjIY2nT8VzoDrmUorStcR1Rg+0JsNuDm5/A==
 
 hexo-util@^0.1.7:
   version "0.1.7"
