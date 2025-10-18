@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 # 第一步：请求API获取成员数据
 # =========================
 
-url = "https://api.yaerxing.com/GetSTBuddies"
+url_api = "https://api.yaerxing.com/GetSTBuddies"
 
 payload = "unionid=c215d6c4512b3d296f3c5f20a7055749&api_sig=74E57ACC672EC43B3419652B634CFA1F&openid=c215d6c4512b3d296f3c5f20a7055749&channel=none&type=1&app_c=144&call_id=1717310986902&os_v=33&um_token=&rom=EMUI&app_v=1.15.1&api_key=9608ebc12b0dcfac257dd071357e3c2c&appid=wx2bd42ba7f4c547f5&device_token=&platform_id=2&model=ELN-W09&page=0&brand=HONOR&search_text="
 
