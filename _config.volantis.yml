@@ -613,68 +613,13 @@ plugins:
 
   # 视差滚动效果 Slide Background
   parallax:
-    enable: false
+    enable: true
     position: fixed       # cover: sticky on the cover.   fixed: Fixed as background for the site.
     shuffle: true         # shuffle playlist
     duration: 30000       # Duration (ms)
     fade: 1500            # fade duration (ms) (Not more than 1500)
     images: # For personal use only. At your own risk if used for commercial purposes !!!
-      - volantis-static/media/wallpaper/minimalist/2020/001.webp
-      - volantis-static/media/wallpaper/minimalist/2020/002.webp
-      - volantis-static/media/wallpaper/minimalist/2020/003.webp
-      - volantis-static/media/wallpaper/minimalist/2020/004.webp
-      - volantis-static/media/wallpaper/minimalist/2020/005.webp
-      - volantis-static/media/wallpaper/minimalist/2020/006.webp
-      - volantis-static/media/wallpaper/minimalist/2020/007.webp
-      - volantis-static/media/wallpaper/minimalist/2020/008.webp
-      - volantis-static/media/wallpaper/minimalist/2020/009.webp
-      - volantis-static/media/wallpaper/minimalist/2020/010.webp
-      - volantis-static/media/wallpaper/minimalist/2020/011.webp
-      - volantis-static/media/wallpaper/minimalist/2020/012.webp
-      - volantis-static/media/wallpaper/minimalist/2020/013.webp
-      - volantis-static/media/wallpaper/minimalist/2020/014.webp
-      - volantis-static/media/wallpaper/minimalist/2020/015.webp
-      - volantis-static/media/wallpaper/minimalist/2020/016.webp
-      - volantis-static/media/wallpaper/minimalist/2020/017.webp
-      - volantis-static/media/wallpaper/minimalist/2020/018.webp
-      - volantis-static/media/wallpaper/minimalist/2020/019.webp
-      - volantis-static/media/wallpaper/minimalist/2020/020.webp
-      - volantis-static/media/wallpaper/minimalist/2020/021.webp
-      - volantis-static/media/wallpaper/minimalist/2020/022.webp
-      - volantis-static/media/wallpaper/minimalist/2020/023.webp
-      - volantis-static/media/wallpaper/minimalist/2020/024.webp
-      - volantis-static/media/wallpaper/minimalist/2020/025.webp
-      - volantis-static/media/wallpaper/minimalist/2020/026.webp
-      - volantis-static/media/wallpaper/minimalist/2020/027.webp
-      - volantis-static/media/wallpaper/minimalist/2020/028.webp
-      - volantis-static/media/wallpaper/minimalist/2020/029.webp
-      - volantis-static/media/wallpaper/minimalist/2020/030.webp
-      - volantis-static/media/wallpaper/minimalist/2020/031.webp
-      - volantis-static/media/wallpaper/minimalist/2020/032.webp
-      - volantis-static/media/wallpaper/minimalist/2020/033.webp
-      - volantis-static/media/wallpaper/minimalist/2020/034.webp
-      - volantis-static/media/wallpaper/minimalist/2020/035.webp
-      - volantis-static/media/wallpaper/minimalist/2020/036.webp
-      - volantis-static/media/wallpaper/minimalist/2020/037.webp
-      - volantis-static/media/wallpaper/minimalist/2020/038.webp
-      - volantis-static/media/wallpaper/minimalist/2020/039.webp
-      - volantis-static/media/wallpaper/minimalist/2020/040.webp
-      - volantis-static/media/wallpaper/minimalist/2020/041.webp
-      - volantis-static/media/wallpaper/minimalist/2020/042.webp
-      - volantis-static/media/wallpaper/minimalist/2020/043.webp
-      - volantis-static/media/wallpaper/minimalist/2020/044.webp
-      - volantis-static/media/wallpaper/minimalist/2020/045.webp
-      - volantis-static/media/wallpaper/minimalist/2020/046.webp
-      - volantis-static/media/wallpaper/minimalist/2020/047.webp
-      - volantis-static/media/wallpaper/minimalist/2020/048.webp
-      - volantis-static/media/wallpaper/minimalist/2020/049.webp
-      - volantis-static/media/wallpaper/minimalist/2020/050.webp
-      - volantis-static/media/wallpaper/minimalist/2020/051.webp
-      - volantis-static/media/wallpaper/minimalist/2020/052.webp
-      - volantis-static/media/wallpaper/minimalist/2020/053.webp
-      - volantis-static/media/wallpaper/minimalist/2020/054.webp
-      - volantis-static/media/wallpaper/minimalist/2020/055.webp
-      - volantis-static/media/wallpaper/minimalist/2020/056.webp
+      - https://bing.img.run/1920x1080.php
 
   # APlayer is only available in mainland China.
   # APlayer config: https://github.com/metowolf/MetingJS
