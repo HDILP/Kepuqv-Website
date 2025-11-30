@@ -1253,7 +1253,7 @@ hexo-renderer-marked@^7.0.1:
     jsdom "^25.0.1"
     marked "^15.0.4"
 
-hexo-renderer-stylus@^3.0.0:
+hexo-renderer-stylus@^3.0.0, hexo-renderer-stylus@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmmirror.com/hexo-renderer-stylus/-/hexo-renderer-stylus-3.0.1.tgz#7ff6f3101fa86ba25de415257be7fa7032e910bc"
   integrity sha512-cFm8ZwShBBeFcQwOXc8EK7lIZnSYVD6OJykdL4GBw99hxc4eD5Hlsi32nRzE8sgKv00jhX1s9Da3GVVFMPAVQg==
@@ -1287,10 +1287,15 @@ hexo-tag-aplayer@^3.0.4:
     hexo-util "^0.1.7"
     meting "^1.2.0"
 
-hexo-theme-volantis@^5.8.1:
-  version "5.8.1"
-  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-5.8.1.tgz#25cf56cbfddc4f6888707a0b6e55c40eb482834f"
-  integrity sha512-xl+fIMdu29en456CtC1FW4zb1AAS9v8a+azIwwUn/HyDykCHpjMMjIY2nT8VzoDrmUorStcR1Rg+0JsNuDm5/A==
+hexo-theme-volantis@^6.0.2:
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-6.0.2.tgz#18ecf32ed8bb770452148671a8a623586664af65"
+  integrity sha512-2Vioq2cB/YDRBbs8QaVe5apPRP4HwVKNisa2sTQy8gIpdEdlZFvEoOghAvR1AB1/tlSmGmF+k8UzGDlw5BwjzQ==
+  dependencies:
+    hexo "^8.1.1"
+    hexo-generator-json-content "^4.2.3"
+    hexo-renderer-ejs "^2.0.0"
+    hexo-renderer-stylus "^3.0.1"
 
 hexo-util@^0.1.7:
   version "0.1.7"
