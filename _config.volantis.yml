@@ -855,71 +855,71 @@ search:
 ############################### Search ############################### > end
 
 ############################### Color Scheme ############################### > start
-# Accessibility: 背景色和前景色要有足够的对比度 https://web.dev/color-contrast/
-# https://ant.design/docs/spec/colors-cn
+# Accessibility: 背景色和前景色要有足够的对比度 https://web.dev/color-contrast/ 
+# https://ant.design/docs/spec/colors-cn 
 color_scheme:
-  common: # (保持不变)
-    theme: '#FFAAB2'
-    link: '#FFAAB2'
-    button: '#FFAEB7'
-    hover: '#E67482'   # 调整为更优雅的灰调樱花粉
-    inner: '#FFF9FA'
-    selection: 'alpha(#FFAAB2, 0.3)'
+  common:
+    theme: '#52C41A'        # Ant Design绿色主色（色板第六个颜色）
+    link: '#52C41A'
+    button: '#389E0D'       # 深一度的绿色，增强按钮视觉层次
+    hover: '#95DE64'        # 柔和的绿色悬停效果
+    inner: '#F6FFED'        # 浅绿色背景
+    selection: '#E6FFCF'    # 纯色选择高亮
 
   light:
-    site_bg: '#F8EDED'   # 改为带灰调的米粉色，更柔和
-    site_inner: '#443637' # 暖灰替代纯灰，与主题更协调
-    site_footer: '#7B4D52' # 降低饱和度
+    site_bg: '#F8FAF5'      # 极浅绿背景，干净专业
+    site_inner: '#262626'   # 近黑色，增强内容可读性
+    site_footer: '#8C8C8C'  # 中性灰色，平衡视觉层次
+
+    card: '#FFFFFF'         # 纯白卡片，清晰分明
+    text: '#434343'         # 深灰文字，阅读舒适
     
-    card: 'alpha(#FFF9FA, 0.8)'       # 改为不透明但更低饱和的底色
-    text: '#594345'       # 暖灰增加粉调
-    
-    block: '#F5E1E4'      # 柔和的粉灰替代纯浅粉
-    codeblock: '#F7EEE8'  # 更温暖的米白色
-    inlinecode: '#D45C67' # 降低明度
-    
-    h1: '#6D4247'
-    h2: '#7E5358'
-    h3: '#8F6469'
-    h4: '#A0757A'
-    h5: '#B1868B'
-    h6: '#C2979C'
-    p: '#756567'         # 带粉调的深灰
-    
-    list: '#87797B'      # 暖灰替代中性灰
-    list_hl: '#FFAAB2'
-    meta: '#8E7F82'      # 带粉调的灰色
-    
-    copyright_bkg: '#FBE8EA' # 更柔和的底色
-    brightness: 92%      # 微降整体亮度
+    block: '#ECF8E6'        # 浅绿区块，温和提示
+    codeblock: '#F9F9F9'    # 极浅灰代码块，专注内容
+    inlinecode: '#52C41A'   # 绿色行内代码，突出而不刺眼
+
+    h1: '#092B00'           # 深绿标题
+    h2: '#135200'
+    h3: '#237804'
+    h4: '#389E0D'
+    h5: '#52C41A'
+    h6: '#73D13D'
+    p: '#595959'            # 中性灰段落
+
+    list: '#8C8C8C'         # 灰色列表
+    list_hl: '#52C41A'      # 绿色高亮
+    meta: '#BFBFBF'         # 浅灰元信息
+
+    copyright_bkg: '#F0F9EF' # 极浅绿页脚
+    brightness: 95%         # 明亮清晰
 
   dark:
-    site_bd: '#1A1214'    # 深樱桃底色
-    site_bg: '#2B1D20'    # 暗玫瑰色
-    card: 'alpha(#3A282B, 0.8)' # 深粉半透明
-    site_inner: '#E8D6D9' # 浅米粉
-    site_footer: '#B29498' # 灰粉色
+    site_bd: '#092B00'      # 深绿底色
+    site_bg: '#0C340D'      # 深森林绿
+    card: '#135200'         # 深绿卡片
+    site_inner: '#D9F7BE'   # 浅绿内文
+    site_footer: '#95DE64'  # 柔和绿页脚
+
+    text: '#D9D9D9'         # 浅灰文字
     
-    text: '#E0C4C8'       # 浅樱花粉
-    
-    block: '#422C2F'      # 深酒红
-    codeblock: '#362125'  # 暗樱桃色
-    inlinecode: '#FF8A95' # 亮樱花色
-    
-    h1: '#FFE6EA'         # 浅粉白
-    h2: '#F5DADE'
-    h3: '#EBCED2'
-    h4: '#E1C2C6'
-    h5: '#D7B6BA'
-    h6: '#CDAAAE'
-    p: '#D8C2C6'
-    
-    list: '#C8B2B6'
-    list_hl: '#FFAAB2'
-    meta: '#A89598'
-    
-    copyright_bkg: '#2E2023'
-    brightness: 75%
+    block: '#186C10'        # 深绿区块
+    codeblock: '#0D1B10'    # 深绿灰代码块
+    inlinecode: '#95DE64'   # 亮绿行内代码
+
+    h1: '#FFFFFF'           # 白色标题
+    h2: '#F0F9EF'
+    h3: '#E6F7CF'
+    h4: '#D9F7BE'
+    h5: '#B7EB8F'
+    h6: '#95DE64'
+    p: '#BFBFBF'            # 中灰段落
+
+    list: '#A3B1AF'         # 浅灰绿列表
+    list_hl: '#95DE64'      # 亮绿高亮
+    meta: '#8C8C8C'         # 中灰元信息
+
+    copyright_bkg: '#0F420F' # 深绿页脚背景
+    brightness: 78%
 
 ############################### Color Scheme ############################### > end
 
