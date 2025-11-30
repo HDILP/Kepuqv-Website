@@ -117,7 +117,7 @@ cover:
     archive: true
     others: false # can be written in front-matter 'cover: true'
   background: https://uapis.cn/api/v1/image/bing-daily
-  # background: https://bing.ioliu.cn/v1/rand?w=1920&h=1200
+  # background: https://bing.img.run/1920x1080.php
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
   title: '<font><span>Welcome to</span> <span>Kepuqv!</span></font>'
   subtitle: <div id="binft"></div>
