@@ -99,7 +99,7 @@ hexo clean && hexo g && hexo d 清除、生成并部署 (常用命令组合)。
 
 💻 项目代码许可证 (MIT)
 
-本项目仓库中的代码、脚本和配置遵循 MIT 许可证。详见根目录下的 [LICENSE](../LICENSE) 文件。
+本项目仓库中的代码、脚本和配置遵循 MIT 许可证。详见根目录下的 [LICENSE](/LICENSE) 文件。
 
 ✍️ 网站内容许可证 (CC BY-NC-SA 4.0)
 
