@@ -15,3 +15,7 @@ test:
   position: bottom
   theme: warning
   cache: false
+  buttons:
+    - title: 好的
+      url: '#'
+      dismiss: true # 点击了是否关闭底部横幅
