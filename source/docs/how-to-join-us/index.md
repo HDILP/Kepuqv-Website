@@ -7,6 +7,8 @@ group: docs
 order: 2
 sidebar: [docs,toc]
 comments: false
+plugins:
+  - snackbar: test
 ---
 1. 你需要满足以下全部条件：
   {% checkbox checked::至少有5篇**原创**科普作品（内容题材不限） %}
