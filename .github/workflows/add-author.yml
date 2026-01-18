@@ -1,0 +1,48 @@
+name: Add New Author
+
+on:
+  workflow_dispatch:
+    inputs:
+      author_id:
+        description: '作者ID (小写字母，无空格)'
+        required: true
+        type: string
+      author_name:
+        description: '作者全名'
+        required: true
+        type: string
+      author_short_name:
+        description: '作者简称'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  add-author:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Run add author script
+        run: |
+          python .github/scripts/add_author.py \
+            --id "${{ github.event.inputs.author_id }}" \
+            --name "${{ github.event.inputs.author_name }}" \
+            --short "${{ github.event.inputs.author_short_name }}"
+            
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add source/_data/author.yml source/_data/friends.yml
+          git commit -m "Add new author: ${{ github.event.inputs.author_name }}"
+          git push
