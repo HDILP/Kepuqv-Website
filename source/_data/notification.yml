@@ -11,8 +11,7 @@ oldversion:
 
 test:
   title: 测试中的文档
-  message: 这份文档正在测试/试行，不代表实际的流程/程序/效果。
+  message: 这份文档正在测试/试行，可能不代表实际的流程/程序/效果。
   position: bottom
   theme: warning
   cache: false
-  
