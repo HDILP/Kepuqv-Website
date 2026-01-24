@@ -111,12 +111,12 @@ navbar:
 ############################### Cover 主页背景 ############################### > start
 cover:
   height_scheme: full # full, half
-  layout_scheme: focus # blank (留白), search (搜索), dock (坞), featured (精选), focus (焦点)
+  layout_scheme: dock # blank (留白), search (搜索), dock (坞), featured (精选), focus (焦点)
   display:
     home: true
     archive: true
     others: false # can be written in front-matter 'cover: true'
-  background: https://uapis.cn/api/v1/image/bing-daily
+  background: https://bing.img.run/1920x1080.php
   # background: https://bing.img.run/1920x1080.php
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
   title: '<font><span>Welcome to</span> <span>Kepuqv!</span></font>'
@@ -608,7 +608,7 @@ site_footer:
 plugins:
   ################ required plugins ################
   # jquery
-  globalJquery: true # 全局引入 jquery
+  globalJquery: false # 全局引入 jquery
   jquery: volantis-static/libs/jquery/dist/jquery.min.js # https://unpkg.com/jquery@3.6.0/dist/jquery.min.js
   # fontawesome Pro 版本：https://cdn.jsdelivr.net/gh/inkss/fontawesome@6.0.0/css/all.min.css
   fontawesome: volantis-static/libs/@fortawesome/fontawesome-pro/css/all.min.css # https://unpkg.com/@fortawesome/fontawesome-free@6.1/css/all.min.css
@@ -650,7 +650,7 @@ plugins:
   # 这里是主题自带的图片懒加载, 实现方案位于 /scripts/filters/z-lazyload ; srcset 属性的的优先级比 src 属性要高, 注意 srcset 存放了懒加载占位图,  src 存放了原图
   # 在支持 srcset 的浏览器或者 RSS 阅读器(还会有人使用老旧的阅读器?)上会优先读取 srcset 加载的图片(懒加载占位图), 对于 RSS 中图片丢失变成懒加载占位图的问题, 建议 自行使用脚本移除 srcset 属性 或 关闭图片懒加载 或 在 RSS 中插入 vanilla-lazyload
   lazyload:
-    enable: false
+    enable: true
     js: volantis-static/libs/vanilla-lazyload/dist/lazyload.min.js # https://unpkg.com/vanilla-lazyload@17.1.0/dist/lazyload.min.js
     onlypost: false
     loadingImg: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@3/img/placeholder/c617bfd2497fcea598e621413e315c368f8d8e.svg # 不建议使用占位图, 建议loadingImg为空, 当前占位图会产生布局偏移, loadingImg 为空占位图是一个 1X1 像素的图片
@@ -699,7 +699,7 @@ plugins:
   ######## Plugins for ...
   # Button Ripple Effect
   nodewaves:
-    enable: true
+    enable: false
     css: volantis-static/libs/node-waves/dist/waves.min.css # https://unpkg.com/node-waves@0.7.6/dist/waves.min.css
     js: volantis-static/libs/node-waves/dist/waves.min.js # https://unpkg.com/node-waves@0.7.6/dist/waves.min.js
 
@@ -711,12 +711,12 @@ plugins:
 
   # Typing Effects
   comment_typing:
-    enable: true
+    enable: false
     js: volantis-static/libs/comment_typing/comment_typing.js # https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@2/js/comment_typing.js
 
   # 视差滚动效果 Slide Background
   parallax:
-    enable: true
+    enable: false
     position: fixed       # cover: sticky on the cover.   fixed: Fixed as background for the site.
     shuffle: true         # shuffle playlist
     duration: 30000       # Duration (ms)
