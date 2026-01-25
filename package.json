@@ -8,7 +8,7 @@
     "g": "hexo clean && hexo generate",
     "c": "hexo clean",
     "d": "hexo deploy",
-    "s": "hexo clean && hexo server"
+    "s": "hexo clean && hexo server",
     "test": "hexo clean && hexo g && python3 cache.py"
   },
   "hexo": {
