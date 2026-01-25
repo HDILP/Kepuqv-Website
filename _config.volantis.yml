@@ -962,13 +962,13 @@ custom_css:
     footnote: .78125rem
   fontfamily:
     logofont:
-      fontfamily: 'Dosis, "Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      fontfamily: 'Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Dosis'
       url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
       weight: normal
       style: normal
     bodyfont:
-      fontfamily: 'Dosis, "Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      fontfamily: '"Maple Mono NF CN", Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Dosis'
       url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
       weight: normal
