@@ -962,14 +962,14 @@ custom_css:
     footnote: .78125rem
   fontfamily:
     logofont:
-      fontfamily: 'Maple Mono NF CN, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Maple Mono NF CN'
       url: 'https://fontsapi.zeoseven.com/442/medium/result.css'
       weight: normal
       style: normal
 
     bodyfont:
-      fontfamily: 'Maple Mono NF CN, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Maple Mono NF CN'
       url: 'https://fontsapi.zeoseven.com/442/medium/result.css'
       weight: normal
