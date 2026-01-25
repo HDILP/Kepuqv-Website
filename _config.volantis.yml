@@ -962,16 +962,15 @@ custom_css:
     footnote: .78125rem
   fontfamily:
     logofont:
-      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
-      name: 'Maple Mono NF CN'
-      url: 'https://fontsapi.zeoseven.com/442/medium/result.css'
+      fontfamily: 'Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      name: 'Dosis'
+      url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
       weight: normal
       style: normal
-
     bodyfont:
-      fontfamily: '"Maple Mono NF CN", "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
-      name: 'Maple Mono NF CN'
-      url: 'https://fontsapi.zeoseven.com/442/medium/result.css'
+      fontfamily: 'Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
+      name: 'Dosis'
+      url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
       weight: normal
       style: normal
 
