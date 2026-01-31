@@ -354,7 +354,7 @@ sidebar:
         title: 公告
         url:
       content:
-        - '科普区自动化已完成闭环<br>2025-03-15'    # ---------------------------------------
+        - '网站正在测试service worker。<br>2026-01-30'
     # toc widget (valid only in articles)
     toc:
       class: toc
