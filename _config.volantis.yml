@@ -119,7 +119,7 @@ cover:
   background: https://bing.img.run/1920x1080.php
   # background: https://bing.img.run/1920x1080.php
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
-  title: '<font><span>Welcome to</span> <span>Kepuqv!</span></font>'
+  title: 'Welcome to Kepuqv!'
   subtitle: <div id="binft"></div>
   search: 搜索... # search bar placeholder
   features:
