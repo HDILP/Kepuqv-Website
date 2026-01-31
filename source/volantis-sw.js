@@ -10,7 +10,7 @@ const PreCachlist = [
 let NPMMirror = false;
 const NPMPackage = "@mhg/volantis-community";
 let NPMPackageVersion = "1.0.1674055760561";
-let debug = false;
+let debug = true;
 // location.hostname == 'localhost' && (debug = true) && (NPMMirror = false);
 const handleFetch = async (event) => {
   const url = event.request.url;
@@ -57,10 +57,9 @@ const cdn = {
     jsdelivr: 'https://cdn.jsdelivr.net/npm',
     fastly: 'https://fastly.jsdelivr.net/npm',
     gcore: 'https://gcore.jsdelivr.net/npm',
-    testingcf: 'https://testingcf.jsdelivr.net/npm',
-    test1: 'https://test1.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
+    admincdn: 'https://jsd.admincdn.com/npm/',
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
@@ -68,6 +67,7 @@ const cdn = {
     bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
     bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
     sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
+    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
   }
 }
 const cdn_match_list = []
