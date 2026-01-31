@@ -10,7 +10,7 @@ const PreCachlist = [
 let NPMMirror = false;
 const NPMPackage = "@mhg/volantis-community";
 let NPMPackageVersion = "1.0.1674055760561";
-let debug = true;
+let debug = false;
 // location.hostname == 'localhost' && (debug = true) && (NPMMirror = false);
 const handleFetch = async (event) => {
   const url = event.request.url;
@@ -21,16 +21,16 @@ const handleFetch = async (event) => {
   } else if (/cdnjs\.cloudflare\.com/.test(url)) {
     return CacheAlways(event)
   } else if (/music\.126\.net/.test(url)) {
-    return CacheAlways(event)
+    return NetworkOnly(event)
   } else if (/qqmusic\.qq\.com/.test(url)) {
-    return CacheAlways(event)
+    return NetworkOnly(event)
   } else if (/jsdelivr\.net/.test(url)) {
     return CacheAlways(event)
   } else if (/npm\.elemecdn\.com/.test(url)) {
     return CacheAlways(event)
   } else if (/unpkg\.com/.test(url)) {
     return CacheAlways(event)
-  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2|mp3)$/.test(url)) {
+  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
     return CacheAlways(event)
   } else if (/.*\.(css|js)$/.test(url)) {
     return CacheAlways(event)
