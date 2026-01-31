@@ -10,7 +10,7 @@ const PreCachlist = [
 let NPMMirror = false;
 const NPMPackage = "@mhg/volantis-community";
 let NPMPackageVersion = "1.0.1674055760561";
-let debug = true;
+let debug = false;
 // location.hostname == 'localhost' && (debug = true) && (NPMMirror = false);
 const handleFetch = async (event) => {
   const url = event.request.url;
