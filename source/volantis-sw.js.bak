@@ -7,7 +7,7 @@ const PreCachlist = [
   "/js/app.js",
   "/js/search/hexo.js",
 ];
-let NPMMirror = true;
+let NPMMirror = false;
 const NPMPackage = "@mhg/volantis-community";
 let NPMPackageVersion = "1.0.1674055760561";
 let debug = true;
