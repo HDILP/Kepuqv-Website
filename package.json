@@ -9,7 +9,7 @@
     "c": "hexo clean",
     "d": "hexo deploy",
     "s": "hexo clean && hexo server",
-    "test": "hexo clean && hexo g && python3 cache.py"
+    "sw": "hexo clean && hexo g && python3 cache.py && gulp"
   },
   "hexo": {
     "version": "8.1.1"
