@@ -21,7 +21,7 @@
     <link href="{{ post.permalink | uriencode }}"/>
     <published>{{ post.date.toISOString() }}</published>
     {% if config.feed.content and post.content %}
-    <content type="html">{{ post.content | safe }}</content>
+    <content type="html"><![CDATA[{{ post.content | safe }}]]></content>
     {% endif %}
   </entry>
   {% endfor %}
