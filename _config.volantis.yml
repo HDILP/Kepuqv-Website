@@ -119,8 +119,8 @@ cover:
   background: https://bing-wallpaper.hdilp.top/bing.jpg
   # background: https://bing.img.run/1920x1080.php
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
-  title: 'Welcome to Kepuqv!'
-  subtitle: <div id="binft"></div>
+  title: <div id="binft"></div>
+  subtitle: 'Welcome to Kepuqv!'
   search: 搜索... # search bar placeholder
   features:
     - name: 首页
