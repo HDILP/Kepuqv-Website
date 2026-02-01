@@ -116,7 +116,7 @@ cover:
     home: true
     archive: true
     others: false # can be written in front-matter 'cover: true'
-  background: https://bing.img.run/1920x1080.php
+  background: https://bing-wallpaper.hdilp.top/bing.jpg
   # background: https://bing.img.run/1920x1080.php
   logo: # https://cdn.jsdelivr.net/gh/volantis-x/cdn-org/blog/Logo-Cover@3x.png
   title: 'Welcome to Kepuqv!'
