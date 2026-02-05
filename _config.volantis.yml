@@ -665,7 +665,7 @@ plugins:
     duration: 30000       # Duration (ms)
     fade: 1500            # fade duration (ms) (Not more than 1500)
     images: # For personal use only. At your own risk if used for commercial purposes !!!
-      - https://bing.img.run/1920x1080.php
+      - https://bing-wallpaper.hdilp.top/bing.jpg
 
   aplayer:
     enable: true
