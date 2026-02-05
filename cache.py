@@ -5,7 +5,8 @@ import time
 
 # 配置项
 # Vercel 提供的 Commit SHA 作为唯一版本标识，如果没有则用时间戳
-version_sha = os.environ.get('VERCEL_GIT_COMMIT_SHA', str(int(time.time())))
+#version_sha = os.environ.get('VERCEL_GIT_COMMIT_SHA', str(int(time.time())))
+version_sha = str(int(time.time()))
 sw_path = "./public/volantis-sw.js"
 
 precache = {}
