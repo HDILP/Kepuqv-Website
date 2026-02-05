@@ -217,18 +217,6 @@ article:
         # 不在以下文件夹文章中展示文章推荐 根目录是source/
         skip_dirs:
           - docs/
-      # ----------------
-      # 相关文章，需要安装插件 (for layout: post)
-      # npm i hexo-related-popular-posts
-      related_posts:
-        enable: false
-        title: 相关文章
-        icon: fa-duotone fa-bookmark
-        max_count: 5
-        # 设为空则不使用文章头图
-        placeholder_img: 
-      # ----------------
-
       # 版权声明组件 (for layout: post)
       copyright:
         enable: true
@@ -575,7 +563,7 @@ color_scheme:
 ############################### Site Footer ############################### > start
 site_footer:
   # layout of footer: [aplayer, social, license, info, copyright]
-  layout: [aplayer, license, info, copyright]
+  layout: [aplayer, license, info, copyright, br, love]
   # social:
     # - icon: #fa-duotone fa-rss
       # url:
@@ -587,14 +575,11 @@ site_footer:
       # url:
   # site source
   source: https://github.com/volantis-x/volantis-docs/
-  # analytics using leancloud
-  # analytics: >
-    # <span id="lc-sv">本站总访问量为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 次</span>
-    # <span id="lc-uv">访客数为 <span id='number'><i class="fa-duotone fa-loader fa-spin fa-fw" aria-hidden="true"></i></span> 人</span>
   # site copyright
   copyright: '[Copyright © since 2025 科普区](/)'
   # You can add your own property here. (Support markdown, for example: br: '<br>')
   br: '<br>'
+  love: '晗菌&所有小伙伴 用❤️构建'
 ############################### Site Footer ############################### > end
 
 
