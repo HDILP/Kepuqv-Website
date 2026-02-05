@@ -33,7 +33,8 @@
     "hexo-tag-aplayer": "^3.0.4",
     "hexo-theme-volantis": "^6.0.2",
     "hexo-wordcount": "^6.0.1",
-    "html-entities": "^2.6.0"
+    "html-entities": "^2.6.0",
+    "nodejieba": "^3.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

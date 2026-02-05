@@ -1,4 +1,5 @@
-// 全站打包上传 npm，sw 并发请求 cdn
+// volantis-sw.js (modified)
+// sw 并发请求 cdn
 const prefix = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
 const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
@@ -7,11 +8,7 @@ const PreCachlist = [
   "/js/app.js",
   "/js/search/hexo.js",
 ];
-let NPMMirror = false;
-const NPMPackage = "@mhg/volantis-community";
-let NPMPackageVersion = "1.0.1674055760561";
 let debug = false;
-// location.hostname == 'localhost' && (debug = true) && (NPMMirror = false);
 const handleFetch = async (event) => {
   const url = event.request.url;
   if (/nocache/.test(url)) {
@@ -21,9 +18,9 @@ const handleFetch = async (event) => {
   } else if (/cdnjs\.cloudflare\.com/.test(url)) {
     return CacheAlways(event)
   } else if (/music\.126\.net/.test(url)) {
-    return NetworkOnly(event)
+    return CacheAlways(event)
   } else if (/qqmusic\.qq\.com/.test(url)) {
-    return NetworkOnly(event)
+    return CacheAlways(event)
   } else if (/jsdelivr\.net/.test(url)) {
     return CacheAlways(event)
   } else if (/npm\.elemecdn\.com/.test(url)) {
@@ -283,47 +280,77 @@ const compareVersion = (a, b) => {
   return a;
 }
 
-const mirrors = [
-  `https://registry.npmjs.org/${NPMPackage}/latest`,
-  `https://registry.npmmirror.com/${NPMPackage}/latest`,
-  `https://mirrors.cloud.tencent.com/npm/${NPMPackage}/latest`
-]
-const getLocalVersion = async () => {
-  NPMPackageVersion = await db.read('blog_version') || NPMPackageVersion
-  logger.bg.info(`Local Version: ${NPMPackage}@${NPMPackageVersion}`)
-}
-let mirror_time = 0;
-const setNewestVersion = async () => {
-  if (!NPMMirror) {
-    return
+/* =====================================================
+   新增：动态解析并缓存新版本资源的逻辑 (不硬编码文件列表)
+   ===================================================== */
+const cacheNewVersionResources = async (cache) => {
+  try {
+    // 请求新的主页 HTML (加个时间戳防止被老 SW 拦截返回旧 HTML)
+    const htmlReq = new Request(`/?t=${Date.now()}`);
+    const response = await fetch(htmlReq);
+    if (!response || !response.ok) {
+      logger.error('[Dynamic Precache] Failed to fetch index.html or non-ok response');
+      return;
+    }
+
+    const html = await response.text();
+
+    // 简单的正则匹配 HTML 中的 CSS 和 JS 文件
+    // 注意：这只能匹配首页源码里显式引入的资源，动态懒加载的无法匹配
+    const resourceRegex = /(?:href|src)=["']([^"']+\.(?:css|js))["']/g;
+    let match;
+    const resourcesToCache = new Set([
+      "/", // 缓存主页本身
+      ...PreCachlist // 保留原本的手动列表
+    ]);
+
+    while ((match = resourceRegex.exec(html)) !== null) {
+      const url = match[1];
+      // 过滤掉第三方 CDN 链接，只缓存本站资源（如果需要缓存 CDN，去掉 !url.startsWith('http') 判断）
+      if (url && !url.startsWith('http') && !url.startsWith('//')) {
+        // 把相对路径也标准化为以斜杠开头（如果需要）
+        let normalized = url;
+        if (!normalized.startsWith('/')) {
+          // 相对路径 -> 转成相对根的绝对路径（简单方式）
+          if (normalized.startsWith('./')) normalized = normalized.substring(1);
+          normalized = '/' + normalized;
+        }
+        resourcesToCache.add(normalized);
+      }
+    }
+
+    logger.group.event(`Dynamic Precache: Found ${resourcesToCache.size} files`);
+
+    // 并发缓存（先检查是否已存在再 add）
+    const cachePromises = Array.from(resourcesToCache).map(url => {
+      const req = new Request(url);
+      return cache.match(req).then(res => {
+        if (!res) {
+          logger.wait(`Background caching: ${url}`);
+          return cache.add(req).catch(e => {
+            logger.error(`Failed to cache ${url}: ${e}`);
+          });
+        } else {
+          logger.ready(`Already cached: ${url}`);
+        }
+      }).catch(e => {
+        logger.error(`Error checking/caching ${url}: ${e}`);
+      });
+    });
+
+    await Promise.all(cachePromises);
+    logger.ready(`Background update complete.`);
+    logger.group.end();
+
+  } catch (err) {
+    logger.error(`[Dynamic Precache Error] ${err}`);
   }
-  let f = null;
-  if (!(mirror_time % (mirrors.length + 1))) {
-    f = FetchEngine(mirrors);
-  } else {
-    f = fetch(mirrors[(mirror_time % (mirrors.length + 1)) - 1]);
-  }
-  mirror_time++;
-  return f
-    .then(res => res.json())
-    .then(async res => {
-      if (!res.version) throw ('No Version Found!')
-      NPMPackageVersion = compareVersion(res.version, await db.read('blog_version') || NPMPackageVersion)
-      logger.bg.ready(`${NPMPackage}@${NPMPackageVersion}`)
-      await db.write('blog_version', NPMPackageVersion)
-    })
-    .catch(error => {
-      logger.error('[Set Newest Version] ' + (error.stack || error))
-    })
-}
-setInterval(async () => {
-  await setNewestVersion()
-}, 60 * 1000);
-setTimeout(async () => {
-  await setNewestVersion()
-}, 5000)
+};
+
+/* =====================================================
+   原有的 installFunction 保留（用于兼容原 precache 行为）
+   ===================================================== */
 const installFunction = async () => {
-  await getLocalVersion();
   return caches.open(CACHE_NAME + "-precache")
     .then(async function (cache) {
       if (!await db.read('uuid')) {
@@ -352,16 +379,72 @@ const installFunction = async () => {
       logger.error('[install] ' + (error.stack || error));
     })
 }
+
+/* =====================================================
+   修改：Install 事件（不再立即 skipWaiting；先完成后台缓存）
+   ===================================================== */
 self.addEventListener('install', async function (event) {
   logger.bg.event("service worker install event listening");
   try {
-    self.skipWaiting();
-    event.waitUntil(installFunction());
-    logger.bg.ready('service worker install sucess!');
+    // 不再 self.skipWaiting()，等待用户确认后前端向 SW 发消息再跳过等待
+    event.waitUntil((async () => {
+      const cache = await caches.open(CACHE_NAME + "-precache");
+      // uuid 保持
+      if (!await db.read('uuid')) {
+        await db.write('uuid', generate_uuid())
+      }
+
+      // 1) 依然执行 PreCachlist 的预缓存（同步并发）
+      if (PreCachlist.length) {
+        logger.group.event(`Precaching ${PreCachlist.length} files.`);
+        const precachePromises = PreCachlist.map(async (url) => {
+          try {
+            const r = await cache.match(new Request(url));
+            if (r) {
+              logger.ready(`Precaching (exists) ${url}`);
+            } else {
+              logger.wait(`Precaching: ${url}`);
+              await cache.add(new Request(url));
+            }
+          } catch (e) {
+            logger.error(`[install] precache ${url} error: ${e}`);
+          }
+        });
+        await Promise.all(precachePromises);
+        logger.ready(`Precached ${PreCachlist.length} files.`);
+        logger.group.end();
+      }
+
+      // 2) 执行动态缓存逻辑：拉取新版本主页并缓存其引用的资源
+      await cacheNewVersionResources(cache);
+
+      // 3) 动态缓存完成后，通知所有页面（window clients）——让页面弹窗提示用户刷新（页面端决定是否调用 SKIP_WAITING）
+      try {
+        const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+        allClients.forEach(client => {
+          client.postMessage({
+            type: 'NEW_VERSION_CACHED',
+            title: '发现新版本',
+            message: '已在后台缓存新版本资源。是否现在刷新以使用新版本？',
+            // 前端可以据此调用 VolantisApp.question(title, message, option, success, cancel, done)
+            // 并在用户确认时向 SW 发送 { type: 'SKIP_WAITING' }。
+            // 我们在下面添加了对 SKIP_WAITING 的监听。
+            showConfirm: true
+          });
+        });
+      } catch (e) {
+        logger.error('[install] notify clients error: ' + e);
+      }
+    })());
+    logger.bg.ready('service worker installed (waiting for activation)');
   } catch (error) {
     logger.error('[install] ' + (error.stack || error));
   }
 });
+
+/* =====================================================
+   activate & fetch 等事件保持不变（仅作整合）
+   ===================================================== */
 self.addEventListener('activate', async event => {
   logger.bg.event("service worker activate event listening");
   try {
@@ -383,6 +466,7 @@ self.addEventListener('activate', async event => {
     logger.error('[activate] ' + (error.stack || error));
   }
 })
+
 self.addEventListener('fetch', async event => {
   event.respondWith(
     handleFetch(event).catch((error) => {
@@ -489,16 +573,6 @@ const matchCDN = async (req) => {
   let pathType = urlObj.pathname.split('/')[1]
   let pathTestRes = "";
 
-  if (NPMMirror && new RegExp(location.origin).test(req.url)) {
-    logger.group.ready(`Match NPM Mirror: ` + req.url);
-    for (const key in cdn.npm) {
-      let url = cdn.npm[key] + "/" + NPMPackage + "@" + NPMPackageVersion + req.url.replace(location.origin, '')
-      url = fullPath(fullPath(url))
-      console.log(url);
-      urls.push(url)
-    }
-    logger.group.end()
-  }
   if (!urls.length) {
     for (const item of cdn_match_list) {
       if (new RegExp(item.key).test(req.url)) {
@@ -525,18 +599,6 @@ const matchCDN = async (req) => {
     res = FetchEngine(urls)
   else
     res = fetch(req)
-  if (res && NPMMirror && new RegExp(location.origin).test(req.url)) {
-    const ext = fullPath(fullPath(req.url)).split('.').pop()
-    const contentType = getContentType(ext)
-    res = res
-      .then(res => res.arrayBuffer())
-      .then(buffer => new Response(buffer, {
-        headers: {
-          "Content-Type": contentType
-        }
-      }))
-      .catch(() => null)
-  }
   return res
 }
 
@@ -794,3 +856,14 @@ const getContentType = (ext) => {
       return 'text/plain'
   }
 }
+
+/* =====================================================
+   新增：监听前端发来的 "SKIP_WAITING" 指令
+   （前端在用户确认刷新时应发送该消息）
+   ===================================================== */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    logger.bg.event("User confirmed update, skipping waiting...");
+    self.skipWaiting();
+  }
+});
