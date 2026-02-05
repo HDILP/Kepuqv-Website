@@ -460,12 +460,24 @@ self.addEventListener('activate', async event => {
         logger.error('[activate] ' + (error.stack || error));
       })
     );
-    await self.clients.claim()
+    await self.clients.claim();
     logger.bg.ready('service worker activate sucess!');
+
+    // 新增：通知所有页面：SW 已经激活并接管（可靠触发前端 reload）
+    try {
+      const windows = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+      windows.forEach(w => {
+        w.postMessage({ type: 'NEW_ACTIVATED' });
+      });
+      logger.bg.ready('Posted NEW_ACTIVATED to clients');
+    } catch (e) {
+      logger.error('[activate] notify clients activated error: ' + e);
+    }
+
   } catch (error) {
     logger.error('[activate] ' + (error.stack || error));
   }
-})
+});
 
 self.addEventListener('fetch', async event => {
   event.respondWith(
