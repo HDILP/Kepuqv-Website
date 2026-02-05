@@ -420,7 +420,7 @@ sidebar:
           enable: true
           friendlyShow: false    # 更友好的时间显示
           text: '最后更新时间：'
-          unit: '日'
+          unit: ''
     # ---------------------------------------
     # lastupdate widget
     lastupdate:
