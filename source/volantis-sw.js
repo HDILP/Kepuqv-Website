@@ -8,7 +8,7 @@ const PreCachlist = [
   "/js/app.js",
   "/js/search/hexo.js",
 ];
-let debug = false;
+let debug = true;
 const handleFetch = async (event) => {
   const url = event.request.url;
   if (/nocache/.test(url)) {
