@@ -27,6 +27,8 @@ const handleFetch = async (event) => {
     return CacheAlways(event)
   } else if (/unpkg\.com/.test(url)) {
     return CacheAlways(event)
+  } else if (new URL(url).pathname === '/bing.jpg') {
+    return NetworkFirst(event)
   } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
     return CacheAlways(event)
   } else if (/.*\.(css|js)$/.test(url)) {
