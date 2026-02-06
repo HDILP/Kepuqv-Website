@@ -41,6 +41,7 @@
     "gulp": "5",
     "gulp-html-minifier-terser": "^7.1.0",
     "gulp-postcss": "^10.0.0",
-    "gulp-terser": "^2.1.0"
+    "gulp-terser": "^2.1.0",
+    "postcss": "^8.5.6"
   }
 }

@@ -71,6 +71,7 @@ replace:
 dns_prefetch:
   - https://unpkg.com
   - https://cdn.bootcdn.net
+  - https://imgcdn.yaerxing.com
 
 # analytics:
 #   busuanzi: volantis-static/libs/busuanzi/bsz.pure.mini.js
