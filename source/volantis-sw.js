@@ -28,7 +28,7 @@ const handleFetch = async (event) => {
   } else if (/unpkg\.com/.test(url)) {
     return CacheAlways(event)
   } else if (new URL(url).pathname === '/bing.jpg') {
-    return NetworkOnly(event)
+    return BingCache(event)
   } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
     return CacheAlways(event)
   } else if (/.*\.(css|js)$/.test(url)) {
@@ -354,12 +354,14 @@ const cacheNewVersionResources = async (cache) => {
       const bingReq = new Request('/bing.jpg', { cache: 'no-store' });
       const bingRes = await fetch(bingReq);
       if (bingRes && bingRes.ok) {
-        await cache.put('/bing.jpg', bingRes.clone());
-        logger.ready('Bing wallpaper refreshed');
+        const runtimeCache = await caches.open(CACHE_NAME + "-runtime");
+        await runtimeCache.put('/bing.jpg', bingRes.clone());
+        logger.ready('Bing wallpaper refreshed in runtime cache');
       }
     } catch (e) {
       logger.warn('Bing wallpaper refresh failed: ' + e);
     }
+
 
     logger.ready(`Background update complete.`);
 
@@ -733,6 +735,33 @@ const FetchEngine = (reqs) => {
       return null;
     });
 };
+
+/**
+ * Bing 壁纸优化：Stale-While-Revalidate 策略
+ * 1. 优先返回缓存，实现“秒开”
+ * 2. 无论是否有缓存，都在后台发起网络请求，静默更新本地缓存
+ */
+const BingCache = async (event) => {
+  const cache = await caches.open(CACHE_NAME + "-runtime");
+  
+  // 尝试匹配缓存
+  const cachedResponse = await cache.match(event.request);
+
+  // 后台静默更新请求
+  const fetchPromise = fetch(event.request).then(networkResponse => {
+    if (networkResponse && networkResponse.ok) {
+      // 更新缓存，供下次使用
+      cache.put(event.request, networkResponse.clone());
+    }
+    return networkResponse;
+  }).catch(err => {
+    logger.error('Bing silent update failed: ' + err);
+  });
+
+  // 如果有缓存立刻返回缓存，否则等待网络请求
+  return cachedResponse || fetchPromise;
+}
+
 
 const getContentType = (ext) => {
   switch (ext) {
