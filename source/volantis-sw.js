@@ -280,11 +280,20 @@ const compareVersion = (a, b) => {
   return a;
 }
 
-/* =====================================================
-   新增：动态解析并缓存新版本资源的逻辑 (不硬编码文件列表)
-   ===================================================== */
+/* ========= 动态缓存（含进度上报） ========= */
 const cacheNewVersionResources = async (cache) => {
   try {
+    // 通知客户端：开始更新（客户端可据此显示进度 toast）
+    try {
+      const starts = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+      starts.forEach(c => c.postMessage({
+        type: 'UPDATE_STARTED',
+        message: '开始在后台缓存新版本资源'
+      }));
+    } catch (e) {
+      logger.error('[Dynamic Precache] notify start error: ' + e);
+    }
+
     // 请求新的主页 HTML (加个时间戳防止被老 SW 拦截返回旧 HTML)
     const htmlReq = new Request(`/?t=${Date.now()}`);
     const response = await fetch(htmlReq);
@@ -295,23 +304,19 @@ const cacheNewVersionResources = async (cache) => {
 
     const html = await response.text();
 
-    // 简单的正则匹配 HTML 中的 CSS 和 JS 文件
-    // 注意：这只能匹配首页源码里显式引入的资源，动态懒加载的无法匹配
+    // 匹配 CSS/JS 文件（仅站内相对地址）
     const resourceRegex = /(?:href|src)=["']([^"']+\.(?:css|js))["']/g;
     let match;
     const resourcesToCache = new Set([
       "/", // 缓存主页本身
-      ...PreCachlist // 保留原本的手动列表
+      ...PreCachlist // 保留原来的手动列表
     ]);
 
     while ((match = resourceRegex.exec(html)) !== null) {
       const url = match[1];
-      // 过滤掉第三方 CDN 链接，只缓存本站资源（如果需要缓存 CDN，去掉 !url.startsWith('http') 判断）
       if (url && !url.startsWith('http') && !url.startsWith('//')) {
-        // 把相对路径也标准化为以斜杠开头（如果需要）
         let normalized = url;
         if (!normalized.startsWith('/')) {
-          // 相对路径 -> 转成相对根的绝对路径（简单方式）
           if (normalized.startsWith('./')) normalized = normalized.substring(1);
           normalized = '/' + normalized;
         }
@@ -319,29 +324,63 @@ const cacheNewVersionResources = async (cache) => {
       }
     }
 
-    logger.group.event(`Dynamic Precache: Found ${resourcesToCache.size} files`);
+    const list = Array.from(resourcesToCache);
+    logger.group.event(`Dynamic Precache: Found ${list.length} files`);
 
-    // 并发缓存（先检查是否已存在再 add）
-    const cachePromises = Array.from(resourcesToCache).map(url => {
-      const req = new Request(url);
-      return cache.match(req).then(res => {
-        if (!res) {
+    // 串行缓存以便精准上报进度（并发也可，但更难精确计数）
+    let cachedCount = 0;
+    for (let i = 0; i < list.length; i++) {
+      const url = list[i];
+      try {
+        const req = new Request(url);
+        const existing = await cache.match(req);
+        if (!existing) {
           logger.wait(`Background caching: ${url}`);
-          return cache.add(req).catch(e => {
+          await cache.add(req).catch(e => {
             logger.error(`Failed to cache ${url}: ${e}`);
           });
         } else {
           logger.ready(`Already cached: ${url}`);
         }
-      }).catch(e => {
-        logger.error(`Error checking/caching ${url}: ${e}`);
-      });
-    });
+      } catch (e) {
+        logger.error(`Error caching ${url}: ${e}`);
+      }
 
-    await Promise.all(cachePromises);
+      // 更新计数并通知 clients
+      cachedCount++;
+      const percent = Math.round((cachedCount / list.length) * 100);
+      try {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'UPDATE_PROGRESS',
+            cached: cachedCount,
+            total: list.length,
+            percent: percent,
+            url: list[i]
+          });
+        });
+      } catch (e) {
+        logger.error('[Dynamic Precache] notify progress error: ' + e);
+      }
+    }
+
     logger.ready(`Background update complete.`);
-    logger.group.end();
 
+    // 结束时仍然通知：已完成（保留原有字段）
+    try {
+      const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+      allClients.forEach(client => {
+        client.postMessage({
+          type: 'NEW_VERSION_CACHED',
+          title: '发现新版本',
+          message: '已在后台缓存新版本资源，是否现在刷新以使用新版本？',
+          showConfirm: true
+        });
+      });
+    } catch (e) {
+      logger.error('[Dynamic Precache] notify complete error: ' + e);
+    }
   } catch (err) {
     logger.error(`[Dynamic Precache Error] ${err}`);
   }
