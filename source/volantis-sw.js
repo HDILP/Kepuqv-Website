@@ -364,6 +364,24 @@ const cacheNewVersionResources = async (cache) => {
         logger.error('[Dynamic Precache] notify progress error: ' + e);
       }
     }
+    
+    // 🌸 强制刷新 Bing 每日壁纸（仅在版本更新时）
+    try {
+      const bingReq = new Request('/bing.jpg', {
+        cache: 'no-store' // ✨ 关键：绕过 HTTP / SW 缓存
+      });
+    
+      const bingRes = await fetch(bingReq);
+    
+      if (bingRes && bingRes.ok) {
+        await cache.put('/bing.jpg', bingRes.clone());
+        logger.ready('Bing wallpaper refreshed for new version');
+      } else {
+        logger.warn('Failed to refresh Bing wallpaper');
+      }
+    } catch (e) {
+      logger.error('Error refreshing Bing wallpaper: ' + e);
+    }
 
     logger.ready(`Background update complete.`);
 
