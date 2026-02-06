@@ -185,7 +185,7 @@ article:
   body:
     # 文章顶部信息
     # 从 meta_library 中取
-    top_meta: [author, category, date, counter, wordcount] #启用评论数量需在此添加
+    top_meta: [author, category, date, wordcount] #启用评论数量需在此添加
     # 文章底部信息
     # 从 meta_library 中取
     bottom_meta: [tags]
@@ -298,7 +298,6 @@ comments:
   service: twikoo
   twikoo:
     path: # 全局评论地址
-    # 其他配置项按照yml格式继续填写即可 除了 [el path] 选项
     envId: https://twikoo.hdilp.top/ # 腾讯云环境id
 
 ############################### Sidebar 文章侧边栏############################### > start
@@ -418,7 +417,7 @@ sidebar:
             unit: '次'
         lastupd:
           enable: true
-          friendlyShow: false    # 更友好的时间显示
+          friendlyShow: true    # 更友好的时间显示
           text: '最后更新时间：'
           unit: ''
     # ---------------------------------------
