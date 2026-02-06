@@ -1,52 +1,48 @@
 const gulp = require('gulp');
 const cleanCSS = require('gulp-clean-css');
 const htmlmin = require('gulp-html-minifier-terser');
-const htmlclean = require('gulp-htmlclean');
 const terser = require('gulp-terser');
-const sourcemaps = require('gulp-sourcemaps');
-const babel = require('gulp-babel');
 
-// 压缩css文件
+// 路径配置（排除库文件）
+const paths = ['./public/**/*.{css,html,js}', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'];
+
+// 压缩 CSS
 function minify_css() {
-  return gulp.src(['./public/**/*.css', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(sourcemaps.init())
-    .pipe(cleanCSS({ compatibility: 'ie8' }))
-    .pipe(sourcemaps.write('./maps'))
+  return gulp.src('./public/**/*.css', { base: './public' })
+    .pipe(cleanCSS({ 
+      level: 2, // 开启 2 级优化，包括合并选择器等
+      format: 'keep-breaks' // 或者去掉 format 实现完全压缩
+    }))
     .pipe(gulp.dest('./public'));
 }
 
-// 压缩html文件
+// 压缩 HTML
 function minify_html() {
-  return gulp.src(['./public/**/*.html', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(htmlclean())
+  return gulp.src('./public/**/*.html', { base: './public' })
     .pipe(htmlmin({
-      removeComments: true,
-      minifyJS: true,
-      minifyCSS: true,
-      minifyURLs: true,
+      collapseWhitespace: true,      // 移除空格
+      removeComments: true,          // 移除注释
+      minifyJS: true,                // 同时压缩 HTML 里的内联 JS
+      minifyCSS: true,               // 同时压缩 HTML 里的内联 CSS
+      removeAttributeQuotes: true,   // 移除属性引号（极致瘦身）
+      removeRedundantAttributes: true // 移除冗余属性
     }))
     .pipe(gulp.dest('./public'));
 }
 
-// 压缩js文件
+// 压缩 JS (直接用 Terser 压缩现代 JS)
 function minify_js() {
-  return gulp.src(['./public/**/*.js', '!./public/**/*.min.js', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: ['@babel/preset-env']
-    }))
+  return gulp.src(['./public/**/*.js', '!./public/**/*.min.js'], { base: './public' })
     .pipe(terser({
-      ecma: 2015,
-      ie8: true,
-      safari10: true,
+      compress: {
+        drop_console: true, // 移除 console
+        drop_debugger: true,
+        passes: 2           // 压缩两次，压榨空间
+      },
+      mangle: true,         // 混淆变量名
       output: { comments: false }
     }))
-    .pipe(sourcemaps.write('./maps'))
     .pipe(gulp.dest('./public'));
 }
 
-// 并行执行所有压缩任务
-const minify = gulp.parallel(minify_html, minify_css, minify_js);
-
-// 默认任务
-exports.default = minify;
+exports.default = gulp.parallel(minify_html, minify_css, minify_js);
