@@ -285,34 +285,23 @@ const compareVersion = (a, b) => {
 /* ========= 动态缓存（含进度上报） ========= */
 const cacheNewVersionResources = async (cache) => {
   try {
-    // 通知客户端：开始更新（客户端可据此显示进度 toast）
-    try {
-      const starts = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-      starts.forEach(c => c.postMessage({
-        type: 'UPDATE_STARTED',
-        message: '开始在后台缓存新版本资源'
-      }));
-    } catch (e) {
-      logger.error('[Dynamic Precache] notify start error: ' + e);
-    }
+    // 1. 通知客户端：开始更新
+    const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+    clients.forEach(c => c.postMessage({ type: 'UPDATE_STARTED' }));
 
-    // 请求新的主页 HTML (加个时间戳防止被老 SW 拦截返回旧 HTML)
+    // 2. 请求新的主页 HTML
     const htmlReq = new Request(`/?t=${Date.now()}`);
     const response = await fetch(htmlReq);
     if (!response || !response.ok) {
-      logger.error('[Dynamic Precache] Failed to fetch index.html or non-ok response');
+      // 如果获取主页失败，直接中止，不报错（可能是离线）
       return;
     }
-
     const html = await response.text();
 
-    // 匹配 CSS/JS 文件（仅站内相对地址）
+    // 3. 正则匹配资源
     const resourceRegex = /(?:href|src)=["']([^"']+\.(?:css|js))["']/g;
     let match;
-    const resourcesToCache = new Set([
-      "/", // 缓存主页本身
-      ...PreCachlist // 保留原来的手动列表
-    ]);
+    const resourcesToCache = new Set([ "/", ...PreCachlist ]);
 
     while ((match = resourceRegex.exec(html)) !== null) {
       const url = match[1];
@@ -329,82 +318,67 @@ const cacheNewVersionResources = async (cache) => {
     const list = Array.from(resourcesToCache);
     logger.group.event(`Dynamic Precache: Found ${list.length} files`);
 
-    // 串行缓存以便精准上报进度（并发也可，但更难精确计数）
+    // 4. 串行缓存并上报进度
     let cachedCount = 0;
     for (let i = 0; i < list.length; i++) {
       const url = list[i];
       try {
         const req = new Request(url);
+        // 检查是否已有缓存
         const existing = await cache.match(req);
         if (!existing) {
-          logger.wait(`Background caching: ${url}`);
-          await cache.add(req).catch(e => {
-            logger.error(`Failed to cache ${url}: ${e}`);
-          });
-        } else {
-          logger.ready(`Already cached: ${url}`);
+          await cache.add(req);
         }
       } catch (e) {
-        logger.error(`Error caching ${url}: ${e}`);
+        logger.warn(`Failed to cache ${url}: ${e}`);
+        // 即使单个文件失败，也继续处理下一个，不中断流程
       }
 
-      // 更新计数并通知 clients
       cachedCount++;
       const percent = Math.round((cachedCount / list.length) * 100);
-      try {
-        const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'UPDATE_PROGRESS',
-            cached: cachedCount,
-            total: list.length,
-            percent: percent,
-            url: list[i]
-          });
+      
+      // 通知进度
+      const processingClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+      processingClients.forEach(client => {
+        client.postMessage({
+          type: 'UPDATE_PROGRESS',
+          cached: cachedCount,
+          total: list.length,
+          percent: percent
         });
-      } catch (e) {
-        logger.error('[Dynamic Precache] notify progress error: ' + e);
-      }
+      });
     }
     
-    // 🌸 强制刷新 Bing 每日壁纸（仅在版本更新时）
+    // 5. 尝试刷新 Bing 壁纸 (独立 try-catch，防止非关键错误打断流程)
     try {
-      const bingReq = new Request('/bing.jpg', {
-        cache: 'no-store' // ✨ 关键：绕过 HTTP / SW 缓存
-      });
-    
+      const bingReq = new Request('/bing.jpg', { cache: 'no-store' });
       const bingRes = await fetch(bingReq);
-    
       if (bingRes && bingRes.ok) {
         await cache.put('/bing.jpg', bingRes.clone());
-        logger.ready('Bing wallpaper refreshed for new version');
-      } else {
-        logger.warn('Failed to refresh Bing wallpaper');
+        logger.ready('Bing wallpaper refreshed');
       }
     } catch (e) {
-      logger.error('Error refreshing Bing wallpaper: ' + e);
+      logger.warn('Bing wallpaper refresh failed: ' + e);
     }
 
     logger.ready(`Background update complete.`);
 
-    // 结束时仍然通知：已完成（保留原有字段）
-    try {
-      const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-      allClients.forEach(client => {
-        client.postMessage({
-          type: 'NEW_VERSION_CACHED',
-          title: '发现新版本',
-          message: '已在后台缓存新版本资源，是否现在刷新以使用新版本？',
-          showConfirm: true
-        });
+    // 6. 最终通知：更新完成
+    const finalClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+    finalClients.forEach(client => {
+      client.postMessage({
+        type: 'NEW_VERSION_CACHED',
+        title: '发现新版本',
+        message: '后台更新已完成，请刷新页面以应用。',
+        showConfirm: true
       });
-    } catch (e) {
-      logger.error('[Dynamic Precache] notify complete error: ' + e);
-    }
+    });
+
   } catch (err) {
     logger.error(`[Dynamic Precache Error] ${err}`);
   }
 };
+
 
 /* =====================================================
    原有的 installFunction 保留（用于兼容原 precache 行为）
@@ -476,25 +450,8 @@ self.addEventListener('install', async function (event) {
 
       // 2) 执行动态缓存逻辑：拉取新版本主页并缓存其引用的资源
       await cacheNewVersionResources(cache);
-
-      // 3) 动态缓存完成后，通知所有页面（window clients）——让页面弹窗提示用户刷新（页面端决定是否调用 SKIP_WAITING）
-      try {
-        const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-        allClients.forEach(client => {
-          client.postMessage({
-            type: 'NEW_VERSION_CACHED',
-            title: '发现新版本',
-            message: '已在后台缓存新版本资源。是否现在刷新以使用新版本？',
-            // 前端可以据此调用 VolantisApp.question(title, message, option, success, cancel, done)
-            // 并在用户确认时向 SW 发送 { type: 'SKIP_WAITING' }。
-            // 我们在下面添加了对 SKIP_WAITING 的监听。
-            showConfirm: true
-          });
-        });
-      } catch (e) {
-        logger.error('[install] notify clients error: ' + e);
-      }
     })());
+
     logger.bg.ready('service worker installed (waiting for activation)');
   } catch (error) {
     logger.error('[install] ' + (error.stack || error));
