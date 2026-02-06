@@ -37,9 +37,10 @@
     "nodejieba": "^3.5.2"
   },
   "devDependencies": {
+    "cssnano": "^7.1.2",
     "gulp": "5",
-    "gulp-clean-css": "^4.3.0",
     "gulp-html-minifier-terser": "^7.1.0",
+    "gulp-postcss": "^10.0.0",
     "gulp-terser": "^2.1.0"
   }
 }

@@ -7,14 +7,21 @@ const terser = require('gulp-terser');
 const paths = ['./public/**/*.{css,html,js}', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'];
 
 // 压缩 CSS
+const postcss = require('gulp-postcss');
+const cssnano = require('cssnano');
+
 function minify_css() {
-  return gulp.src('./public/**/*.css', { base: './public' })
-    .pipe(cleanCSS({ 
-      level: 2, // 开启 2 级优化，包括合并选择器等
-      format: 'keep-breaks' // 或者去掉 format 实现完全压缩
-    }))
+  return gulp.src('./public/**/*.css', { base: './public', allowEmpty: true })
+    .pipe(postcss([
+      cssnano({
+        preset: ['default', {
+          discardComments: { removeAll: true },
+        }]
+      })
+    ]))
     .pipe(gulp.dest('./public'));
 }
+
 
 // 压缩 HTML
 function minify_html() {
