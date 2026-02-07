@@ -11,6 +11,12 @@
   });
 
   navigator.serviceWorker.ready.then(registration => {
+    // 向当前或等待中的 worker 发送 FORCE_UPDATE（修复：兼容多种状态）
+    const worker = registration.active || registration.waiting || registration.installing;
+    if (worker) {
+      worker.postMessage({ type: 'FORCE_UPDATE' });
+    }
+
     let refreshing = false;
     let progressShown = false;
     let doneShown = false;
@@ -21,9 +27,8 @@
     const onControllerChange = () => {
       if (refreshing) return;
       refreshing = true;
-      // 清理可能残留的 iziToast
-      iziToast.destroy();
-      // 强制刷新
+      // 不使用 destroy()，避免 UI 闪烁和多个 toast 被误删
+      // 直接刷新页面即可
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange, { once: true });
@@ -106,7 +111,8 @@
         if (toastEl) {
           const bar = toastEl.querySelector('.sw-update-bar');
           const txt = toastEl.querySelector('.sw-update-text');
-          const pct = Math.round((data.cached / data.total) * 100);
+          // 支持两种数据格式：progress 字段 或 cached/total 字段
+          const pct = data.progress !== undefined ? data.progress : Math.round((data.cached / data.total) * 100);
           if (bar) bar.style.width = pct + '%';
           if (txt) txt.textContent = pct + '%';
         }

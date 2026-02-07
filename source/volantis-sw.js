@@ -1,926 +1,395 @@
-// volantis-sw.js (modified)
-// sw 并发请求 cdn
+/* =====================================================
+   Volantis Service Worker (Final Optimized Version)
+   ===================================================== */
 const prefix = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
 const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
+
 const PreCachlist = [
   "/css/style.css",
   "/js/app.js",
   "/js/search/hexo.js",
+  "/", // 确保根目录被预缓存
 ];
-let debug = true;
-const handleFetch = async (event) => {
-  const url = event.request.url;
-  if (/nocache/.test(url)) {
-    return NetworkOnly(event)
-  } else if (/@latest/.test(url)) {
-    return CacheFirst(event)
-  } else if (/cdnjs\.cloudflare\.com/.test(url)) {
-    return CacheAlways(event)
-  } else if (/music\.126\.net/.test(url)) {
-    return CacheAlways(event)
-  } else if (/qqmusic\.qq\.com/.test(url)) {
-    return CacheAlways(event)
-  } else if (/jsdelivr\.net/.test(url)) {
-    return CacheAlways(event)
-  } else if (/npm\.elemecdn\.com/.test(url)) {
-    return CacheAlways(event)
-  } else if (/unpkg\.com/.test(url)) {
-    return CacheAlways(event)
-  } else if (new URL(url).pathname === '/bing.jpg') {
-    return BingCache(event)
-  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
-    return CacheAlways(event)
-  } else if (/.*\.(css|js)$/.test(url)) {
-    return CacheAlways(event)
-  } else {
-    return CacheFirst(event)
-  }
-}
-const cdn = {
-  gh: {
-    jsdelivr: 'https://cdn.jsdelivr.net/gh',
-    fastly: 'https://fastly.jsdelivr.net/gh',
-    gcore: 'https://gcore.jsdelivr.net/gh',
-    testingcf: 'https://testingcf.jsdelivr.net/gh',
-    test1: 'https://test1.jsdelivr.net/gh',
-  },
-  combine: {
-    jsdelivr: 'https://cdn.jsdelivr.net/combine',
-    fastly: 'https://fastly.jsdelivr.net/combine',
-    gcore: 'https://gcore.jsdelivr.net/combine',
-    testingcf: 'https://testingcf.jsdelivr.net/combine',
-    test1: 'https://test1.jsdelivr.net/combine',
-  },
-  npm: {
-    jsdelivr: 'https://cdn.jsdelivr.net/npm',
-    fastly: 'https://fastly.jsdelivr.net/npm',
-    gcore: 'https://gcore.jsdelivr.net/npm',
-    unpkg: 'https://unpkg.com',
-    eleme: 'https://npm.elemecdn.com',
-    admincdn: 'https://jsd.admincdn.com/npm/',
-  },
-  cdnjs: {
-    cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
-    baomitu: 'https://lib.baomitu.com',
-    bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
-    bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
-    sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
-    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
-  }
-}
-const cdn_match_list = []
-for (const type in cdn) {
-  for (const key in cdn[type]) {
-    cdn_match_list.push({ type: type, key: cdn[type][key] })
-  }
-}
-const _console = console;
-const color = {
-  black: '#000000',
-  red: '#FF0000',
-  green: '#008000',
-  yellow: '#FFFF00',
-  blue: '#0000FF',
-  magenta: '#FF00FF',
-  cyan: '#00FFFF',
-  white: '#FFFFFF',
-};
-const add = (...arr) => {
-  let fi = [
-    []
-  ];
-  for (let key = 0; key < arr.length; key++) {
-    const [first, ...other] = arr[key];
-    fi[0] += first;
-    fi = fi.concat(other);
-  }
-  return fi;
-};
-const createlog = (util) => (...args) => {
-  // const fun = _console[util] ? _console[util] : _console.log;
-  const fun = util == "error" ? _console[util] : _console.log;
-  fun.apply(void 0, args);
-};
-const creategroup = (util) => (...args) => {
-  const fun = _console.groupCollapsed;
-  fun.apply(void 0, args);
-};
-const colorUtils = {
-  bold: (str) => {
-    if (typeof str === 'string' || typeof str === 'number') {
-      return `${str};font-weight: bold;`;
-    }
-    for (let key = 1; key < str.length; key++) {
-      str[key] += `;font-weight: bold;`;
-    }
-    return str;
-  }
-};
-const colorHash = {
-  log: 'black',
-  wait: 'cyan',
-  error: 'red',
-  warn: 'yellow',
-  ready: 'green',
-  info: 'blue',
-  event: 'magenta',
-};
-const createChalk = (name) => (...str) => {
-  if (typeof str[0] === 'object') {
-    createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
-    return;
-  }
-  let strArr = str;
-  if (typeof str === 'string' || typeof str === 'number') {
-    strArr = colorUtils[colorHash[name]](str);
-  }
-  createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
-};
-const createChalkBg = (name) => (...str) => {
-  if (typeof str[0] === 'object') {
-    createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), ...str));
-    return;
-  }
-  let strArr = str;
-  if (typeof str === 'string' || typeof str === 'number') {
-    strArr = colorUtils[colorHash[name]](str);
-  }
-  createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), strArr));
-};
-const createChalkGroup = (name) => (...str) => {
-  if (typeof str[0] === 'object') {
-    creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
-    return;
-  }
-  let strArr = str;
-  if (typeof str === 'string' || typeof str === 'number') {
-    strArr = colorUtils[colorHash[name]](str);
-  }
-  creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
-};
-const chalk = {
-  group: {
-    end: _console.groupEnd
-  },
-  bg: {}
-};
-Object.keys(colorHash).forEach(key => {
-  chalk[key] = createChalk(key);
-  chalk.group[key] = createChalkGroup(key);
-  chalk.bg[key] = createChalkBg(key);
-});
-const firstToUpperCase = (str) => str.toLowerCase().replace(/( |^)[a-z]/g, (L) => L.toUpperCase());
-Object.keys(color).forEach(key => {
-  colorUtils[key] = (str) => {
-    if (typeof str === 'string' || typeof str === 'number') {
-      return [`%c${str}`, `color:${color[key]}`];
-    }
-    for (let i = 1; i < str.length; i++) {
-      str[i] += `;color:${color[key]}`;
-    }
-    return str;
-  };
-  colorUtils[`bg${firstToUpperCase(key)}`] = (str) => {
-    if (typeof str === 'string' || typeof str === 'number') {
-      return [`%c${str}`, `padding: 2px 4px; border-radius: 3px; color: ${key === 'white' ? '#000' : '#fff'}; font-weight: bold; background:${color[key]};`];
-    }
-    for (let i = 1; i < str.length; i++) {
-      str[i] += `;padding: 2px 4px; border-radius: 3px; font-weight: bold; background:${color[key]};`;
-    }
-    return str;
-  };
-});
-self.logger = {
-  add,
-  ...chalk,
-  ...colorUtils,
-};
 
-if (!debug) {
-  logger = {
-    log: () => { },
-    wait: () => { },
-    error: () => { },
-    warn: () => { },
-    ready: () => { },
-    info: () => { },
-    event: () => { },
-    group: {
-      log: () => { },
-      wait: () => { },
-      error: () => { },
-      warn: () => { },
-      ready: () => { },
-      info: () => { },
-      event: () => { },
-      end: () => { },
-    },
-    bg: {
-      log: () => { },
-      wait: () => { },
-      error: () => { },
-      warn: () => { },
-      ready: () => { },
-      info: () => { },
-      event: () => { },
-    }
-  };
-  console.log = () => { };
-}
-
-const generate_uuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-self.db = {
-  read: (key, config) => {
-    if (!config) { config = { type: "text" } }
-    return new Promise((resolve, reject) => {
-      caches.open(CACHE_NAME).then(cache => {
-        cache.match(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`)).then(function (res) {
-          if (!res) resolve(null)
-          res.text().then(text => resolve(text))
-        }).catch(() => {
-          resolve(null)
-        })
-      })
-    })
-  },
-  write: (key, value) => {
-    return new Promise((resolve, reject) => {
-      caches.open(CACHE_NAME).then(function (cache) {
-        cache.put(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`), new Response(value));
-        resolve()
-      }).catch(() => {
-        reject()
-      })
-    })
-  }
-}
-const compareVersion = (a, b) => {
-  let v1 = a.split('.');
-  let v2 = b.split('.');
-  const len = Math.max(v1.length, v2.length);
-  while (v1.length < len) {
-    v1.push('0');
-  }
-  while (v2.length < len) {
-    v2.push('0');
-  }
-  for (let i = 0; i < len; i++) {
-    const num1 = parseInt(v1[i]);
-    const num2 = parseInt(v2[i]);
-    if (num1 > num2) {
-      return a;
-    } else if (num1 < num2) {
-      return b;
-    }
-  }
-  return a;
-}
-
-/* ========= 动态缓存（含进度上报） ========= */
-const cacheNewVersionResources = async (cache) => {
+/* =====================================================
+   1. 工具函数与路径统一 (Key Management)
+   ===================================================== */
+const fullPath = (url) => {
   try {
-    // 1. 通知客户端：开始更新
-    const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-    clients.forEach(c => c.postMessage({ type: 'UPDATE_STARTED' }));
+    const urlObj = new URL(url, self.location.origin);
+    let path = urlObj.pathname;
 
-    // 2. 请求新的主页 HTML
-    const htmlReq = new Request(`/?t=${Date.now()}`);
-    const response = await fetch(htmlReq);
-    if (!response || !response.ok) {
-      // 如果获取主页失败，直接中止，不报错（可能是离线）
-      return;
-    }
-    const html = await response.text();
-
-    // 3. 正则匹配资源
-    const resourceRegex = /(?:href|src)=["']([^"']+\.(?:css|js))["']/g;
-    let match;
-    const resourcesToCache = new Set([ "/", ...PreCachlist ]);
-
-    while ((match = resourceRegex.exec(html)) !== null) {
-      const url = match[1];
-      if (url && !url.startsWith('http') && !url.startsWith('//')) {
-        let normalized = url;
-        if (!normalized.startsWith('/')) {
-          if (normalized.startsWith('./')) normalized = normalized.substring(1);
-          normalized = '/' + normalized;
-        }
-        resourcesToCache.add(normalized);
+    // 只对站内链接进行路径补全，避免误伤外部 CDN
+    if (urlObj.origin === self.location.origin) {
+      if (path.endsWith('/')) {
+        path += 'index.html';
+      } else {
+        const last = path.split('/').pop();
+        if (last && !last.includes('.')) path += '/index.html';
       }
-    }
-
-    const list = Array.from(resourcesToCache);
-    logger.group.event(`Dynamic Precache: Found ${list.length} files`);
-
-    // 4. 串行缓存并上报进度
-    let cachedCount = 0;
-    for (let i = 0; i < list.length; i++) {
-      const url = list[i];
-      try {
-        const req = new Request(url);
-        // 检查是否已有缓存
-        const existing = await cache.match(req);
-        if (!existing) {
-          await cache.add(req);
-        }
-      } catch (e) {
-        logger.warn(`Failed to cache ${url}: ${e}`);
-        // 即使单个文件失败，也继续处理下一个，不中断流程
-      }
-
-      cachedCount++;
-      const percent = Math.round((cachedCount / list.length) * 100);
-      
-      // 通知进度
-      const processingClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-      processingClients.forEach(client => {
-        client.postMessage({
-          type: 'UPDATE_PROGRESS',
-          cached: cachedCount,
-          total: list.length,
-          percent: percent
-        });
-      });
     }
     
-    // 5. 尝试刷新 Bing 壁纸 (独立 try-catch，防止非关键错误打断流程)
+    return `${urlObj.origin}${path}`;
+  } catch (e) { return url; }
+};
+
+// 统一生成带标准化路径的 Request
+const requestFor = (url) => new Request(fullPath(url));
+
+const logger = {
+  info: (...args) => console.log(`[SW]`, ...args),
+  ready: (...args) => console.log(`%c[SW]`, 'color:#42b983;font-weight:bold;', ...args),
+  warn: (...args) => console.warn(`[SW]`, ...args),
+  error: (...args) => console.error(`[SW]`, ...args),
+};
+
+/* =====================================================
+   2. 数据库与动态更新逻辑
+   ===================================================== */
+const DB_NAME = prefix + '-db'; // 持久化 DB，不随版本销毁
+
+const db = {
+  read: async (key) => {
     try {
-      const bingReq = new Request('/bing.jpg', { cache: 'no-store' });
-      const bingRes = await fetch(bingReq);
-      if (bingRes && bingRes.ok) {
-        const runtimeCache = await caches.open(CACHE_NAME + "-runtime");
-        await runtimeCache.put('/bing.jpg', bingRes.clone());
-        logger.ready('Bing wallpaper refreshed in runtime cache');
-      }
+      const cache = await caches.open(DB_NAME); // 使用独立的持久库
+      const res = await cache.match(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`));
+      return res ? res.text() : null;
     } catch (e) {
-      logger.warn('Bing wallpaper refresh failed: ' + e);
+      logger.error('db.read error:', e);
+      return null;
     }
-
-
-    logger.ready(`Background update complete.`);
-
-    // 6. 最终通知：更新完成
-    const finalClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-    finalClients.forEach(client => {
-      client.postMessage({
-        type: 'NEW_VERSION_CACHED',
-        title: '发现新版本',
-        message: '后台更新已完成，请刷新页面以应用。',
-        showConfirm: true
-      });
-    });
-
-  } catch (err) {
-    logger.error(`[Dynamic Precache Error] ${err}`);
+  },
+  write: async (key, value) => {
+    try {
+      const cache = await caches.open(DB_NAME); // 使用独立的持久库
+      return cache.put(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`), new Response(value));
+    } catch (e) {
+      logger.error('db.write error:', e);
+    }
   }
 };
 
-
-/* =====================================================
-   原有的 installFunction 保留（用于兼容原 precache 行为）
-   ===================================================== */
-const installFunction = async () => {
-  return caches.open(CACHE_NAME + "-precache")
-    .then(async function (cache) {
-      if (!await db.read('uuid')) {
-        await db.write('uuid', generate_uuid())
-      }
-      if (PreCachlist.length) {
-        logger.group.event(`Precaching ${PreCachlist.length} files.`);
-        let index = 0;
-        PreCachlist.forEach(function (url) {
-          cache.match(new Request(url)).then(function (response) {
-            if (response) {
-              logger.ready(`Precaching ${url}`);
-            } else {
-              logger.wait(`Precaching ${url}`);
-              cache.add(new Request(url));
-            }
-            index++;
-            if (index === PreCachlist.length) {
-              logger.ready(`Precached ${PreCachlist.length} files.`);
-              logger.group.end();
-            }
-          })
-        })
-      }
-    }).catch((error) => {
-      logger.error('[install] ' + (error.stack || error));
-    })
-}
-
-/* =====================================================
-   修改：Install 事件（不再立即 skipWaiting；先完成后台缓存）
-   ===================================================== */
-self.addEventListener('install', async function (event) {
-  logger.bg.event("service worker install event listening");
+const cacheNewVersionResources = async (cache) => {
   try {
-    // 不再 self.skipWaiting()，等待用户确认后前端向 SW 发消息再跳过等待
-    event.waitUntil((async () => {
-      const cache = await caches.open(CACHE_NAME + "-precache");
-      // uuid 保持
-      if (!await db.read('uuid')) {
-        await db.write('uuid', generate_uuid())
-      }
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    clients.forEach(c => {
+      try { c.postMessage({ type: 'UPDATE_STARTED' }); } catch (e) {}
+    });
 
-      // 1) 依然执行 PreCachlist 的预缓存（同步并发）
-      if (PreCachlist.length) {
-        logger.group.event(`Precaching ${PreCachlist.length} files.`);
-        const precachePromises = PreCachlist.map(async (url) => {
+    let latestList = [];
+    try {
+      const txt = await db.read('latest-list');
+      if (txt) latestList = JSON.parse(txt);
+    } catch (e) {
+      logger.error('Failed to parse latest-list:', e);
+    }
+
+    const total = latestList.length;
+    if (total === 0) {
+      logger.warn('No resources to update in latest-list');
+      return;
+    }
+
+    let done = 0;
+    const MAX_CONCURRENT = 5;
+    
+    for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
+      const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
+        const req = requestFor(url);
+        try {
+          const res = await fetch(req);
+          if (res.ok) await cache.put(req, res.clone());
+        } catch (e) {
+          logger.warn(`Failed to fetch ${url}:`, e);
+        }
+        done++;
+        
+        // 进度通知
+        const currentClients = await self.clients.matchAll({ includeUncontrolled: true });
+        currentClients.forEach(c => {
           try {
-            const r = await cache.match(new Request(url));
-            if (r) {
-              logger.ready(`Precaching (exists) ${url}`);
-            } else {
-              logger.wait(`Precaching: ${url}`);
-              await cache.add(new Request(url));
+            c.postMessage({ 
+              type: 'UPDATE_PROGRESS', 
+              progress: Math.round((done / total) * 100) 
+            });
+          } catch (e) {}
+        });
+      });
+      await Promise.all(batch);
+    }
+    
+    // 完成通知
+    const finalClients = await self.clients.matchAll({ includeUncontrolled: true });
+    finalClients.forEach(c => {
+      try { c.postMessage({ type: 'NEW_VERSION_CACHED' }); } catch (e) {}
+    });
+  } catch (e) { 
+    logger.error('Dynamic cache error:', e); 
+  }
+};
+
+/* =====================================================
+   3. 生命周期 (Install / Activate)
+   ===================================================== */
+self.addEventListener('install', event => {
+  logger.info('Service Worker installing...');
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(CACHE_NAME + "-precache");
+      logger.info(`Precaching ${PreCachlist.length} files...`);
+      
+      // 并发下载，防止串行阻塞（每批 5 个）
+      const MAX_CONCURRENT = 5;
+      for (let i = 0; i < PreCachlist.length; i += MAX_CONCURRENT) {
+        const batch = PreCachlist.slice(i, i + MAX_CONCURRENT).map(async (url) => {
+          const req = requestFor(url);
+          const matched = await cache.match(req);
+          if (!matched) {
+            try {
+              const res = await fetch(req);
+              if (res.ok) {
+                await cache.put(req, res.clone());
+                logger.ready(`Precached: ${url}`);
+              } else {
+                logger.warn(`Failed to precache ${url}: HTTP ${res.status}`);
+              }
+            } catch (e) { 
+              logger.warn(`Failed to precache ${url}:`, e); 
             }
-          } catch (e) {
-            logger.error(`[install] precache ${url} error: ${e}`);
+          } else {
+            logger.info(`Already cached: ${url}`);
           }
         });
-        await Promise.all(precachePromises);
-        logger.ready(`Precached ${PreCachlist.length} files.`);
-        logger.group.end();
+        await Promise.all(batch);
       }
+      
+      logger.ready('Precache complete.');
+      // 移除自动 skipWaiting，由用户点击"立即刷新"按钮触发
+      // self.skipWaiting();
+    } catch (e) {
+      logger.error('Install error:', e);
+    }
+  })());
+});
 
-      // 2) 执行动态缓存逻辑：拉取新版本主页并缓存其引用的资源
-      await cacheNewVersionResources(cache);
-    })());
-
-    logger.bg.ready('service worker installed (waiting for activation)');
-  } catch (error) {
-    logger.error('[install] ' + (error.stack || error));
-  }
+self.addEventListener('activate', event => {
+  logger.info('Service Worker activating...');
+  event.waitUntil((async () => {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => {
+        // 白名单：保护持久化数据库不被清理
+        if (!key.includes(cacheSuffixVersion) && key !== DB_NAME) {
+          logger.info(`Deleting old cache: ${key}`);
+          return caches.delete(key);
+        }
+      }));
+      
+      await self.clients.claim();
+      
+      const windows = await self.clients.matchAll({ type: 'window' });
+      windows.forEach(w => {
+        try { w.postMessage({ type: 'SW_ACTIVATED' }); } catch (e) {}
+      });
+      
+      logger.ready('Activated and claimed clients.');
+    } catch (e) {
+      logger.error('Activate error:', e);
+    }
+  })());
 });
 
 /* =====================================================
-   activate & fetch 等事件保持不变（仅作整合）
+   4. 缓存策略 (Cache Strategies)
    ===================================================== */
-self.addEventListener('activate', async event => {
-  logger.bg.event("service worker activate event listening");
-  try {
-    event.waitUntil(
-      caches.keys().then((keys) => {
-        return Promise.all(keys.map((key) => {
-          if (!key.includes(cacheSuffixVersion)) {
-            caches.delete(key);
-            logger.bg.ready('Deleted Outdated Cache: ' + key);
-          }
-        }));
-      }).catch((error) => {
-        logger.error('[activate] ' + (error.stack || error));
-      })
-    );
-    await self.clients.claim();
-    logger.bg.ready('service worker activate sucess!');
-
-    // 新增：通知所有页面：SW 已经激活并接管（可靠触发前端 reload）
-    try {
-      const windows = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-      windows.forEach(w => {
-        w.postMessage({ type: 'NEW_ACTIVATED' });
-      });
-      logger.bg.ready('Posted NEW_ACTIVATED to clients');
-    } catch (e) {
-      logger.error('[activate] notify clients activated error: ' + e);
-    }
-
-  } catch (error) {
-    logger.error('[activate] ' + (error.stack || error));
-  }
-});
-
-self.addEventListener('fetch', async event => {
-  event.respondWith(
-    handleFetch(event).catch((error) => {
-      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
-    })
-  )
-});
-
-
 const NetworkOnly = async (event) => {
-  logger.group.info('NetworkOnly: ' + new URL(event.request.url).pathname);
-  logger.wait('service worker fetch: ' + event.request.url)
-  logger.group.end();
-  return fetch(event.request)
-}
-const CacheFirst = async (event) => {
-  return caches.match(event.request).then(function (resp) {
-    logger.group.info('CacheFirst: ' + new URL(event.request.url).pathname);
-    logger.wait('service worker fetch: ' + event.request.url)
-    if (resp) {
-      logger.group.ready(`Cache Hit`);
-      console.log(resp)
-      logger.group.end();
-      logger.group.end();
-      event.waitUntil(CacheRuntime(event.request))
-      return resp;
-    } else {
-      logger.warn(`Cache Miss`);
-      logger.group.end();
-      return CacheRuntime(event.request)
-    }
-  })
-}
-const CacheAlways = async (event) => {
-  return caches.match(event.request).then(function (resp) {
-    logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
-    logger.wait('service worker fetch: ' + event.request.url)
-    if (resp) {
-      logger.group.ready(`Cache Hit`);
-      console.log(resp)
-      logger.group.end();
-      logger.group.end();
-      return resp;
-    } else {
-      logger.warn(`Cache Miss`);
-      logger.group.end();
-      return CacheRuntime(event.request)
-    }
-  })
-}
-
-const matchCache = async (event) => {
-  return caches.match(event.request).then(function (resp) {
-    logger.group.info('service worker fetch: ' + event.request.url)
-    if (resp) {
-      logger.group.ready(`Cache Hit`);
-      console.log(resp)
-      logger.group.end();
-      logger.group.end();
-      return resp;
-    } else {
-      logger.warn(`Cache Miss`);
-      logger.group.end();
-      return CacheRuntime(event.request)
-    }
-  })
-}
-async function CacheRuntime(request) {
-  const url = new URL(request.url);
-  let response = await matchCDN(request);
-  if (!response) {
-    response = await fetch(request).catch(() => null)
+  try {
+    return await fetch(event.request);
+  } catch (e) {
+    logger.warn('NetworkOnly failed:', e);
+    return new Response('Offline', { status: 503 });
   }
-  logger.group.event(`Cache Runtime ${url.pathname}`);
-  logger.wait(`Caching url: ${request.url}`);
-  console.log(response);
-
-  if (request.method === "GET" && (url.protocol == "https:")) {
-    const cache = await caches.open(CACHE_NAME + "-runtime");
-    cache.put(request, response.clone()).catch(error => {
-      logger.error('[Cache Runtime] ' + (error.stack || error));
-      if (error.name === 'QuotaExceededError') {
-        caches.delete(CACHE_NAME + "-runtime");
-        logger.ready("deleted cache")
-      }
-    })
-    logger.ready(`Cached url: ${request.url}`);
-  } else {
-    logger.warn(`Not Cached url: ${request.url}`);
-  }
-  logger.group.end();
-  return response;
-}
-
-const matchCDN = async (req) => {
-  const nav = navigator
-  const { saveData, effectiveType } = nav.connection || nav.mozConnection || nav.webkitConnection || {}
-  if (saveData || /2g/.test(effectiveType)) {
-    logger.warn("Slow Network: Transparent Proxy");
-    return fetch(req);
-  }
-  const urls = []
-  let urlObj = new URL(req.url)
-  let pathType = urlObj.pathname.split('/')[1]
-  let pathTestRes = "";
-
-  if (!urls.length) {
-    for (const item of cdn_match_list) {
-      if (new RegExp(item.key).test(req.url)) {
-        pathType = item.type
-        pathTestRes = new RegExp(item.key).exec(req.url)[0]
-        break;
-      }
-    }
-    for (const type in cdn) {
-      if (type === pathType) {
-        logger.group.ready(`Match CDN ${pathType}: ` + req.url);
-        for (const key in cdn[type]) {
-          const url = cdn[type][key] + req.url.replace(pathTestRes, '')
-          console.log(url);
-          urls.push(url)
-        }
-        logger.group.end()
-      }
-    }
-  }
-
-  let res;
-  if (urls.length)
-    res = FetchEngine(urls)
-  else
-    res = fetch(req)
-  return res
-}
-
-const fullPath = (url) => {
-  url = url.split('?')[0].split('#')[0]
-  if (url.endsWith('/')) {
-    url += 'index.html'
-  } else {
-    const list = url.split('/')
-    const last = list[list.length - 1]
-    if (last.indexOf('.') === -1) {
-      url += '.html'
-    }
-  }
-  return url
-}
-async function progress(res) {
-  return new Response(await res.arrayBuffer(), {
-    status: res.status,
-    headers: res.headers
-  })
-}
-
-function createPromiseAny() {
-  Promise.any = function (promises) {
-    return new Promise((resolve, reject) => {
-      promises = Array.isArray(promises) ? promises : []
-      let len = promises.length
-      let errs = []
-      if (len === 0) return reject(new AggregateError('All promises were rejected'))
-      promises.forEach((p) => {
-        if (p instanceof Promise) {
-          p.then(
-            (res) => resolve(res),
-            (err) => {
-              len--
-              errs.push(err)
-              if (len === 0) reject(new AggregateError(errs))
-            }
-          )
-        } else {
-          reject(p)
-        }
-      })
-    })
-  }
-}
-
-function fetchAny(reqs) {
-  const controller = new AbortController()
-
-  return reqs.map(req => {
-    return new Promise((resolve, reject) => {
-      fetch(req, {
-        signal: controller.signal
-      })
-        .then(progress)
-        .then(res => {
-          controller.abort()
-          if (res.status !== 200)
-            reject(null)
-          else
-            resolve(res)
-        })
-        .catch(() => reject(null))
-    })
-  })
-}
-
-function fetchParallel(reqs) {
-  const abortEvent = new Event("abortOtherInstance")
-  const eventTarget = new EventTarget();
-
-  return reqs.map(async req => {
-    const controller = new AbortController();
-    let tagged = false;
-    eventTarget.addEventListener(abortEvent.type, () => {
-      if (!tagged) controller.abort();
-    })
-    return new Promise((resolve, reject) => {
-      fetch(req, {
-        signal: controller.signal,
-      }).then(res => {
-        tagged = true;
-        eventTarget.dispatchEvent(abortEvent)
-        if (res.status !== 200)
-          reject(null)
-        else
-          resolve(res)
-      }).catch(() => reject(null))
-    })
-  });
-}
-
-const FetchEngine = (reqs) => {
-  if (!Promise.any) createPromiseAny();
-  return Promise.any(fetchParallel(reqs)).then(res => res)
-    .catch((e) => {
-      if (e == "AggregateError: All promises were rejected") {
-        return Promise.any(fetchAny(reqs))
-          .then((res) => res)
-          .catch(() => null);
-      }
-      return null;
-    });
 };
 
-/**
- * Bing 壁纸优化：Stale-While-Revalidate 策略
- * 1. 优先返回缓存，实现“秒开”
- * 2. 无论是否有缓存，都在后台发起网络请求，静默更新本地缓存
- */
+const CacheFirst = async (event) => {
+  const req = requestFor(event.request.url);
+  const cached = await caches.match(req);
+  if (cached) {
+    logger.info(`Cache hit: ${event.request.url}`);
+    return cached;
+  }
+  
+  try {
+    const res = await fetch(event.request);
+    if (res.ok) {
+      const cache = await caches.open(CACHE_NAME + "-runtime");
+      cache.put(req, res.clone()); // 不阻塞返回
+    }
+    return res;
+  } catch (e) {
+    logger.error(`CacheFirst failed for ${event.request.url}:`, e);
+    return new Response('Network error', { status: 504 });
+  }
+};
+
+const CacheAlways = async (event) => {
+  const req = requestFor(event.request.url);
+  const cache = await caches.open(CACHE_NAME + "-runtime");
+  const cached = await cache.match(req);
+  if (cached) return cached;
+  
+  try {
+    const res = await fetch(event.request);
+    // 增加对 opaque 响应的保护（跨域资源）
+    if (res && (res.ok || res.type === 'opaque')) {
+      await cache.put(req, res.clone());
+    }
+    return res;
+  } catch (e) {
+    logger.error(`CacheAlways failed for ${event.request.url}:`, e);
+    // 返回一个合适的错误响应而不是抛出异常
+    return new Response('Network error', { status: 504 });
+  }
+};
+
+// Bing 专用：Stale-While-Revalidate (秒开 + 静默更新)
 const BingCache = async (event) => {
   const cache = await caches.open(CACHE_NAME + "-runtime");
-  
-  // 尝试匹配缓存
-  const cachedResponse = await cache.match(event.request);
+  const req = requestFor('/bing.jpg'); // 统一存为 bing.jpg
+  const cached = await cache.match(req);
 
-  // 后台静默更新请求
-  const fetchPromise = fetch(event.request).then(networkResponse => {
-    if (networkResponse && networkResponse.ok) {
-      // 更新缓存，供下次使用
-      cache.put(event.request, networkResponse.clone());
+  // 后台更新任务（可选延迟）
+  const updateTask = async (withDelay = true) => {
+    try {
+      if (withDelay) await new Promise(r => setTimeout(r, 2000)); // 避开首屏闪烁
+      const res = await fetch(event.request);
+      if (res.ok) await cache.put(req, res.clone());
+      return res;
+    } catch (e) { 
+      logger.warn('BingCache background update failed:', e);
+      return null; 
     }
-    return networkResponse;
-  }).catch(err => {
-    logger.error('Bing silent update failed: ' + err);
-  });
+  };
 
-  // 如果有缓存立刻返回缓存，否则等待网络请求
-  return cachedResponse || fetchPromise;
-}
-
-
-const getContentType = (ext) => {
-  switch (ext) {
-    case 'js':
-      return 'text/javascript'
-    case 'html':
-      return 'text/html'
-    case 'css':
-      return 'text/css'
-    case 'json':
-      return 'application/json'
-    case 'webp':
-      return 'image/webp'
-    case 'jpg':
-      return 'image/jpg'
-    case 'jpeg':
-      return 'image/jpeg'
-    case 'png':
-      return 'image/png'
-    case 'gif':
-      return 'image/gif'
-    case 'xml':
-      return 'text/xml'
-    case 'xsl':
-      return 'text/xml'
-    case 'webmanifest':
-      return 'text/webmanifest'
-    case 'map':
-      return 'application/json'
-    case 'bcmap':
-      return 'image/vnd.wap.wbmp'
-    case 'wbmp':
-      return 'image/vnd.wap.wbmp'
-    case 'bmp':
-      return 'image/bmp'
-    case 'ico':
-      return 'image/vnd.microsoft.icon'
-    case 'tiff':
-      return 'image/tiff'
-    case 'tif':
-      return 'image/tiff'
-    case 'svg':
-      return 'image/svg+xml'
-    case 'svgz':
-      return 'image/svg+xml'
-    case 'woff':
-      return 'application/font-woff'
-    case 'woff2':
-      return 'application/font-woff2'
-    case 'ttf':
-      return 'application/font-ttf'
-    case 'otf':
-      return 'application/font-otf'
-    case 'eot':
-      return 'application/vnd.ms-fontobject'
-    case 'zip':
-      return 'application/zip'
-    case 'tar':
-      return 'application/x-tar'
-    case 'gz':
-      return 'application/gzip'
-    case 'bz2':
-      return 'application/x-bzip2'
-    case 'rar':
-      return 'application/x-rar-compressed'
-    case '7z':
-      return 'application/x-7z-compressed'
-    case 'doc':
-      return 'application/msword'
-    case 'docx':
-      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    case 'xls':
-      return 'application/vnd.ms-excel'
-    case 'xlsx':
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    case 'ppt':
-      return 'application/vnd.ms-powerpoint'
-    case 'pptx':
-      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    case 'pdf':
-      return 'application/pdf'
-    case 'txt':
-      return 'text/plain'
-    case 'rtf':
-      return 'application/rtf'
-    case 'mp3':
-      return 'audio/mpeg'
-    case 'wav':
-      return 'audio/x-wav'
-    case 'ogg':
-      return 'audio/ogg'
-    case 'mp4':
-      return 'video/mp4'
-    case 'm4v':
-      return 'video/x-m4v'
-    case 'mov':
-      return 'video/quicktime'
-    case 'avi':
-      return 'video/x-msvideo'
-    case 'wmv':
-      return 'video/x-ms-wmv'
-    case 'flv':
-      return 'video/x-flv'
-    case 'swf':
-      return 'application/x-shockwave-flash'
-    case 'mpg':
-      return 'video/mpeg'
-    case 'mpeg':
-      return 'video/mpeg'
-    case 'mpe':
-      return 'video/mpeg'
-    case 'mpv':
-      return 'video/mpeg'
-    case 'm2v':
-      return 'video/mpeg'
-    case 'm4a':
-      return 'audio/mp4'
-    case 'aac':
-      return 'audio/aac'
-    case 'm3u':
-      return 'audio/x-mpegurl'
-    case 'm3u8':
-      return 'application/vnd.apple.mpegurl'
-    case 'pls':
-      return 'audio/x-scpls'
-    case 'cue':
-      return 'application/x-cue'
-    case 'wma':
-      return 'audio/x-ms-wma'
-    case 'flac':
-      return 'audio/flac'
-    case 'aif':
-      return 'audio/x-aiff'
-    case 'aiff':
-      return 'audio/x-aiff'
-    case 'aifc':
-      return 'audio/x-aiff'
-    case 'au':
-      return 'audio/basic'
-    case 'snd':
-      return 'audio/basic'
-    case 'mid':
-      return 'audio/midi'
-    case 'midi':
-      return 'audio/midi'
-    case 'kar':
-      return 'audio/midi'
-    default:
-      return 'text/plain'
+  if (cached) {
+    event.waitUntil(updateTask(true)); // 有缓存时，后台静默延迟更新
+    return cached; // 立即返回缓存
   }
-}
+
+  // 没缓存时，立即请求，失败时兜底到原始 fetch
+  return updateTask(false).then(res => res || fetch(event.request));
+};
 
 /* =====================================================
-   新增：监听前端发来的 "SKIP_WAITING" 指令
-   （前端在用户确认刷新时应发送该消息）
+   5. Fetch 路由与 CDN 并发
+   ===================================================== */
+const handleFetch = async (event) => {
+  const url = event.request.url;
+  
+  // nocache 强制走网络
+  if (/nocache/.test(url)) return NetworkOnly(event);
+  
+  // @latest 标记的资源优先缓存
+  if (/@latest/.test(url)) return CacheFirst(event);
+  
+  // Bing 每日图片特殊处理
+  if (new URL(url).pathname.includes('bing.jpg') || /bing\.com\/th\?/.test(url)) {
+    return BingCache(event);
+  }
+  
+  // 静态资源与 CDN 匹配
+  const isStatic = /\.(png|jpg|jpeg|svg|gif|webp|ico|css|js|woff2?|ttf|eot)$/i.test(url);
+  const isCDN = /(cdnjs\.cloudflare\.com|jsdelivr\.net|elemecdn\.com|unpkg\.com)/.test(url);
+
+  if (isCDN) return matchCDN(event.request);
+  if (isStatic) return CacheAlways(event);
+  
+  // 默认策略：缓存优先
+  return CacheFirst(event);
+};
+
+self.addEventListener('fetch', event => {
+  // 只处理 GET 请求
+  if (event.request.method !== 'GET') return;
+  
+  event.respondWith(
+    handleFetch(event).catch(err => {
+      logger.error('handleFetch critical error:', err);
+      // 最后的兜底：尝试直接 fetch
+      return fetch(event.request).catch(() => 
+        new Response('Service Worker Error', { status: 503 })
+      );
+    })
+  );
+});
+
+/* =====================================================
+   6. CDN 并发引擎 (Simplified)
+   ===================================================== */
+const matchCDN = async (req) => {
+  const urls = [req.url];
+  const urlObj = new URL(req.url);
+  
+  // 备选节点
+  if (urlObj.hostname.includes('jsdelivr.net')) {
+    urls.push(req.url.replace('cdn.jsdelivr.net', 'fastly.jsdelivr.net'));
+  }
+
+  // 竞速模式：谁快用谁（增加 timeout 防止挂起）
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10秒超时
+  
+  const fetchPromises = urls.map(u => 
+    fetch(new Request(u), { signal: controller.signal })
+      .then(res => {
+        if (res.ok) {
+          clearTimeout(timeout);
+          controller.abort(); // 取消其他请求
+          return res;
+        }
+        throw res;
+      })
+      .catch(err => {
+        // 屏蔽掉我们主动取消导致的错误日志
+        if (err.name !== 'AbortError') {
+          logger.warn(`CDN node ${u} failed:`, err.status || err);
+        }
+        throw err;
+      })
+  );
+
+  // 手动实现 Promise.any (谁先成功用谁，而不是谁先完成)
+  return new Promise((resolve, reject) => {
+    let errors = 0;
+    fetchPromises.forEach(p => {
+      p.then(resolve).catch(() => {
+        errors++;
+        if (errors === fetchPromises.length) {
+          clearTimeout(timeout);
+          reject(new Error('All CDN nodes failed'));
+        }
+      });
+    });
+  }).catch(() => {
+    logger.warn('All CDN nodes failed, fallback to original');
+    return fetch(req);
+  });
+};
+
+/* =====================================================
+   7. 消息监听
    ===================================================== */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    logger.bg.event("User confirmed update, skipping waiting...");
+  if (!event.data) return;
+  
+  if (event.data.type === 'SKIP_WAITING') {
+    logger.info('SKIP_WAITING received, activating new SW...');
     self.skipWaiting();
+  }
+  
+  if (event.data.type === 'FORCE_UPDATE') {
+    logger.info('FORCE_UPDATE received, caching new resources...');
+    caches.open(CACHE_NAME + "-precache").then(cache => cacheNewVersionResources(cache));
   }
 });
