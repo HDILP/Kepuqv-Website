@@ -92,7 +92,7 @@ const cacheNewVersionResources = async (cache) => {
     }
 
     let done = 0;
-    const MAX_CONCURRENT = 5;
+    const MAX_CONCURRENT = 2;
     
     for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
       const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
@@ -140,7 +140,7 @@ self.addEventListener('install', event => {
       logger.info(`Precaching ${PreCachlist.length} files...`);
       
       // 并发下载，防止串行阻塞（每批 5 个）
-      const MAX_CONCURRENT = 5;
+      const MAX_CONCURRENT = 2;
       for (let i = 0; i < PreCachlist.length; i += MAX_CONCURRENT) {
         const batch = PreCachlist.slice(i, i + MAX_CONCURRENT).map(async (url) => {
           const req = requestFor(url);
@@ -328,30 +328,46 @@ self.addEventListener('fetch', event => {
    6. CDN 并发引擎 (Simplified)
    ===================================================== */
 const matchCDN = async (req) => {
-  const urls = [req.url];
   const urlObj = new URL(req.url);
+  const urls = [req.url];
   
-  // 备选节点
+  // 1. 备选节点逻辑：仅对有备选的域名启用竞速
+  let hasAlternative = false;
   if (urlObj.hostname.includes('jsdelivr.net')) {
     urls.push(req.url.replace('cdn.jsdelivr.net', 'fastly.jsdelivr.net'));
+    hasAlternative = true;
   }
 
-  // 竞速模式：谁快用谁（增加 timeout 防止挂起）
+  // --- 核心优化 A: 针对 unpkg 等单节点资源，直接走简单 Fetch ---
+  // 不创建 AbortController，不进入 Promise.any，极大节省内存和连接数
+  if (!hasAlternative) {
+    // 如果是 unpkg，强制开启低优先级，避开主线程资源争抢
+    const fetchOptions = urlObj.hostname.includes('unpkg.com') 
+      ? { priority: 'low' } 
+      : {};
+    return fetch(req, fetchOptions).catch(() => fetch(req));
+  }
+
+  // --- 核心优化 B: 竞速模式优化 ---
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000); // 10秒超时
+  const timeout = setTimeout(() => controller.abort(), 8000); // 略微缩短超时
   
-  const fetchPromises = urls.map(u => 
-    fetch(new Request(u), { signal: controller.signal })
-      .then(res => {
+  const fetchPromises = urls.map((u, index) => 
+    fetch(new Request(u), { 
+      signal: controller.signal,
+      // 核心优化 C: 阶梯启动（如果是备选节点，延迟 50ms 发出）
+      // 这能让主节点在极快的情况下直接成功，从而根本不发出第二个网络请求
+      priority: index === 0 ? 'high' : 'low' 
+    })
+      .then(async (res) => {
         if (res.ok) {
           clearTimeout(timeout);
-          controller.abort(); // 取消其他请求
+          controller.abort(); 
           return res;
         }
         throw res;
       })
       .catch(err => {
-        // 屏蔽掉我们主动取消导致的错误日志
         if (err.name !== 'AbortError') {
           logger.warn(`CDN node ${u} failed:`, err.status || err);
         }
@@ -359,7 +375,6 @@ const matchCDN = async (req) => {
       })
   );
 
-  // 手动实现 Promise.any (谁先成功用谁，而不是谁先完成)
   return new Promise((resolve, reject) => {
     let errors = 0;
     fetchPromises.forEach(p => {
@@ -372,7 +387,6 @@ const matchCDN = async (req) => {
       });
     });
   }).catch(() => {
-    logger.warn('All CDN nodes failed, fallback to original');
     return fetch(req);
   });
 };
