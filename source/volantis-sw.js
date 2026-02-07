@@ -247,39 +247,105 @@ const CacheAlways = async (event) => {
   } catch (e) { return new Response('Network error', { status: 504 }); }
 };
 
-// 简化的 CDN 竞速（优先用首节点，启用备选时用 AbortController）
+// ==================== Smart jsDelivr racing (基于你的 cdn 表) ====================
+const raceFetch = async (urls, reqInit = {}, timeoutMs = 6000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await Promise.any(
+      urls.map(u => fetch(new Request(u, reqInit), { signal: controller.signal }).then(r => {
+        if (r && (r.ok || r.type === 'opaque')) return r;
+        throw new Error('bad response');
+      }))
+    );
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+};
+
 const matchCDN = async (req) => {
   try {
-    const urlObj = new URL(req.url);
-    const isJsdelivr = urlObj.hostname.includes('jsdelivr.net');
-    if (!isJsdelivr) return fetch(req).catch(() => fetch(req));
+    const url = req.url;
 
-    const alternatives = [req.url, req.url.replace('cdn.jsdelivr.net', 'fastly.jsdelivr.net')];
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const promises = alternatives.map((u, idx) => fetch(new Request(u), { signal: controller.signal }).then(r => {
-      if (r && r.ok) {
-        clearTimeout(timeout); controller.abort(); return r;
-      }
-      throw new Error('bad');
-    }));
-    return Promise.any(promises).catch(() => fetch(req));
-  } catch (e) { return fetch(req).catch(() => null); }
+    // gh
+    if (url.startsWith(cdn.gh.jsdelivr)) {
+      const path = url.slice(cdn.gh.jsdelivr.length);
+      return raceFetch([
+        cdn.gh.jsdelivr + path,
+        cdn.gh.fastly + path,
+        cdn.gh.gcore + path,
+        cdn.gh.testingcf + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    // combine
+    if (url.startsWith(cdn.combine.jsdelivr)) {
+      const path = url.slice(cdn.combine.jsdelivr.length);
+      return raceFetch([
+        cdn.combine.jsdelivr + path,
+        cdn.combine.fastly + path,
+        cdn.combine.gcore + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    // npm
+    if (url.startsWith(cdn.npm.jsdelivr)) {
+      const path = url.slice(cdn.npm.jsdelivr.length);
+      return raceFetch([
+        cdn.npm.jsdelivr + path,
+        cdn.npm.fastly + path,
+        cdn.npm.gcore + path,
+        cdn.npm.eleme + path,
+        cdn.npm.unpkg + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    // cdnjs
+    if (url.startsWith(cdn.cdnjs.cdnjs)) {
+      const path = url.slice(cdn.cdnjs.cdnjs.length);
+      return raceFetch([
+        cdn.cdnjs.cdnjs + path,
+        cdn.cdnjs.baomitu + path,
+        cdn.cdnjs.bootcdn + path,
+        cdn.cdnjs.bytedance + path,
+        cdn.cdnjs.sustech + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    return fetch(req);
+  } catch (e) {
+    return fetch(req);
+  }
 };
 
 /* ==================== Fetch routing ==================== */
 const handleFetch = async (event) => {
   const url = event.request.url;
-  if (/nocache/.test(url)) return NetworkOnly(event);
-  if (/@latest/.test(url)) return CacheFirst(event);
-  if (/bing\.com\/th\?/.test(url) || new URL(url).pathname.includes('bing.jpg')) return CacheAlways(event);
-
-  const isStatic = /\.(png|jpg|jpeg|svg|gif|webp|ico|css|js|woff2?|ttf|eot)$/i.test(url);
-  const isCDN = /(cdnjs\.cloudflare\.com|jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com)/.test(url);
-
-  if (isCDN) return matchCDN(event.request);
-  if (isStatic) return CacheAlways(event);
-  return CacheFirst(event);
+  if (/nocache/.test(url)) {
+    return NetworkOnly(event);
+  } else if (/@latest/.test(url)) {
+    return CacheFirst(event);
+  } else if (/cdnjs\.cloudflare\.com/.test(url)) {
+    return CacheAlways(event);
+  } else if (/music\.126\.net/.test(url)) {
+    return CacheAlways(event);
+  } else if (/qqmusic\.qq\.com/.test(url)) {
+    return CacheAlways(event);
+  } else if (/jsdelivr\.net/.test(url)) {
+    return CacheAlways(event);
+  } else if (/npm\.elemecdn\.com/.test(url)) {
+    return CacheAlways(event);
+  } else if (/unpkg\.com/.test(url)) {
+    return CacheAlways(event);
+  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
+    return CacheAlways(event);
+  } else if (/.*\.(css|js)$/.test(url)) {
+    return CacheAlways(event);
+  } else {
+    return CacheFirst(event);
+  }
 };
 
 self.addEventListener('fetch', event => {
@@ -306,4 +372,37 @@ self.addEventListener('message', (event) => {
 });
 
 /* ==================== End ==================== */
+const cdn = {
+  gh: {
+    jsdelivr: 'https://cdn.jsdelivr.net/gh',
+    fastly: 'https://fastly.jsdelivr.net/gh',
+    gcore: 'https://gcore.jsdelivr.net/gh',
+    testingcf: 'https://testingcf.jsdelivr.net/gh',
+    test1: 'https://test1.jsdelivr.net/gh',
+  },
+  combine: {
+    jsdelivr: 'https://cdn.jsdelivr.net/combine',
+    fastly: 'https://fastly.jsdelivr.net/combine',
+    gcore: 'https://gcore.jsdelivr.net/combine',
+    testingcf: 'https://testingcf.jsdelivr.net/combine',
+    test1: 'https://test1.jsdelivr.net/combine',
+  },
+  npm: {
+    jsdelivr: 'https://cdn.jsdelivr.net/npm',
+    fastly: 'https://fastly.jsdelivr.net/npm',
+    gcore: 'https://gcore.jsdelivr.net/npm',
+    unpkg: 'https://unpkg.com',
+    eleme: 'https://npm.elemecdn.com',
+    admincdn: 'https://jsd.admincdn.com/npm/',
+  },
+  cdnjs: {
+    cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
+    baomitu: 'https://lib.baomitu.com',
+    bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
+    bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
+    sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
+    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
+  }
+};
+
 logger.ready('Volantis SW (merged) loaded');
