@@ -309,7 +309,7 @@ const matchCDN = async (req) => {
 const handleFetch = async (event) => {
   const url = event.request.url;
 
-  // === 🎵 音乐 / 播放器资源：完全绕过 SW（Meting / APlayer 依赖 Range + CORS） ===
+  // === 🎵 音乐 / 播放器资源：完全绕过 SW ===
   if (
     event.request.headers.has('range') ||
     /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url) ||
@@ -318,22 +318,13 @@ const handleFetch = async (event) => {
     return fetch(event.request);
   }
 
-  // === 强制不缓存 ===
-  if (/nocache/.test(url)) {
-    return NetworkOnly(event);
-  }
+  if (/nocache/.test(url)) return NetworkOnly(event);
+  if (/@latest/.test(url)) return CacheFirst(event);
 
-  // === 版本探测 ===
-  if (/@latest/.test(url)) {
-    return CacheFirst(event);
-  }
-
-  // === CDN 走智能竞速 ===
   if (/(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/.test(url)) {
     return matchCDN(event.request);
   }
 
-  // === 静态资源 ===
   if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
     return CacheAlways(event);
   }
@@ -341,25 +332,6 @@ const handleFetch = async (event) => {
     return CacheAlways(event);
   }
 
-  // === 页面 / API 兜底 ===
-  return CacheFirst(event);
-};
-  }
-
-  // === CDN 走智能竞速 ===
-  if (/(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/.test(url)) {
-    return matchCDN(event.request);
-  }
-
-  // === 静态资源 ===
-  if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
-    return CacheAlways(event);
-  }
-  if (/\.(css|js)$/i.test(url)) {
-    return CacheAlways(event);
-  }
-
-  // === 页面 / API 兜底 ===
   return CacheFirst(event);
 };
 
