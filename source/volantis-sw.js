@@ -34,23 +34,13 @@ const logger = (() => {
 })();
 
 /* ==================== Utilities ==================== */
-const fullPath = (url) => {
-  try {
-    const urlObj = new URL(url, self.location.origin);
-    let path = urlObj.pathname;
-    if (urlObj.origin === self.location.origin) {
-      if (path.endsWith('/')) path += 'index.html';
-      else {
-        const last = path.split('/').pop();
-        if (last && !last.includes('.')) path += '/index.html';
-      }
-    }
-    return `${urlObj.origin}${path}`;
-  } catch (e) {
-    return url;
-  }
+// ==================== Safe request handling ====================
+// 不再进行路径推断（不补 /index.html）
+// 目录是否可缓存，交给服务器与浏览器自己决定
+const requestFor = (urlOrReq) => {
+  if (urlOrReq instanceof Request) return urlOrReq;
+  return new Request(urlOrReq, { credentials: 'same-origin' });
 };
-const requestFor = (url) => new Request(fullPath(url));
 
 /* ==================== Simple DB (caches-based) ==================== */
 const db = {
@@ -86,52 +76,39 @@ const sendMessageToAllClients = async (msg) => {
 
 /* ==================== Dynamic background caching with progress ==================== */
 async function cacheNewVersionResources(cache) {
-  // 一次性把可能的资源列表从 db/latest-list 取出来；若没有，再尝试抓取主页并解析资源
   await sendMessageToAllClients({ type: 'UPDATE_STARTED' });
+
   let latestList = [];
   try {
     const txt = await db.read('latest-list');
     if (txt) latestList = JSON.parse(txt);
-  } catch (e) { /* ignore */ }
+  } catch (e) {}
 
-  // fallback: parse index.html to find CSS/JS if no latest-list
   if (!latestList || latestList.length === 0) {
     try {
-      const res = await fetch(new Request(`/?t=${Date.now()}`));
+      const res = await fetch(new Request('/', { cache: 'no-store' }));
       if (res && res.ok) {
         const html = await res.text();
-        const rx = /(?:href|src)=["']([^"']+\.(?:css|js))["']/g;
+        const rx = /(?:href|src)=["']([^"']+)["']/g;
         let m;
-        const set = new Set(["/", ...PreCachlist]);
+        const set = new Set(['/']);
         while ((m = rx.exec(html)) !== null) {
           let url = m[1];
           if (!url) continue;
-          if (url.startsWith('http') || url.startsWith('//')) continue; // skip third-party by default
-          if (!url.startsWith('/')) {
-            if (url.startsWith('./')) url = url.substring(1);
-            url = '/' + url;
-          }
+          if (url.startsWith('http') || url.startsWith('//')) continue;
+          if (!url.startsWith('/')) url = '/' + url.replace(/^\.\//, '');
           set.add(url);
         }
         latestList = Array.from(set);
-        // 缓存至 DB 以便下次使用
         try { await db.write('latest-list', JSON.stringify(latestList)); } catch (e) {}
       }
-    } catch (e) {
-      logger.warn('Dynamic parse failed:', e);
-    }
+    } catch (e) {}
   }
 
   const total = latestList.length;
-  if (total === 0) {
-    await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
-    return;
-  }
-
   let done = 0;
   const MAX_CONCURRENT = 3;
 
-  // 分批并发下载并发送进度
   for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
     const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
       try {
@@ -140,9 +117,7 @@ async function cacheNewVersionResources(cache) {
         if (res && res.ok) {
           await cache.put(req, res.clone()).catch(() => {});
         }
-      } catch (e) {
-        // 忽略单个资源失败
-      }
+      } catch (e) {}
       done++;
       const pct = Math.round((done / total) * 100);
       await sendMessageToAllClients({ type: 'UPDATE_PROGRESS', progress: pct });
@@ -218,33 +193,43 @@ self.addEventListener('activate', event => {
 
 /* ==================== Fetch strategies ==================== */
 const NetworkOnly = async (event) => {
-  try { return await fetch(event.request); } catch (e) { return new Response('Offline', { status: 503 }); }
+  try {
+    return await fetch(event.request);
+  } catch (e) {
+    return new Response('Offline', { status: 503 });
+  }
 };
 
 const CacheFirst = async (event) => {
-  const req = requestFor(event.request.url);
+  const req = requestFor(event.request);
   const cached = await caches.match(req);
   if (cached) return cached;
   try {
-    const res = await fetch(event.request);
+    const res = await fetch(req);
     if (res && res.ok) {
       const cache = await caches.open(CACHE_NAME + '-runtime');
       cache.put(req, res.clone()).catch(() => {});
     }
     return res;
-  } catch (e) { return new Response('Network error', { status: 504 }); }
+  } catch (e) {
+    return new Response('Network error', { status: 504 });
+  }
 };
 
 const CacheAlways = async (event) => {
-  const req = requestFor(event.request.url);
+  const req = requestFor(event.request);
   const cache = await caches.open(CACHE_NAME + '-runtime');
   const cached = await cache.match(req);
   if (cached) return cached;
   try {
-    const res = await fetch(event.request);
-    if (res && (res.ok || res.type === 'opaque')) await cache.put(req, res.clone()).catch(() => {});
+    const res = await fetch(req);
+    if (res && (res.ok || res.type === 'opaque')) {
+      cache.put(req, res.clone()).catch(() => {});
+    }
     return res;
-  } catch (e) { return new Response('Network error', { status: 504 }); }
+  } catch (e) {
+    return new Response('Network error', { status: 504 });
+  }
 };
 
 // ==================== Smart jsDelivr racing (基于你的 cdn 表) ====================
@@ -323,29 +308,59 @@ const matchCDN = async (req) => {
 /* ==================== Fetch routing ==================== */
 const handleFetch = async (event) => {
   const url = event.request.url;
+
+  // === 🎵 音乐 / 播放器资源：完全绕过 SW（Meting / APlayer 依赖 Range + CORS） ===
+  if (
+    event.request.headers.has('range') ||
+    /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url) ||
+    /(music\.163\.com|music\.126\.net|qqmusic\.qq\.com)/i.test(url)
+  ) {
+    return fetch(event.request);
+  }
+
+  // === 强制不缓存 ===
   if (/nocache/.test(url)) {
     return NetworkOnly(event);
-  } else if (/@latest/.test(url)) {
-    return CacheFirst(event);
-  } else if (/cdnjs\.cloudflare\.com/.test(url)) {
-    return CacheAlways(event);
-  } else if (/music\.126\.net/.test(url)) {
-    return CacheAlways(event);
-  } else if (/qqmusic\.qq\.com/.test(url)) {
-    return CacheAlways(event);
-  } else if (/jsdelivr\.net/.test(url)) {
-    return CacheAlways(event);
-  } else if (/npm\.elemecdn\.com/.test(url)) {
-    return CacheAlways(event);
-  } else if (/unpkg\.com/.test(url)) {
-    return CacheAlways(event);
-  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
-    return CacheAlways(event);
-  } else if (/.*\.(css|js)$/.test(url)) {
-    return CacheAlways(event);
-  } else {
+  }
+
+  // === 版本探测 ===
+  if (/@latest/.test(url)) {
     return CacheFirst(event);
   }
+
+  // === CDN 走智能竞速 ===
+  if (/(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/.test(url)) {
+    return matchCDN(event.request);
+  }
+
+  // === 静态资源 ===
+  if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
+    return CacheAlways(event);
+  }
+  if (/\.(css|js)$/i.test(url)) {
+    return CacheAlways(event);
+  }
+
+  // === 页面 / API 兜底 ===
+  return CacheFirst(event);
+};
+  }
+
+  // === CDN 走智能竞速 ===
+  if (/(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/.test(url)) {
+    return matchCDN(event.request);
+  }
+
+  // === 静态资源 ===
+  if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
+    return CacheAlways(event);
+  }
+  if (/\.(css|js)$/i.test(url)) {
+    return CacheAlways(event);
+  }
+
+  // === 页面 / API 兜底 ===
+  return CacheFirst(event);
 };
 
 self.addEventListener('fetch', event => {
@@ -377,15 +392,11 @@ const cdn = {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
-    testingcf: 'https://testingcf.jsdelivr.net/gh',
-    test1: 'https://test1.jsdelivr.net/gh',
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',
     fastly: 'https://fastly.jsdelivr.net/combine',
     gcore: 'https://gcore.jsdelivr.net/combine',
-    testingcf: 'https://testingcf.jsdelivr.net/combine',
-    test1: 'https://test1.jsdelivr.net/combine',
   },
   npm: {
     jsdelivr: 'https://cdn.jsdelivr.net/npm',
