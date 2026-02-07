@@ -4,6 +4,7 @@
 const prefix = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
 const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
+const debug = true; // 发布时请设为 false
 
 const PreCachlist = [
   "/css/style.css",
@@ -72,60 +73,46 @@ const db = {
 
 const cacheNewVersionResources = async (cache) => {
   try {
-    const clients = await self.clients.matchAll({ includeUncontrolled: true });
-    clients.forEach(c => {
-      try { c.postMessage({ type: 'UPDATE_STARTED' }); } catch (e) {}
-    });
+    await sendMessageToAllClients({ type: 'UPDATE_STARTED' });
 
     let latestList = [];
-    try {
-      const txt = await db.read('latest-list');
-      if (txt) latestList = JSON.parse(txt);
-    } catch (e) {
-      logger.error('Failed to parse latest-list:', e);
-    }
+    const txt = await (async () => {
+      try {
+        const dbCache = await caches.open(DB_NAME);
+        const res = await dbCache.match(new Request(`https://LOCALCACHE/latest-list`));
+        return res ? await res.text() : null;
+      } catch (e) { return null; }
+    })();
+    
+    if (txt) latestList = JSON.parse(txt);
 
     const total = latestList.length;
     if (total === 0) {
-      logger.warn('No resources to update in latest-list');
+      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
       return;
     }
 
     let done = 0;
-    const MAX_CONCURRENT = 2;
+    const MAX_CONCURRENT = 3; // 适度恢复并发
     
     for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
       const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
-        const req = requestFor(url);
         try {
-          const res = await fetch(req);
-          if (res.ok) await cache.put(req, res.clone());
-        } catch (e) {
-          logger.warn(`Failed to fetch ${url}:`, e);
-        }
+          const res = await fetch(requestFor(url));
+          if (res.ok) await cache.put(requestFor(url), res.clone());
+        } catch (e) {}
         done++;
-        
-        // 进度通知
-        const currentClients = await self.clients.matchAll({ includeUncontrolled: true });
-        currentClients.forEach(c => {
-          try {
-            c.postMessage({ 
-              type: 'UPDATE_PROGRESS', 
-              progress: Math.round((done / total) * 100) 
-            });
-          } catch (e) {}
+        await sendMessageToAllClients({ 
+          type: 'UPDATE_PROGRESS', 
+          progress: Math.round((done / total) * 100) 
         });
       });
       await Promise.all(batch);
     }
-    
-    // 完成通知
-    const finalClients = await self.clients.matchAll({ includeUncontrolled: true });
-    finalClients.forEach(c => {
-      try { c.postMessage({ type: 'NEW_VERSION_CACHED' }); } catch (e) {}
-    });
+    await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
   } catch (e) { 
-    logger.error('Dynamic cache error:', e); 
+    logger.error('Dynamic cache error:', e);
+    await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' }); // 失败也要关进度条
   }
 };
 
