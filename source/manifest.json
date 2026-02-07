@@ -1,51 +1,30 @@
 {
   "name": "科普区",
   "short_name": "科普区",
-  "description": "疯狂刷题 科普区",
-  "icons": [
-    {
-      "src": "/imgs/icon.jpg",
-      "sizes": "720x720",
-      "type": "image/jpeg"
-    }
-  ],
+  "description": "科普区的Website",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#42b549",
-  "lang": "zh-CN",
-  "dir": "ltr",
-  "categories": [
-    "education",
-    "science",
-    "blog"
-  ],
-  "shortcuts": [
+  "theme_color": "#3dd9b6",
+  "icons": [
     {
-      "name": "分类",
-      "short_name": "分类",
-      "description": "查看文章分类",
-      "url": "/categories/",
-      "icons": [
-        {
-          "src": "/imgs/categories-icon.png",
-          "sizes": "96x96"
-        }
-      ]
+      "src": "/imgs/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "name": "标签",
-      "short_name": "标签",
-      "description": "查看文章标签",
-      "url": "/tags/",
-      "icons": [
-        {
-          "src": "/imgs/tags-icon.png",
-          "sizes": "96x96"
-        }
-      ]
+      "src": "/imgs/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/imgs/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
