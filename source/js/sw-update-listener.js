@@ -8,9 +8,16 @@
     zindex: 99999
   });
 
-  navigator.serviceWorker.ready.then(registration => {
-    const worker = registration.active || registration.waiting || registration.installing;
-    if (worker) worker.postMessage({ type: 'FORCE_UPDATE' });
+  let updateTriggered = false;
+
+  navigator.serviceWorker.ready.then(reg => {
+    if (updateTriggered) return;
+    updateTriggered = true;
+
+    if (reg.waiting) {
+      reg.waiting.postMessage({ type: 'FORCE_UPDATE' });
+    }
+  });
 
     let refreshing = false;
     let doneShown = false;
