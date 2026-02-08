@@ -115,6 +115,8 @@ navbar:
             - name: 必应
               icon: fa-duotone fa-b
               url: https://cn.bing.com
+        - name: 背景音乐
+          icon: fa-solid fa-compact-disc
         - name: hr
         - name: 投稿
           icon: fa-duotone fa-grid-2-plus
@@ -144,15 +146,17 @@ cover:
   search: 搜索... # search bar placeholder
   features:
     - name: 首页
+      img: volantis-static/media/twemoji/assets/svg/1f4eb.svg
       url: /
     - name: 文章
       icon: #
-      img: # volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
+      img: volantis-static/media/twemoji/assets/svg/1f4f0.svg #  https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg
       url: /archives/
     - name: 成员
-      icon: # fa-duotone fa-heart
+      img: volantis-static/media/twemoji/assets/svg/1f497.svg
       url: /friends/
     - name: 文档
+      img: volantis-static/media/twemoji/assets/svg/1f516.svg
       url: /docs/what-is-kepuqv/
 ############################### Cover ############################### > end
 
@@ -836,12 +840,12 @@ custom_css:
     hover_background: rgb(255, 170, 178) linear-gradient(45deg, rgba(255, 255, 255, 0.4) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.4) 75%, transparent 75%, transparent)
   navbar:
     height: 64px
-    width: auto # auto, max
-    effect: [shadow, blur] # [shadow, floatable, blur]
+    width: max # auto, max
+    effect: [shadow, floatable, blur] # [shadow, floatable, blur]
   sidebar:
-    effect: [shadow, blur] # [shadow, floatable, blur]
+    effect: [shadow, floatable, blur] # [shadow, floatable, blur]
   body:
-    effect: [shadow, blur] # [shadow, floatable, blur]
+    effect: [shadow, floatable, blur] # [shadow, floatable, blur]
     highlight:
       language: true # show language of codeblock
       grayscale: false # Enable grayscale effect
