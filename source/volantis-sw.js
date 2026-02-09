@@ -288,6 +288,10 @@ const matchCDN = async (req) => {
 const handleFetch = async (event) => {
   const url = event.request.url;
 
+  // === SW listener 永远直连网络 ===
+  if (/sw-update-listener\.js$/.test(url)) {
+    return fetch(event.request);
+  }
   // === 🎵 音乐 / 播放器资源：完全绕过 SW ===
   if (
     event.request.headers.has('range') ||
