@@ -10,13 +10,42 @@
 
   let updateTriggered = false;
 
+  let nextVersion = null;
+
+  const extractVersion = (scriptText) => {
+    const match = scriptText.match(/cacheSuffixVersion\s*=\s*['"]([^'"]+)['"]/);
+    return match ? match[1] : null;
+  };
+
+  const sendNextVersion = (worker) => {
+    if (!worker || !nextVersion) return;
+    worker.postMessage({ type: 'SET_NEXT_VERSION', version: nextVersion });
+  };
+
   navigator.serviceWorker.ready.then(reg => {
     if (updateTriggered) return;
     updateTriggered = true;
 
     if (reg.waiting) {
+      sendNextVersion(reg.waiting);
       reg.waiting.postMessage({ type: 'FORCE_UPDATE' });
     }
+  });
+
+  navigator.serviceWorker.addEventListener('updatefound', () => {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg || !reg.installing) return;
+      const worker = reg.installing;
+      fetch(worker.scriptURL, { cache: 'no-store' })
+        .then(res => (res && res.ok ? res.text() : null))
+        .then(text => {
+          if (!text) return;
+          nextVersion = extractVersion(text);
+          sendNextVersion(worker);
+          if (reg.waiting) sendNextVersion(reg.waiting);
+        })
+        .catch(() => {});
+    });
   });
 
     let refreshing = false;

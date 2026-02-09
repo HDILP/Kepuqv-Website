@@ -12,7 +12,6 @@
 const prefix = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::'; // 构建时替换
 const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
-const DB_NAME = prefix + '-db'; // 持久化小型本地 "DB"（用 caches 实现）
 const debug = true;
 
 const PreCachlist = [
@@ -42,27 +41,8 @@ const requestFor = (urlOrReq) => {
   return new Request(urlOrReq, { credentials: 'same-origin' });
 };
 
-/* ==================== Simple DB (caches-based) ==================== */
-const db = {
-  read: async (key) => {
-    try {
-      const cache = await caches.open(DB_NAME);
-      const res = await cache.match(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`));
-      return res ? await res.text() : null;
-    } catch (e) {
-      logger.error('db.read error:', e);
-      return null;
-    }
-  },
-  write: async (key, value) => {
-    try {
-      const cache = await caches.open(DB_NAME);
-      await cache.put(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`), new Response(value));
-    } catch (e) {
-      logger.error('db.write error:', e);
-    }
-  }
-};
+let nextCacheSuffixVersion = cacheSuffixVersion;
+const cacheNameFor = (version, type) => `${prefix}-v${version}-${type}`;
 
 /* ==================== Client messaging ==================== */
 const sendMessageToAllClients = async (msg) => {
@@ -75,37 +55,36 @@ const sendMessageToAllClients = async (msg) => {
 };
 
 /* ==================== Dynamic background caching with progress ==================== */
-async function cacheNewVersionResources(cache) {
+async function cacheNewVersionResources() {
   await sendMessageToAllClients({ type: 'UPDATE_STARTED' });
 
   let latestList = [];
   try {
-    const txt = await db.read('latest-list');
-    if (txt) latestList = JSON.parse(txt);
+    const res = await fetch(new Request('/', { cache: 'no-store' }));
+    if (res && res.ok) {
+      const html = await res.text();
+      const rx = /(?:href|src)=["']([^"']+)["']/g;
+      let m;
+      const set = new Set(['/']);
+      while ((m = rx.exec(html)) !== null) {
+        let url = m[1];
+        if (!url) continue;
+        if (url.startsWith('http') || url.startsWith('//')) continue;
+        if (!url.startsWith('/')) url = '/' + url.replace(/^\.\//, '');
+        set.add(url);
+      }
+      latestList = Array.from(set);
+    }
   } catch (e) {}
 
-  if (!latestList || latestList.length === 0) {
-    try {
-      const res = await fetch(new Request('/', { cache: 'no-store' }));
-      if (res && res.ok) {
-        const html = await res.text();
-        const rx = /(?:href|src)=["']([^"']+)["']/g;
-        let m;
-        const set = new Set(['/']);
-        while ((m = rx.exec(html)) !== null) {
-          let url = m[1];
-          if (!url) continue;
-          if (url.startsWith('http') || url.startsWith('//')) continue;
-          if (!url.startsWith('/')) url = '/' + url.replace(/^\.\//, '');
-          set.add(url);
-        }
-        latestList = Array.from(set);
-        try { await db.write('latest-list', JSON.stringify(latestList)); } catch (e) {}
-      }
-    } catch (e) {}
-  }
+  const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
+  const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
 
   const total = latestList.length;
+  if (total === 0) {
+    await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
+    return;
+  }
   let done = 0;
   const MAX_CONCURRENT = 3;
 
@@ -115,7 +94,8 @@ async function cacheNewVersionResources(cache) {
         const req = requestFor(url);
         const res = await fetch(req);
         if (res && res.ok) {
-          await cache.put(req, res.clone()).catch(() => {});
+          await precache.put(req, res.clone()).catch(() => {});
+          await runtime.put(req, res.clone()).catch(() => {});
         }
       } catch (e) {}
       done++;
@@ -134,9 +114,6 @@ self.addEventListener('install', event => {
   event.waitUntil((async () => {
     try {
       const cache = await caches.open(CACHE_NAME + '-precache');
-      // uuid 保持（兼容）
-      if (!await db.read('uuid')) await db.write('uuid', (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random()));
-
       // 并发预缓存（小批量）
       const CONC = 2;
       for (let i = 0; i < PreCachlist.length; i += CONC) {
@@ -154,7 +131,7 @@ self.addEventListener('install', event => {
       }
 
       // 动态拉取并缓存新版本的资源（并发送进度）
-      await cacheNewVersionResources(cache);
+      await cacheNewVersionResources();
 
       // 安装完成后不立即 skipWaiting，等待前端发起 SKIP_WAITING
       logger.ready('install done');
@@ -179,8 +156,10 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     try {
       const keys = await caches.keys();
+      const keepVersions = new Set([cacheSuffixVersion, nextCacheSuffixVersion]);
       await Promise.all(keys.map(key => {
-        if (!key.includes(cacheSuffixVersion) && key !== DB_NAME) {
+        const shouldKeep = Array.from(keepVersions).some(version => key.includes(`-v${version}-`));
+        if (!shouldKeep) {
           logger.info('Deleting old cache', key);
           return caches.delete(key);
         }
@@ -354,7 +333,13 @@ self.addEventListener('message', (event) => {
   }
   if (event.data.type === 'FORCE_UPDATE') {
     logger.info('FORCE_UPDATE received — starting background update');
-    caches.open(CACHE_NAME + '-precache').then(cache => cacheNewVersionResources(cache));
+    cacheNewVersionResources();
+  }
+  if (event.data.type === 'SET_NEXT_VERSION') {
+    if (event.data.version) {
+      nextCacheSuffixVersion = event.data.version;
+      logger.info('SET_NEXT_VERSION received', nextCacheSuffixVersion);
+    }
   }
 });
 
