@@ -1,52 +1,49 @@
 const gulp = require('gulp');
-const cleanCSS = require('gulp-clean-css');
 const htmlmin = require('gulp-html-minifier-terser');
-const htmlclean = require('gulp-htmlclean');
 const terser = require('gulp-terser');
-const sourcemaps = require('gulp-sourcemaps');
-const babel = require('gulp-babel');
+const postcss = require('gulp-postcss');
+const cssnano = require('cssnano');
 
-// 压缩css文件
+// 压缩 CSS - 使用 PostCSS + cssnano
 function minify_css() {
-  return gulp.src(['./public/**/*.css', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(sourcemaps.init())
-    .pipe(cleanCSS({ compatibility: 'ie8' }))
-    .pipe(sourcemaps.write('./maps'))
+  return gulp.src(['./public/**/*.css', '!./public/{lib,libs,media}/**'], { base: './public' })
+    .pipe(postcss([
+      cssnano({
+        preset: ['default', {
+          discardComments: { removeAll: true }, // 移除所有注释
+          normalizeWhitespace: true            // 极度压缩空白
+        }]
+      })
+    ]))
     .pipe(gulp.dest('./public'));
 }
 
-// 压缩html文件
+// 压缩 HTML - 极致精简版
 function minify_html() {
-  return gulp.src(['./public/**/*.html', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(htmlclean())
+  return gulp.src(['./public/**/*.html', '!./public/{lib,libs,media}/**'], { base: './public' })
     .pipe(htmlmin({
+      collapseWhitespace: true,
       removeComments: true,
       minifyJS: true,
       minifyCSS: true,
-      minifyURLs: true,
+      removeAttributeQuotes: true,
+      removeRedundantAttributes: true
     }))
     .pipe(gulp.dest('./public'));
 }
 
-// 压缩js文件
+// 压缩 JS - 针对现代浏览器优化
 function minify_js() {
-  return gulp.src(['./public/**/*.js', '!./public/**/*.min.js', '!./public/{lib,lib/**}', '!./public/{libs,libs/**}', '!./public/{media,media/**}'])
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: ['@babel/preset-env']
-    }))
+  return gulp.src(['./public/**/*.js', '!./public/**/*.min.js', '!./public/{lib,libs,media}/**'], { base: './public' })
     .pipe(terser({
-      ecma: 2015,
-      ie8: true,
-      safari10: true,
+      compress: {
+        drop_console: true, // 移除 console.log
+        passes: 2           // 运行两次压缩以获取最小体积
+      },
       output: { comments: false }
     }))
-    .pipe(sourcemaps.write('./maps'))
     .pipe(gulp.dest('./public'));
 }
 
-// 并行执行所有压缩任务
-const minify = gulp.parallel(minify_html, minify_css, minify_js);
-
-// 默认任务
-exports.default = minify;
+// 并行执行
+exports.default = gulp.parallel(minify_html, minify_css, minify_js);

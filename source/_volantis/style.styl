@@ -1,0 +1,41 @@
+// 文章卡片磨砂玻璃质感（替换原白色背景）
+.post.white-box
+  background rgba(255, 255, 255, 0.65) !important
+  background-color rgba(255, 255, 255, 0.65) !important
+
+  backdrop-filter blur(12px)
+  -webkit-backdrop-filter blur(12px)
+
+  background-image none !important
+
+// 可选：文章内描述区同步磨砂（防止内部背景冲突）
+.post .article-desc
+  background: transparent !important
+  backdrop-filter: none !important
+  
+// 顶部导航栏 · 磨砂玻璃
+// 顶部 Header · 磨砂玻璃（最终正确层）
+#l_header.l_header
+  background rgba(255, 255, 255, 0.65) !important
+  background-color rgba(255, 255, 255, 0.65) !important
+  background-image none !important
+
+  backdrop-filter blur(10px) saturate(120%)
+  -webkit-backdrop-filter blur(10px) saturate(120%)
+
+  border-bottom 1px solid rgba(255, 255, 255, 0.35)
+  box-shadow 0 6px 24px rgba(0, 0, 0, 0.08)
+  
+// 侧边栏 Widget · 磨砂玻璃
+#l_side .widget
+  background rgba(255, 255, 255, 0.65) !important
+  background-color rgba(255, 255, 255, 0.65) !important
+  background-image none !important
+
+  backdrop-filter blur(12px) saturate(120%)
+  -webkit-backdrop-filter blur(12px) saturate(120%)
+
+  // border 1px solid rgba(255, 255, 255, 0.35)
+  border-radius 16px
+
+  box-shadow 0 6px 24px rgba(0, 0, 0, 0.08)
