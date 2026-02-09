@@ -48,48 +48,70 @@
     });
   });
 
-    let refreshing = false;
-    let doneShown = false;
-    const PROG_TOAST_CLASS = 'sw-update-progress-toast';
+  let doneShown = false;
+  let pendingSoftReload = false;
+  const PROG_TOAST_CLASS = 'sw-update-progress-toast';
 
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      refreshing = true;
+  const isHomePage = () => {
+    const path = window.location.pathname;
+    return path === '/' || path === '/index.html';
+  };
+
+  const pjaxSoftReload = () => {
+    if (!window.pjax || typeof window.pjax.loadUrl !== 'function') {
       window.location.reload();
-    }, { once: true });
-
-    function showUpdateToast(title, message) {
-      if (doneShown) return;
-      doneShown = true;
-      
-      // 强制清理进度条
-      const old = document.querySelector('.' + PROG_TOAST_CLASS);
-      if (old) iziToast.destroy();
-
-      iziToast.show({
-        title: title || '发现新版本',
-        message: message || '新资源已准备就绪，点击刷新应用。',
-        buttons: [
-          ['<button><b>立即刷新</b></button>', (instance, toast) => {
-            instance.hide({ transitionOut: 'fadeOutUp' }, toast, 'button');
-            navigator.serviceWorker.getRegistration().then(reg => {
-              if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              else window.location.reload();
-            });
-            setTimeout(() => { if (!refreshing) window.location.reload(); }, 1500);
-          }, true],
-          ['<button>忽略</button>', (instance, toast) => {
-            instance.hide({ transitionOut: 'fadeOutUp' }, toast, 'button');
-          }]
-        ]
-      });
+      return;
     }
+    const url = window.location.pathname + window.location.search;
+    let finished = false;
+    const fallbackTimer = window.setTimeout(() => {
+      if (!finished) window.location.reload();
+    }, 5000);
+    const cleanup = () => {
+      finished = true;
+      window.clearTimeout(fallbackTimer);
+      document.removeEventListener('pjax:complete', onComplete);
+      document.removeEventListener('pjax:error', onError);
+    };
+    const onComplete = () => cleanup();
+    const onError = () => {
+      cleanup();
+      window.location.reload();
+    };
+    document.addEventListener('pjax:complete', onComplete);
+    document.addEventListener('pjax:error', onError);
+    window.pjax.loadUrl(url);
+  };
+
+  const verifyAndSoftReload = () => {
+    if (!isHomePage()) return;
+    fetch('/', { cache: 'no-store' })
+      .then(res => (res && res.ok ? res.text() : Promise.reject(new Error('bad response'))))
+      .then(() => {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg && reg.waiting) {
+            pendingSoftReload = true;
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            return;
+          }
+          pjaxSoftReload();
+        });
+      })
+      .catch(() => {});
+  };
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!pendingSoftReload) return;
+    pendingSoftReload = false;
+    pjaxSoftReload();
+  });
 
     navigator.serviceWorker.addEventListener('message', (event) => {
       const data = event.data;
       if (!data) return;
 
       if (data.type === 'UPDATE_STARTED' && !doneShown) {
+        doneShown = true;
         iziToast.show({
           class: PROG_TOAST_CLASS,
           message: `
@@ -111,10 +133,10 @@
           if (txt) txt.textContent = pct + '%';
         }
       } else if (data.type === 'NEW_VERSION_CACHED') {
-        // 关键修复：先销毁进度条再弹窗
+        if (!isHomePage()) return;
         const p = document.querySelector('.' + PROG_TOAST_CLASS);
         if (p) iziToast.hide({ transitionOut: 'fadeOutUp' }, p);
-        showUpdateToast();
+        verifyAndSoftReload();
       }
     });
 })();
