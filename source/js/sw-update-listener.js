@@ -15,6 +15,23 @@
   const FAILED_TOAST_CLASS = 'sw-update-failed-toast';
 
   let nextVersion = null;
+  const NO_RETRY_STORE_KEY = '__VOLANTIS_SW_NO_RETRY_FAILED_VERSIONS__';
+  const loadNoRetryVersions = () => {
+    try {
+      const raw = window.localStorage.getItem(NO_RETRY_STORE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(v => typeof v === 'string' && v) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const saveNoRetryVersions = (setObj) => {
+    try {
+      window.localStorage.setItem(NO_RETRY_STORE_KEY, JSON.stringify(Array.from(setObj).slice(-20)));
+    } catch (e) {}
+  };
+
   let activatedByUser = false;
   let preferPjaxReloadAfterActivate = false;
 
@@ -148,7 +165,7 @@
       timeout: 8000,
       close: true,
       title: '后台更新未完成',
-      message: `有 ${failedCount} 个资源未缓存成功，稍后将自动重试。`,
+      message: `有 ${failedCount} 个资源未缓存成功。已停止自动重试，请手动刷新以切换到新版本。`,
     });
   };
 
@@ -164,9 +181,15 @@
       .catch(() => {});
   };
 
+  const noRetryFailedVersions = new Set(loadNoRetryVersions());
+
   const triggerBackgroundUpdate = (registration) => {
     const target = registration.waiting || registration.installing;
     if (!target) return;
+    if (nextVersion && noRetryFailedVersions.has(nextVersion)) {
+      console.warn('[SW-UPDATE] Skip FORCE_UPDATE for failed version (no-retry):', nextVersion);
+      return;
+    }
     sendVersionHint(target);
     sendMessageToWorker(target, { type: 'FORCE_UPDATE' });
   };
@@ -186,6 +209,10 @@
     }
 
     if (data.type === 'NEW_VERSION_CACHED') {
+      if (data && data.version && noRetryFailedVersions.has(data.version)) {
+        noRetryFailedVersions.delete(data.version);
+        saveNoRetryVersions(noRetryFailedVersions);
+      }
       navigator.serviceWorker.getRegistration().then(registration => {
         if (!registration || !registration.waiting) return;
         showReadyToast(registration);
@@ -194,6 +221,15 @@
     }
 
     if (data.type === 'UPDATE_FAILED') {
+      if (data && data.version && data.noRetry) {
+        noRetryFailedVersions.add(data.version);
+        saveNoRetryVersions(noRetryFailedVersions);
+        console.warn('[SW-UPDATE] Background cache failed; no auto-retry. Refresh manually to activate new version.', {
+          version: data.version,
+          failed: data.failed || 1,
+          failedAssets: data.failedAssets || [],
+        });
+      }
       showFailedToast(data.failed || 1);
     }
   });
