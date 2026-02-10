@@ -386,8 +386,10 @@ const shouldBypassCDNRace = () => {
 };
 
 const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
-const CDN_RACE_LIMIT = 3;
+const CDN_RACE_LIMIT = 2;
 const CDN_RACE_TIMEOUT_MS = 4500;
+const CDN_HEDGE_DELAY_MS = 250;
+const CDN_MAX_PARALLEL_RACES = 4;
 const cdnFailureUntil = new Map();
 
 const markCDNFailed = (url) => {
@@ -419,53 +421,92 @@ const joinCDNUrl = (base, tailPath) => {
   return cleanBase + cleanTail;
 };
 
-const fetchParallel = (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
-  const doneEvent = new EventTarget();
-  const tasks = urls.map((u) => new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, timeoutMs);
+let activeCDNRaces = 0;
+const pendingCDNRaceResolvers = [];
 
-    const abortRest = () => controller.abort();
-    doneEvent.addEventListener('abortOtherInstance', abortRest, { once: true });
+const acquireCDNRaceSlot = async () => {
+  if (activeCDNRaces < CDN_MAX_PARALLEL_RACES) {
+    activeCDNRaces += 1;
+    return;
+  }
+  await new Promise((resolve) => pendingCDNRaceResolvers.push(resolve));
+  activeCDNRaces += 1;
+};
 
-    fetch(new Request(u, reqInit), { signal: controller.signal })
-      .then((r) => {
-        if (r && (r.status === 200 || r.type === 'opaque')) {
-          doneEvent.dispatchEvent(new Event('abortOtherInstance'));
-          resolve(r);
-          return;
-        }
-        markCDNFailed(u);
-        reject(new Error('bad response: ' + u));
-      })
-      .catch((err) => {
-        if (timedOut) {
-          markCDNFailed(u);
-          reject(new Error('timeout: ' + u));
-          return;
-        }
-        if (err && err.name === 'AbortError') {
-          reject(err);
-          return;
-        }
-        markCDNFailed(u);
-        reject(err);
-      })
-      .finally(() => {
-        clearTimeout(timer);
-      });
-  }));
+const releaseCDNRaceSlot = () => {
+  activeCDNRaces = Math.max(0, activeCDNRaces - 1);
+  const next = pendingCDNRaceResolvers.shift();
+  if (next) next();
+};
 
-  return Promise.any(tasks);
+const fetchSingleCandidate = (url, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS, winnerSignalRef = { won: false }, controllers = []) => {
+  const controller = new AbortController();
+  controllers.push(controller);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  return fetch(new Request(url, reqInit), { signal: controller.signal })
+    .then((r) => {
+      if (r && (r.status === 200 || r.type === 'opaque')) {
+        winnerSignalRef.won = true;
+        controllers.forEach((c) => {
+          if (c !== controller) c.abort();
+        });
+        return r;
+      }
+      markCDNFailed(url);
+      throw new Error('bad response: ' + url);
+    })
+    .catch((err) => {
+      if (timedOut) {
+        markCDNFailed(url);
+        throw new Error('timeout: ' + url);
+      }
+      if (err && err.name === 'AbortError' && winnerSignalRef.won) {
+        throw err;
+      }
+      if (!(err && err.name === 'AbortError')) {
+        markCDNFailed(url);
+      }
+      throw err;
+    })
+    .finally(() => {
+      clearTimeout(timer);
+    });
 };
 
 const FetchEngine = async (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
   if (!urls || urls.length === 0) throw new Error('empty urls');
-  return fetchParallel(urls, reqInit, timeoutMs);
+
+  await acquireCDNRaceSlot();
+  try {
+    const deduped = urls.filter((url, index, arr) => arr.indexOf(url) === index);
+    const controllers = [];
+    const winnerSignalRef = { won: false };
+    const errors = [];
+
+    for (let i = 0; i < deduped.length; i += 1) {
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, CDN_HEDGE_DELAY_MS));
+      }
+      if (winnerSignalRef.won) break;
+
+      try {
+        const response = await fetchSingleCandidate(deduped[i], reqInit, timeoutMs, winnerSignalRef, controllers);
+        return response;
+      } catch (e) {
+        errors.push(e);
+        continue;
+      }
+    }
+
+    throw new AggregateError(errors, 'all cdn candidates failed');
+  } finally {
+    releaseCDNRaceSlot();
+  }
 };
 
 const matchCDN = async (req) => {
