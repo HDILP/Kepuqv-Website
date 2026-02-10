@@ -106,7 +106,7 @@ const parseHomePageAssets = async () => {
 
     let m;
     while ((m = rx.exec(html)) !== null) {
-      const normalized = normalizeLocalAssetPath(m[1]);
+      const normalized = normalizeAssetForUpdate(m[1]);
       if (normalized) result.add(normalized);
     }
     return Array.from(result);
@@ -114,6 +114,13 @@ const parseHomePageAssets = async () => {
     logger.warn('parseHomePageAssets failed:', e);
     return [];
   }
+};
+
+const fetchForBackgroundUpdate = async (req) => {
+  if (isCDNUrl(req.url)) {
+    return matchCDN(req);
+  }
+  return fetch(req);
 };
 
 async function cacheNewVersionResources() {
@@ -125,7 +132,7 @@ async function cacheNewVersionResources() {
     const latestList = Array.from(new Set([
       ...PreCachlist,
       ...(await parseHomePageAssets()),
-    ].map(normalizeLocalAssetPath).filter(Boolean)));
+    ].map(normalizeAssetForUpdate).filter(Boolean)));
 
     const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
     const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
@@ -145,8 +152,8 @@ async function cacheNewVersionResources() {
       const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
         try {
           const req = requestFor(url, { cache: 'no-store' });
-          const res = await fetch(req);
-          if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
+          const res = await fetchForBackgroundUpdate(req);
+          if (!res || (!res.ok && res.type !== 'opaque')) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
           await precache.put(req, res.clone());
           await runtime.put(req, res.clone());
           success += 1;
@@ -313,9 +320,38 @@ const CacheAlways = async (event) => {
   }
 };
 
-const raceFetch = async (urls, reqInit = {}, timeoutMs = 6000) => {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+const clearOldRuntimeCaches = async () => {
+  const keep = new Set([
+    cacheNameFor(cacheSuffixVersion, 'runtime'),
+    cacheNameFor(nextCacheSuffixVersion, 'runtime'),
+  ]);
+  const keys = await caches.keys();
+  await Promise.all(keys.map((key) => {
+    if (!key.startsWith(prefix + '-v') || !key.endsWith('-runtime')) return Promise.resolve();
+    if (keep.has(key)) return Promise.resolve();
+    return caches.delete(key);
+  }));
+};
+
+const putIntoRuntimeCache = async (req, res) => {
+  if (!res) return;
+  const runtime = await caches.open(CACHE_NAME + '-runtime');
+  try {
+    await runtime.put(req, res.clone());
+  } catch (e) {
+    if (e && e.name === 'QuotaExceededError') {
+      logger.warn('[runtime] quota exceeded, clearing old runtime caches');
+      await clearOldRuntimeCaches();
+      try {
+        await runtime.put(req, res.clone());
+      } catch (retryError) {
+        logger.warn('[runtime] retry cache put failed', retryError);
+      }
+      return;
+    }
+    throw e;
+  }
+};
 
 const CacheRuntime = async (event, fetcher) => {
   const req = requestFor(event.request);
@@ -374,53 +410,26 @@ const FetchEngine = async (urls, reqInit = {}, timeoutMs = 6000) => {
 
 const matchCDN = async (req) => {
   try {
-    const url = req.url;
-
-    if (url.startsWith(cdn.gh.jsdelivr)) {
-      const path = url.slice(cdn.gh.jsdelivr.length);
-      return raceFetch([
-        cdn.gh.jsdelivr + path,
-        cdn.gh.fastly + path,
-        cdn.gh.gcore + path,
-        cdn.gh.testingcf + path,
-      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    if (shouldBypassCDNRace()) {
+      return fetch(req);
     }
 
-    if (url.startsWith(cdn.combine.jsdelivr)) {
-      const path = url.slice(cdn.combine.jsdelivr.length);
-      return raceFetch([
-        cdn.combine.jsdelivr + path,
-        cdn.combine.fastly + path,
-        cdn.combine.gcore + path,
-      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    const reqUrl = req.url;
+    const matched = cdn_match_list.find((item) => item.regexp.test(reqUrl));
+    if (!matched || !matched.type || !matched.base) {
+      return fetch(req);
     }
 
-    if (url.startsWith(cdn.npm.jsdelivr)) {
-      const path = url.slice(cdn.npm.jsdelivr.length);
-      return raceFetch([
-        cdn.npm.jsdelivr + path,
-        cdn.npm.fastly + path,
-        cdn.npm.gcore + path,
-        cdn.npm.eleme + path,
-        cdn.npm.unpkg + path,
-      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
-    }
-
-    if (url.startsWith(cdn.cdnjs.cdnjs)) {
-      const path = url.slice(cdn.cdnjs.cdnjs.length);
-      return raceFetch([
-        cdn.cdnjs.cdnjs + path,
-        cdn.cdnjs.baomitu + path,
-        cdn.cdnjs.bootcdn + path,
-        cdn.cdnjs.bytedance + path,
-        cdn.cdnjs.sustech + path,
-      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
-    }
-
+    const pathType = matched.type;
+    const pathTestRes = matched.base;
     const tailPath = reqUrl.replace(pathTestRes, '');
     const urls = Object.values(cdn[pathType])
       .filter(Boolean)
       .map(base => base + tailPath);
+
+    if (urls.length === 0) {
+      return fetch(req);
+    }
 
     return await FetchEngine(urls, {
       method: req.method,
@@ -429,6 +438,7 @@ const matchCDN = async (req) => {
       credentials: req.credentials,
     });
   } catch (e) {
+    logger.warn('[matchCDN] fallback to native fetch', e);
     return fetch(req);
   }
 };
