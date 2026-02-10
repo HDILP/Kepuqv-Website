@@ -386,6 +386,8 @@ const shouldBypassCDNRace = () => {
 };
 
 const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
+const CDN_RACE_LIMIT = 3;
+const CDN_RACE_TIMEOUT_MS = 4500;
 const cdnFailureUntil = new Map();
 
 const markCDNFailed = (url) => {
@@ -417,11 +419,15 @@ const joinCDNUrl = (base, tailPath) => {
   return cleanBase + cleanTail;
 };
 
-const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
+const fetchParallel = (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
   const doneEvent = new EventTarget();
   const tasks = urls.map((u) => new Promise((resolve, reject) => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
 
     const abortRest = () => controller.abort();
     doneEvent.addEventListener('abortOtherInstance', abortRest, { once: true });
@@ -437,6 +443,15 @@ const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
         reject(new Error('bad response: ' + u));
       })
       .catch((err) => {
+        if (timedOut) {
+          markCDNFailed(u);
+          reject(new Error('timeout: ' + u));
+          return;
+        }
+        if (err && err.name === 'AbortError') {
+          reject(err);
+          return;
+        }
         markCDNFailed(u);
         reject(err);
       })
@@ -448,7 +463,7 @@ const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
   return Promise.any(tasks);
 };
 
-const FetchEngine = async (urls, reqInit = {}, timeoutMs = 6000) => {
+const FetchEngine = async (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
   if (!urls || urls.length === 0) throw new Error('empty urls');
   return fetchParallel(urls, reqInit, timeoutMs);
 };
@@ -468,16 +483,15 @@ const matchCDN = async (req) => {
     const pathType = matched.type;
     const pathTestRes = matched.base;
     const tailPath = reqUrl.replace(pathTestRes, '');
-    const rawUrls = [
-      ...Object.values(cdn[pathType])
-        .filter(Boolean)
-        .map(base => joinCDNUrl(base, tailPath)),
-      reqUrl,
-    ].filter(Boolean);
-
-    const urls = rawUrls
+    const mirrorUrls = Object.values(cdn[pathType])
+      .filter(Boolean)
+      .map(base => joinCDNUrl(base, tailPath))
+      .filter(Boolean)
       .filter((url, index, arr) => arr.indexOf(url) === index)
-      .filter((url) => url === reqUrl || !isCDNInCooldown(url));
+      .filter((url) => url !== reqUrl)
+      .filter((url) => !isCDNInCooldown(url));
+
+    const urls = [reqUrl, ...mirrorUrls].slice(0, CDN_RACE_LIMIT);
 
     if (urls.length === 0) {
       return fetch(req);
