@@ -15,10 +15,10 @@ const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
 const debug = true;
 
 const PreCachlist = [
-  "/css/style.css",
-  "/js/app.js",
-  "/js/search/hexo.js",
-  "/",
+  '/css/style.css',
+  '/js/app.js',
+  '/js/search/hexo.js',
+  '/',
 ];
 
 /* ==================== Logger ==================== */
@@ -33,12 +33,27 @@ const logger = (() => {
 })();
 
 /* ==================== Utilities ==================== */
-// ==================== Safe request handling ====================
-// 不再进行路径推断（不补 /index.html）
-// 目录是否可缓存，交给服务器与浏览器自己决定
-const requestFor = (urlOrReq) => {
-  if (urlOrReq instanceof Request) return urlOrReq;
-  return new Request(urlOrReq, { credentials: 'same-origin' });
+const requestFor = (urlOrReq, extra = {}) => {
+  if (urlOrReq instanceof Request) {
+    return new Request(urlOrReq, { credentials: 'same-origin', ...extra });
+  }
+  return new Request(urlOrReq, { credentials: 'same-origin', ...extra });
+};
+
+const normalizeLocalAssetPath = (rawUrl) => {
+  if (!rawUrl) return null;
+  if (/^(?:https?:)?\/\//i.test(rawUrl) || rawUrl.startsWith('data:') || rawUrl.startsWith('mailto:') || rawUrl.startsWith('javascript:')) {
+    return null;
+  }
+
+  let cleaned = rawUrl.trim();
+  if (!cleaned) return null;
+  cleaned = cleaned.split('#')[0].split('?')[0];
+  if (!cleaned) return null;
+
+  if (cleaned.startsWith('./')) cleaned = cleaned.slice(1);
+  if (!cleaned.startsWith('/')) cleaned = '/' + cleaned;
+  return cleaned;
 };
 
 let nextCacheSuffixVersion = cacheSuffixVersion;
@@ -55,57 +70,99 @@ const sendMessageToAllClients = async (msg) => {
 };
 
 /* ==================== Dynamic background caching with progress ==================== */
-async function cacheNewVersionResources() {
-  await sendMessageToAllClients({ type: 'UPDATE_STARTED' });
+let updateJob = null;
 
-  let latestList = [];
+const parseHomePageAssets = async () => {
   try {
-    const res = await fetch(new Request('/', { cache: 'no-store' }));
-    if (res && res.ok) {
-      const html = await res.text();
-      const rx = /(?:href|src)=["']([^"']+)["']/g;
-      let m;
-      const set = new Set(['/']);
-      while ((m = rx.exec(html)) !== null) {
-        let url = m[1];
-        if (!url) continue;
-        if (url.startsWith('http') || url.startsWith('//')) continue;
-        if (!url.startsWith('/')) url = '/' + url.replace(/^\.\//, '');
-        set.add(url);
-      }
-      latestList = Array.from(set);
+    const res = await fetch(requestFor('/', { cache: 'no-store' }));
+    if (!res || !res.ok) return [];
+    const html = await res.text();
+    const rx = /(?:href|src)=['"]([^'"\s>]+)['"]/g;
+    const result = new Set();
+
+    let m;
+    while ((m = rx.exec(html)) !== null) {
+      const normalized = normalizeLocalAssetPath(m[1]);
+      if (normalized) result.add(normalized);
     }
-  } catch (e) {}
-
-  const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
-  const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
-
-  const total = latestList.length;
-  if (total === 0) {
-    await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
-    return;
+    return Array.from(result);
+  } catch (e) {
+    logger.warn('parseHomePageAssets failed:', e);
+    return [];
   }
-  let done = 0;
-  const MAX_CONCURRENT = 3;
+};
 
-  for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
-    const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
-      try {
-        const req = requestFor(url);
-        const res = await fetch(req);
-        if (res && res.ok) {
-          await precache.put(req, res.clone()).catch(() => {});
-          await runtime.put(req, res.clone()).catch(() => {});
+async function cacheNewVersionResources() {
+  if (updateJob) return updateJob;
+
+  updateJob = (async () => {
+    await sendMessageToAllClients({ type: 'UPDATE_STARTED', version: nextCacheSuffixVersion });
+
+    const latestList = Array.from(new Set([
+      ...PreCachlist,
+      ...(await parseHomePageAssets()),
+    ].map(normalizeLocalAssetPath).filter(Boolean)));
+
+    const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
+    const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
+
+    const total = latestList.length;
+    if (total === 0) {
+      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version: nextCacheSuffixVersion });
+      return;
+    }
+
+    let done = 0;
+    let success = 0;
+    const failed = [];
+    const MAX_CONCURRENT = 3;
+
+    for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
+      const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
+        try {
+          const req = requestFor(url, { cache: 'no-store' });
+          const res = await fetch(req);
+          if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
+          await precache.put(req, res.clone());
+          await runtime.put(req, res.clone());
+          success += 1;
+        } catch (e) {
+          failed.push(url);
+          logger.warn('[update] cache fail', url, e);
         }
-      } catch (e) {}
-      done++;
-      const pct = Math.round((done / total) * 100);
-      await sendMessageToAllClients({ type: 'UPDATE_PROGRESS', progress: pct });
-    });
-    await Promise.all(batch);
-  }
 
-  await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED' });
+        done += 1;
+        const pct = Math.round((done / total) * 100);
+        await sendMessageToAllClients({
+          type: 'UPDATE_PROGRESS',
+          version: nextCacheSuffixVersion,
+          progress: pct,
+          done,
+          total,
+          success,
+          failed: failed.length,
+        });
+      });
+      await Promise.all(batch);
+    }
+
+    if (failed.length === 0) {
+      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version: nextCacheSuffixVersion, total });
+    } else {
+      await sendMessageToAllClients({
+        type: 'UPDATE_FAILED',
+        version: nextCacheSuffixVersion,
+        total,
+        success,
+        failed: failed.length,
+        failedAssets: failed.slice(0, 20),
+      });
+    }
+  })().finally(() => {
+    updateJob = null;
+  });
+
+  return updateJob;
 }
 
 /* ==================== Install ==================== */
@@ -114,12 +171,11 @@ self.addEventListener('install', event => {
   event.waitUntil((async () => {
     try {
       const cache = await caches.open(CACHE_NAME + '-precache');
-      // 并发预缓存（小批量）
       const CONC = 2;
       for (let i = 0; i < PreCachlist.length; i += CONC) {
         const batch = PreCachlist.slice(i, i + CONC).map(async (u) => {
           try {
-            const req = requestFor(u);
+            const req = requestFor(u, { cache: 'no-store' });
             const matched = await cache.match(req);
             if (!matched) {
               const r = await fetch(req);
@@ -130,18 +186,14 @@ self.addEventListener('install', event => {
         await Promise.all(batch);
       }
 
-      // 动态拉取并缓存新版本的资源（并发送进度）
       await cacheNewVersionResources();
 
-      // 安装完成后不立即 skipWaiting，等待前端发起 SKIP_WAITING
       logger.ready('install done');
-
-      // 通知 clients 可用（页面端会收到 NEW_VERSION_CACHED）
       try {
         const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
         allClients.forEach(c => {
           try {
-            c.postMessage({ type: 'INSTALLED' });
+            c.postMessage({ type: 'INSTALLED', version: cacheSuffixVersion });
           } catch (e) {}
         });
       } catch (e) { logger.warn('notify clients after install failed', e); }
@@ -211,7 +263,6 @@ const CacheAlways = async (event) => {
   }
 };
 
-// ==================== Smart jsDelivr racing (基于你的 cdn 表) ====================
 const raceFetch = async (urls, reqInit = {}, timeoutMs = 6000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -233,7 +284,6 @@ const matchCDN = async (req) => {
   try {
     const url = req.url;
 
-    // gh
     if (url.startsWith(cdn.gh.jsdelivr)) {
       const path = url.slice(cdn.gh.jsdelivr.length);
       return raceFetch([
@@ -244,7 +294,6 @@ const matchCDN = async (req) => {
       ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
     }
 
-    // combine
     if (url.startsWith(cdn.combine.jsdelivr)) {
       const path = url.slice(cdn.combine.jsdelivr.length);
       return raceFetch([
@@ -254,7 +303,6 @@ const matchCDN = async (req) => {
       ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
     }
 
-    // npm
     if (url.startsWith(cdn.npm.jsdelivr)) {
       const path = url.slice(cdn.npm.jsdelivr.length);
       return raceFetch([
@@ -266,7 +314,6 @@ const matchCDN = async (req) => {
       ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
     }
 
-    // cdnjs
     if (url.startsWith(cdn.cdnjs.cdnjs)) {
       const path = url.slice(cdn.cdnjs.cdnjs.length);
       return raceFetch([
@@ -288,11 +335,9 @@ const matchCDN = async (req) => {
 const handleFetch = async (event) => {
   const url = event.request.url;
 
-  // === SW listener 永远直连网络 ===
   if (/sw-update-listener\.js$/.test(url)) {
     return fetch(event.request);
   }
-  // === 🎵 音乐 / 播放器资源：完全绕过 SW ===
   if (
     event.request.headers.has('range') ||
     /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url) ||
@@ -328,7 +373,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-/* ==================== Message listener (简洁) ==================== */
+/* ==================== Message listener ==================== */
 self.addEventListener('message', (event) => {
   if (!event.data) return;
   if (event.data.type === 'SKIP_WAITING') {
@@ -337,7 +382,7 @@ self.addEventListener('message', (event) => {
   }
   if (event.data.type === 'FORCE_UPDATE') {
     logger.info('FORCE_UPDATE received — starting background update');
-    cacheNewVersionResources();
+    event.waitUntil(cacheNewVersionResources());
   }
   if (event.data.type === 'SET_NEXT_VERSION') {
     if (event.data.version) {
@@ -353,6 +398,7 @@ const cdn = {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
+    testingcf: 'https://testingcf.jsdelivr.net/gh'
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',

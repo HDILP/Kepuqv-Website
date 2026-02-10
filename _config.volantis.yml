@@ -1,3 +1,5 @@
+debug: pjax # false: 关闭调试模式， env：环境配置检查， rightMenus: 调试右键, cdn: 调试 CDN System
+
 cdn_system:
   # CDN 优先级 从高到低排序 写入 priority 列表即表示启用(enable)
   priority: [custom, local, cdnjs, npm, static]
@@ -367,6 +369,7 @@ sidebar:
       header:
         icon: fa-duotone fa-folder-open
         title: 文章分类
+        url: /categories/
     # ---------------------------------------
     # tagcloud widget
     tagcloud:
