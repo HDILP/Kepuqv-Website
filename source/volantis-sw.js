@@ -95,6 +95,7 @@ const sendMessageToAllClients = async (msg) => {
 
 /* ==================== Dynamic background caching with progress ==================== */
 let updateJob = null;
+const noRetryUpdateVersions = new Set();
 
 const parseHomePageAssets = async () => {
   try {
@@ -125,6 +126,11 @@ const fetchForBackgroundUpdate = async (req) => {
 
 async function cacheNewVersionResources() {
   if (updateJob) return updateJob;
+
+  if (noRetryUpdateVersions.has(nextCacheSuffixVersion)) {
+    logger.warn('[update] skip FORCE_UPDATE because this version is marked as no-retry:', nextCacheSuffixVersion);
+    return;
+  }
 
   updateJob = (async () => {
     await sendMessageToAllClients({ type: 'UPDATE_STARTED', version: nextCacheSuffixVersion });
@@ -180,6 +186,8 @@ async function cacheNewVersionResources() {
     if (failed.length === 0) {
       await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version: nextCacheSuffixVersion, total });
     } else {
+      noRetryUpdateVersions.add(nextCacheSuffixVersion);
+      logger.warn('[update] mark version as no-retry, user should refresh manually:', nextCacheSuffixVersion, failed);
       await sendMessageToAllClients({
         type: 'UPDATE_FAILED',
         version: nextCacheSuffixVersion,
@@ -187,6 +195,7 @@ async function cacheNewVersionResources() {
         success,
         failed: failed.length,
         failedAssets: failed.slice(0, 20),
+        noRetry: true,
       });
     }
   })().finally(() => {
