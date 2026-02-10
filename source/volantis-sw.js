@@ -96,10 +96,13 @@ const sendMessageToAllClients = async (msg) => {
 /* ==================== Dynamic background caching with progress ==================== */
 let updateJob = null;
 const noRetryUpdateVersions = new Set();
+const extraPendingUrls = new Set();
 
 const parseHomePageAssets = async () => {
   try {
-    const res = await fetch(requestFor('/', { cache: 'no-store' }));
+    // 增加版本参数以击穿 CDN/浏览器强缓存
+    const bustUrl = `/?sw_update=${nextCacheSuffixVersion}`;
+    const res = await fetch(requestFor(bustUrl, { cache: 'no-store' }));
     if (!res || !res.ok) return [];
     const html = await res.text();
     const rx = /(?:href|src)=['"]([^'"\s>]+)['"]/g;
@@ -138,6 +141,7 @@ async function cacheNewVersionResources() {
     const latestList = Array.from(new Set([
       ...PreCachlist,
       ...(await parseHomePageAssets()),
+      ...Array.from(extraPendingUrls),
     ].map(normalizeAssetForUpdate).filter(Boolean)));
 
     const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
@@ -157,11 +161,20 @@ async function cacheNewVersionResources() {
     for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
       const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
         try {
-          const req = requestFor(url, { cache: 'no-store' });
+          let fetchUrl = url;
+          // 对 HTML 增加版本参数以击穿中间缓存
+          if (url.endsWith('/') || url.endsWith('.html') || !url.includes('.')) {
+            const connector = url.includes('?') ? '&' : '?';
+            fetchUrl = `${url}${connector}sw_update=${nextCacheSuffixVersion}`;
+          }
+
+          const req = requestFor(fetchUrl, { cache: 'no-store' });
           const res = await fetchForBackgroundUpdate(req);
           if (!res || (!res.ok && res.type !== 'opaque')) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
-          await precache.put(req, res.clone());
-          await runtime.put(req, res.clone());
+
+          const cacheKey = requestFor(url); // 以不带参数的 URL 作为缓存 Key
+          await precache.put(cacheKey, res.clone());
+          await runtime.put(cacheKey, res.clone());
           success += 1;
         } catch (e) {
           failed.push(url);
@@ -290,6 +303,55 @@ const NetworkFirst = async (event) => {
     if (precached) return precached;
     return new Response('Network error', { status: 504 });
   }
+};
+
+const StaleWhileRevalidate = async (event) => {
+  const req = requestFor(event.request);
+  const url = new URL(req.url);
+
+  // 如果带有 _sw_refresh，强制走网络并更新缓存
+  if (url.searchParams.has('_sw_refresh')) {
+    try {
+      const res = await fetch(requestFor(req, { cache: 'no-store' }));
+      if (res && res.ok) {
+        // 剥离刷新参数后存入缓存，确保后续访问能命中
+        const cleanUrl = new URL(req.url);
+        cleanUrl.searchParams.delete('_sw_refresh');
+        const cleanReq = requestFor(cleanUrl.toString());
+        const runtime = await caches.open(CACHE_NAME + '-runtime');
+        runtime.put(cleanReq, res.clone()).catch(() => {});
+        return res;
+      }
+    } catch (e) {
+      logger.warn('[SWR] force refresh failed, fallback to cache', e);
+    }
+  }
+
+  const runtime = await caches.open(CACHE_NAME + '-runtime');
+  const precache = await caches.open(CACHE_NAME + '-precache');
+  const cached = (await runtime.match(req)) || (await precache.match(req));
+
+  const fetchAndCache = async () => {
+    try {
+      const res = await fetch(requestFor(req, { cache: 'no-store' }));
+      if (res && res.ok) {
+        const rt = await caches.open(CACHE_NAME + '-runtime');
+        await rt.put(req, res.clone());
+      }
+      return res;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  if (cached) {
+    // 使用 waitUntil 确保后台更新不会因为 SW 进程关闭而中断
+    event.waitUntil(fetchAndCache());
+    return cached;
+  }
+
+  const res = await fetchAndCache();
+  return res || new Response('Network error', { status: 504 });
 };
 
 const isHtmlRequest = (request) => {
@@ -555,7 +617,7 @@ const handleFetch = async (event) => {
   }
 
   if (/nocache/.test(url)) return NetworkOnly(event);
-  if (isHtmlRequest(event.request)) return NetworkFirst(event);
+  if (isHtmlRequest(event.request)) return StaleWhileRevalidate(event);
   if (/@latest/.test(url)) return CacheFirst(event);
 
   if (isCDNUrl(url)) {
@@ -597,6 +659,12 @@ self.addEventListener('message', (event) => {
     if (event.data.version) {
       nextCacheSuffixVersion = event.data.version;
       logger.info('SET_NEXT_VERSION received', nextCacheSuffixVersion);
+    }
+  }
+  if (event.data.type === 'PRECACHE_URL') {
+    if (event.data.url) {
+      extraPendingUrls.add(event.data.url);
+      logger.info('PRECACHE_URL received', event.data.url);
     }
   }
 });

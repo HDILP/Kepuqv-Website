@@ -47,6 +47,9 @@
     }
 
     const url = window.location.pathname + window.location.search;
+    const connector = url.includes('?') ? '&' : '?';
+    const refreshUrl = url + connector + '_sw_refresh=true';
+
     let finished = false;
     const fallbackTimer = window.setTimeout(() => {
       if (!finished) window.location.reload();
@@ -60,6 +63,11 @@
     };
     const onComplete = () => {
       cleanup();
+      // 清理 URL 中的 _sw_refresh 参数，保持地址栏美观
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.href.replace(/[?&]_sw_refresh=true/, '').replace(/\?$/, '');
+        window.history.replaceState({}, '', cleanUrl);
+      }
       iziToast.success({
         timeout: 3000,
         title: '刷新完成',
@@ -73,7 +81,7 @@
 
     document.addEventListener('pjax:complete', onComplete);
     document.addEventListener('pjax:error', onError);
-    window.pjax.loadUrl(url);
+    window.pjax.loadUrl(refreshUrl);
   };
 
   const extractVersion = (scriptText) => {
@@ -191,6 +199,11 @@
       return;
     }
     sendVersionHint(target);
+    // 告知 SW 预缓存当前页面
+    sendMessageToWorker(target, {
+      type: 'PRECACHE_URL',
+      url: window.location.pathname + window.location.search
+    });
     sendMessageToWorker(target, { type: 'FORCE_UPDATE' });
   };
 
