@@ -106,7 +106,7 @@ const parseHomePageAssets = async () => {
 
     let m;
     while ((m = rx.exec(html)) !== null) {
-      const normalized = normalizeAssetForUpdate(m[1]);
+      const normalized = normalizeLocalAssetPath(m[1]);
       if (normalized) result.add(normalized);
     }
     return Array.from(result);
@@ -114,13 +114,6 @@ const parseHomePageAssets = async () => {
     logger.warn('parseHomePageAssets failed:', e);
     return [];
   }
-};
-
-const fetchForBackgroundUpdate = async (req) => {
-  if (isCDNUrl(req.url)) {
-    return matchCDN(req);
-  }
-  return fetch(req);
 };
 
 async function cacheNewVersionResources() {
@@ -132,7 +125,7 @@ async function cacheNewVersionResources() {
     const latestList = Array.from(new Set([
       ...PreCachlist,
       ...(await parseHomePageAssets()),
-    ].map(normalizeAssetForUpdate).filter(Boolean)));
+    ].map(normalizeLocalAssetPath).filter(Boolean)));
 
     const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
     const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
@@ -152,7 +145,7 @@ async function cacheNewVersionResources() {
       const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
         try {
           const req = requestFor(url, { cache: 'no-store' });
-          const res = await fetchForBackgroundUpdate(req);
+          const res = await fetch(req);
           if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
           await precache.put(req, res.clone());
           await runtime.put(req, res.clone());
@@ -320,23 +313,9 @@ const CacheAlways = async (event) => {
   }
 };
 
-const putIntoRuntimeCache = async (request, response) => {
-  if (!response || !(response.ok || response.type === 'opaque')) return;
-  const runtimeCacheName = CACHE_NAME + '-runtime';
-  const runtime = await caches.open(runtimeCacheName);
-  try {
-    await runtime.put(request, response.clone());
-  } catch (e) {
-    const isQuota = e && (e.name === 'QuotaExceededError' || String(e).includes('QuotaExceededError'));
-    if (!isQuota) return;
-    logger.warn('[runtime] quota exceeded, pruning oldest entry');
-    const keys = await runtime.keys();
-    if (keys.length > 0) {
-      await runtime.delete(keys[0]);
-      await runtime.put(request, response.clone()).catch(() => {});
-    }
-  }
-};
+const raceFetch = async (urls, reqInit = {}, timeoutMs = 6000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
 const CacheRuntime = async (event, fetcher) => {
   const req = requestFor(event.request);
@@ -395,21 +374,48 @@ const FetchEngine = async (urls, reqInit = {}, timeoutMs = 6000) => {
 
 const matchCDN = async (req) => {
   try {
-    if (shouldBypassCDNRace()) return fetch(req);
+    const url = req.url;
 
-    const reqUrl = req.url;
-    let pathType = null;
-    let pathTestRes = null;
-
-    for (const item of cdn_match_list) {
-      if (item.regexp.test(reqUrl)) {
-        pathType = item.type;
-        pathTestRes = item.base;
-        break;
-      }
+    if (url.startsWith(cdn.gh.jsdelivr)) {
+      const path = url.slice(cdn.gh.jsdelivr.length);
+      return raceFetch([
+        cdn.gh.jsdelivr + path,
+        cdn.gh.fastly + path,
+        cdn.gh.gcore + path,
+        cdn.gh.testingcf + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
     }
 
-    if (!pathType || !pathTestRes || !cdn[pathType]) return fetch(req);
+    if (url.startsWith(cdn.combine.jsdelivr)) {
+      const path = url.slice(cdn.combine.jsdelivr.length);
+      return raceFetch([
+        cdn.combine.jsdelivr + path,
+        cdn.combine.fastly + path,
+        cdn.combine.gcore + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    if (url.startsWith(cdn.npm.jsdelivr)) {
+      const path = url.slice(cdn.npm.jsdelivr.length);
+      return raceFetch([
+        cdn.npm.jsdelivr + path,
+        cdn.npm.fastly + path,
+        cdn.npm.gcore + path,
+        cdn.npm.eleme + path,
+        cdn.npm.unpkg + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
+
+    if (url.startsWith(cdn.cdnjs.cdnjs)) {
+      const path = url.slice(cdn.cdnjs.cdnjs.length);
+      return raceFetch([
+        cdn.cdnjs.cdnjs + path,
+        cdn.cdnjs.baomitu + path,
+        cdn.cdnjs.bootcdn + path,
+        cdn.cdnjs.bytedance + path,
+        cdn.cdnjs.sustech + path,
+      ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
+    }
 
     const tailPath = reqUrl.replace(pathTestRes, '');
     const urls = Object.values(cdn[pathType])
