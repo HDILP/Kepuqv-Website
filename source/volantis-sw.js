@@ -385,6 +385,38 @@ const shouldBypassCDNRace = () => {
   }
 };
 
+const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
+const cdnFailureUntil = new Map();
+
+const markCDNFailed = (url) => {
+  try {
+    const host = new URL(url).host;
+    cdnFailureUntil.set(host, Date.now() + CDN_FAIL_COOLDOWN_MS);
+  } catch (e) {}
+};
+
+const isCDNInCooldown = (url) => {
+  try {
+    const host = new URL(url).host;
+    const until = cdnFailureUntil.get(host) || 0;
+    if (until <= Date.now()) {
+      cdnFailureUntil.delete(host);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+const joinCDNUrl = (base, tailPath) => {
+  if (!base) return null;
+  if (!tailPath) return base;
+  const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+  const cleanTail = tailPath.startsWith('/') ? tailPath : '/' + tailPath;
+  return cleanBase + cleanTail;
+};
+
 const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
   const doneEvent = new EventTarget();
   const tasks = urls.map((u) => new Promise((resolve, reject) => {
@@ -401,9 +433,13 @@ const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
           resolve(r);
           return;
         }
-        reject(new Error('bad response'));
+        markCDNFailed(u);
+        reject(new Error('bad response: ' + u));
       })
-      .catch(reject)
+      .catch((err) => {
+        markCDNFailed(u);
+        reject(err);
+      })
       .finally(() => {
         clearTimeout(timer);
       });
@@ -432,9 +468,16 @@ const matchCDN = async (req) => {
     const pathType = matched.type;
     const pathTestRes = matched.base;
     const tailPath = reqUrl.replace(pathTestRes, '');
-    const urls = Object.values(cdn[pathType])
-      .filter(Boolean)
-      .map(base => base + tailPath);
+    const rawUrls = [
+      ...Object.values(cdn[pathType])
+        .filter(Boolean)
+        .map(base => joinCDNUrl(base, tailPath)),
+      reqUrl,
+    ].filter(Boolean);
+
+    const urls = rawUrls
+      .filter((url, index, arr) => arr.indexOf(url) === index)
+      .filter((url) => url === reqUrl || !isCDNInCooldown(url));
 
     if (urls.length === 0) {
       return fetch(req);
@@ -442,12 +485,19 @@ const matchCDN = async (req) => {
 
     return await FetchEngine(urls, {
       method: req.method,
-      headers: req.headers,
       mode: req.mode,
       credentials: req.credentials,
+      redirect: req.redirect,
+      referrer: req.referrer,
+      referrerPolicy: req.referrerPolicy,
+      integrity: req.integrity,
     });
   } catch (e) {
-    logger.warn('[matchCDN] fallback to native fetch', e);
+    logger.warn('[matchCDN] race failed, fallback to native fetch', {
+      url: req && req.url,
+      message: e && e.message,
+      errors: e && e.errors ? e.errors.map(err => err && err.message ? err.message : String(err)).slice(0, 5) : [],
+    });
     return fetch(req);
   }
 };
@@ -550,7 +600,7 @@ const cdn_match_list = Object.entries(cdn).flatMap(([type, mirrors]) =>
   Object.values(mirrors).filter(Boolean).map(base => ({
     type,
     base,
-    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')),
+    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   }))
 );
 
