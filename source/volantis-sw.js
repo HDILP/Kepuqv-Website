@@ -59,6 +59,30 @@ const normalizeLocalAssetPath = (rawUrl) => {
 let nextCacheSuffixVersion = cacheSuffixVersion;
 const cacheNameFor = (version, type) => `${prefix}-v${version}-${type}`;
 
+const CDN_URL_REGEXP = /(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/i;
+const isCDNUrl = (url) => CDN_URL_REGEXP.test(url);
+
+const normalizeAssetForUpdate = (rawUrl) => {
+  if (!rawUrl) return null;
+  const cleaned = rawUrl.trim().split('#')[0];
+  if (!cleaned) return null;
+
+  if (/^https?:\/\//i.test(cleaned)) {
+    return isCDNUrl(cleaned) ? cleaned : null;
+  }
+  if (cleaned.startsWith('//')) {
+    const httpsUrl = 'https:' + cleaned;
+    return isCDNUrl(httpsUrl) ? httpsUrl : null;
+  }
+  if (cleaned.startsWith('data:') || cleaned.startsWith('mailto:') || cleaned.startsWith('javascript:')) return null;
+
+  let local = cleaned;
+  if (local.startsWith('./')) local = local.slice(1);
+  if (!local.startsWith('/')) local = '/' + local;
+  return local;
+};
+
+
 /* ==================== Client messaging ==================== */
 const sendMessageToAllClients = async (msg) => {
   try {
@@ -231,6 +255,32 @@ const NetworkOnly = async (event) => {
   }
 };
 
+const NetworkFirst = async (event) => {
+  const req = requestFor(event.request, { cache: 'no-store' });
+  const runtime = await caches.open(CACHE_NAME + '-runtime');
+  const precache = await caches.open(CACHE_NAME + '-precache');
+
+  try {
+    const res = await fetch(req);
+    if (res && res.ok) {
+      runtime.put(req, res.clone()).catch(() => {});
+      return res;
+    }
+    throw new Error('bad response');
+  } catch (e) {
+    const runtimeCached = await runtime.match(req);
+    if (runtimeCached) return runtimeCached;
+    const precached = await precache.match(req);
+    if (precached) return precached;
+    return new Response('Network error', { status: 504 });
+  }
+};
+
+const isHtmlRequest = (request) => {
+  const accept = request.headers.get('accept') || '';
+  return request.mode === 'navigate' || accept.includes('text/html');
+};
+
 const CacheFirst = async (event) => {
   const req = requestFor(event.request);
   const cached = await caches.match(req);
@@ -267,17 +317,59 @@ const raceFetch = async (urls, reqInit = {}, timeoutMs = 6000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+const CacheRuntime = async (event, fetcher) => {
+  const req = requestFor(event.request);
+  const runtime = await caches.open(CACHE_NAME + '-runtime');
+  const cached = await runtime.match(req);
+  if (cached) return cached;
+
+  const res = await fetcher(req);
+  putIntoRuntimeCache(req, res).catch(() => {});
+  return res;
+};
+
+const shouldBypassCDNRace = () => {
   try {
-    return await Promise.any(
-      urls.map(u => fetch(new Request(u, reqInit), { signal: controller.signal }).then(r => {
-        if (r && (r.ok || r.type === 'opaque')) return r;
-        throw new Error('bad response');
-      }))
-    );
-  } finally {
-    clearTimeout(timer);
-    controller.abort();
+    const connection = (self.navigator && self.navigator.connection) || null;
+    if (!connection) return false;
+    const saveData = !!connection.saveData;
+    const effectiveType = String(connection.effectiveType || '').toLowerCase();
+    return saveData || /2g/.test(effectiveType);
+  } catch (e) {
+    return false;
   }
+};
+
+const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
+  const doneEvent = new EventTarget();
+  const tasks = urls.map((u) => new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const abortRest = () => controller.abort();
+    doneEvent.addEventListener('abortOtherInstance', abortRest, { once: true });
+
+    fetch(new Request(u, reqInit), { signal: controller.signal })
+      .then((r) => {
+        if (r && (r.status === 200 || r.type === 'opaque')) {
+          doneEvent.dispatchEvent(new Event('abortOtherInstance'));
+          resolve(r);
+          return;
+        }
+        reject(new Error('bad response'));
+      })
+      .catch(reject)
+      .finally(() => {
+        clearTimeout(timer);
+      });
+  }));
+
+  return Promise.any(tasks);
+};
+
+const FetchEngine = async (urls, reqInit = {}, timeoutMs = 6000) => {
+  if (!urls || urls.length === 0) throw new Error('empty urls');
+  return fetchParallel(urls, reqInit, timeoutMs);
 };
 
 const matchCDN = async (req) => {
@@ -325,7 +417,17 @@ const matchCDN = async (req) => {
       ], { method: req.method, headers: req.headers, mode: req.mode, credentials: req.credentials });
     }
 
-    return fetch(req);
+    const tailPath = reqUrl.replace(pathTestRes, '');
+    const urls = Object.values(cdn[pathType])
+      .filter(Boolean)
+      .map(base => base + tailPath);
+
+    return await FetchEngine(urls, {
+      method: req.method,
+      headers: req.headers,
+      mode: req.mode,
+      credentials: req.credentials,
+    });
   } catch (e) {
     return fetch(req);
   }
@@ -347,10 +449,11 @@ const handleFetch = async (event) => {
   }
 
   if (/nocache/.test(url)) return NetworkOnly(event);
+  if (isHtmlRequest(event.request)) return NetworkFirst(event);
   if (/@latest/.test(url)) return CacheFirst(event);
 
-  if (/(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/.test(url)) {
-    return matchCDN(event.request);
+  if (isCDNUrl(url)) {
+    return CacheRuntime(event, matchCDN);
   }
 
   if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
@@ -422,5 +525,14 @@ const cdn = {
     admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
   }
 };
+
+
+const cdn_match_list = Object.entries(cdn).flatMap(([type, mirrors]) =>
+  Object.values(mirrors).filter(Boolean).map(base => ({
+    type,
+    base,
+    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')),
+  }))
+);
 
 logger.ready('Volantis SW (merged) loaded');
