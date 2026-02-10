@@ -368,9 +368,16 @@ const CacheRuntime = async (event, fetcher) => {
   const cached = await runtime.match(req);
   if (cached) return cached;
 
-  const res = await fetcher(req);
-  putIntoRuntimeCache(req, res).catch(() => {});
-  return res;
+  try {
+    const res = await fetcher(req);
+    if (res && (res.status === 200 || res.type === 'opaque')) {
+      putIntoRuntimeCache(req, res).catch(() => {});
+    }
+    return res;
+  } catch (e) {
+    logger.error('CacheRuntime error:', e);
+    return fetch(req);
+  }
 };
 
 const shouldBypassCDNRace = () => {
@@ -386,10 +393,8 @@ const shouldBypassCDNRace = () => {
 };
 
 const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
-const CDN_RACE_LIMIT = 2;
-const CDN_RACE_TIMEOUT_MS = 4500;
-const CDN_HEDGE_DELAY_MS = 250;
-const CDN_MAX_PARALLEL_RACES = 4;
+const CDN_RACE_LIMIT = 3;
+const CDN_RACE_TIMEOUT_MS = 5000;
 const cdnFailureUntil = new Map();
 
 const markCDNFailed = (url) => {
@@ -421,92 +426,69 @@ const joinCDNUrl = (base, tailPath) => {
   return cleanBase + cleanTail;
 };
 
-let activeCDNRaces = 0;
-const pendingCDNRaceResolvers = [];
-
-const acquireCDNRaceSlot = async () => {
-  if (activeCDNRaces < CDN_MAX_PARALLEL_RACES) {
-    activeCDNRaces += 1;
-    return;
-  }
-  await new Promise((resolve) => pendingCDNRaceResolvers.push(resolve));
-  activeCDNRaces += 1;
-};
-
-const releaseCDNRaceSlot = () => {
-  activeCDNRaces = Math.max(0, activeCDNRaces - 1);
-  const next = pendingCDNRaceResolvers.shift();
-  if (next) next();
-};
-
-const fetchSingleCandidate = (url, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS, winnerSignalRef = { won: false }, controllers = []) => {
-  const controller = new AbortController();
-  controllers.push(controller);
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
-
-  return fetch(new Request(url, reqInit), { signal: controller.signal })
-    .then((r) => {
-      if (r && (r.status === 200 || r.type === 'opaque')) {
-        winnerSignalRef.won = true;
-        controllers.forEach((c) => {
-          if (c !== controller) c.abort();
+const createPromiseAny = () => {
+  if (Promise.any) return;
+  Promise.any = (promises) => {
+    return new Promise((resolve, reject) => {
+      let errors = [];
+      let pending = promises.length;
+      promises.forEach((p) => {
+        Promise.resolve(p).then(resolve).catch((e) => {
+          errors.push(e);
+          if (--pending === 0) {
+            reject(new AggregateError(errors, 'All promises rejected'));
+          }
         });
-        return r;
-      }
-      markCDNFailed(url);
-      throw new Error('bad response: ' + url);
-    })
-    .catch((err) => {
-      if (timedOut) {
-        markCDNFailed(url);
-        throw new Error('timeout: ' + url);
-      }
-      if (err && err.name === 'AbortError' && winnerSignalRef.won) {
-        throw err;
-      }
-      if (!(err && err.name === 'AbortError')) {
-        markCDNFailed(url);
-      }
-      throw err;
-    })
-    .finally(() => {
-      clearTimeout(timer);
+      });
     });
+  };
 };
+
+function fetchParallel(urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) {
+  const abortEvent = "abortOtherInstance";
+  const eventTarget = new EventTarget();
+
+  return urls.map(url => {
+    const controller = new AbortController();
+    let tagged = false;
+
+    const onAbort = () => {
+      if (!tagged) controller.abort();
+    };
+    eventTarget.addEventListener(abortEvent, onAbort);
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (!tagged) {
+          controller.abort();
+          reject(new Error("Timeout"));
+        }
+      }, timeoutMs);
+
+      fetch(new Request(url, reqInit), { signal: controller.signal }).then(res => {
+        if (res && (res.status === 200 || res.type === 'opaque')) {
+          tagged = true;
+          eventTarget.dispatchEvent(new Event(abortEvent));
+          resolve(res);
+        } else {
+          markCDNFailed(url);
+          reject(new Error("Bad response"));
+        }
+      }).catch(err => {
+        if (err.name !== 'AbortError') markCDNFailed(url);
+        reject(err);
+      }).finally(() => {
+        clearTimeout(timer);
+        eventTarget.removeEventListener(abortEvent, onAbort);
+      });
+    });
+  });
+}
 
 const FetchEngine = async (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
   if (!urls || urls.length === 0) throw new Error('empty urls');
-
-  await acquireCDNRaceSlot();
-  try {
-    const deduped = urls.filter((url, index, arr) => arr.indexOf(url) === index);
-    const controllers = [];
-    const winnerSignalRef = { won: false };
-    const errors = [];
-
-    for (let i = 0; i < deduped.length; i += 1) {
-      if (i > 0) {
-        await new Promise((r) => setTimeout(r, CDN_HEDGE_DELAY_MS));
-      }
-      if (winnerSignalRef.won) break;
-
-      try {
-        const response = await fetchSingleCandidate(deduped[i], reqInit, timeoutMs, winnerSignalRef, controllers);
-        return response;
-      } catch (e) {
-        errors.push(e);
-        continue;
-      }
-    }
-
-    throw new AggregateError(errors, 'all cdn candidates failed');
-  } finally {
-    releaseCDNRaceSlot();
-  }
+  createPromiseAny();
+  return Promise.any(fetchParallel(urls, reqInit, timeoutMs));
 };
 
 const matchCDN = async (req) => {
