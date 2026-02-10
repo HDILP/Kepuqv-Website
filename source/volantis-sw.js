@@ -385,36 +385,128 @@ const shouldBypassCDNRace = () => {
   }
 };
 
-const fetchParallel = (urls, reqInit = {}, timeoutMs = 6000) => {
-  const doneEvent = new EventTarget();
-  const tasks = urls.map((u) => new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
+const CDN_RACE_LIMIT = 2;
+const CDN_RACE_TIMEOUT_MS = 4500;
+const CDN_HEDGE_DELAY_MS = 250;
+const CDN_MAX_PARALLEL_RACES = 4;
+const cdnFailureUntil = new Map();
 
-    const abortRest = () => controller.abort();
-    doneEvent.addEventListener('abortOtherInstance', abortRest, { once: true });
-
-    fetch(new Request(u, reqInit), { signal: controller.signal })
-      .then((r) => {
-        if (r && (r.status === 200 || r.type === 'opaque')) {
-          doneEvent.dispatchEvent(new Event('abortOtherInstance'));
-          resolve(r);
-          return;
-        }
-        reject(new Error('bad response'));
-      })
-      .catch(reject)
-      .finally(() => {
-        clearTimeout(timer);
-      });
-  }));
-
-  return Promise.any(tasks);
+const markCDNFailed = (url) => {
+  try {
+    const host = new URL(url).host;
+    cdnFailureUntil.set(host, Date.now() + CDN_FAIL_COOLDOWN_MS);
+  } catch (e) {}
 };
 
-const FetchEngine = async (urls, reqInit = {}, timeoutMs = 6000) => {
+const isCDNInCooldown = (url) => {
+  try {
+    const host = new URL(url).host;
+    const until = cdnFailureUntil.get(host) || 0;
+    if (until <= Date.now()) {
+      cdnFailureUntil.delete(host);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+const joinCDNUrl = (base, tailPath) => {
+  if (!base) return null;
+  if (!tailPath) return base;
+  const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+  const cleanTail = tailPath.startsWith('/') ? tailPath : '/' + tailPath;
+  return cleanBase + cleanTail;
+};
+
+let activeCDNRaces = 0;
+const pendingCDNRaceResolvers = [];
+
+const acquireCDNRaceSlot = async () => {
+  if (activeCDNRaces < CDN_MAX_PARALLEL_RACES) {
+    activeCDNRaces += 1;
+    return;
+  }
+  await new Promise((resolve) => pendingCDNRaceResolvers.push(resolve));
+  activeCDNRaces += 1;
+};
+
+const releaseCDNRaceSlot = () => {
+  activeCDNRaces = Math.max(0, activeCDNRaces - 1);
+  const next = pendingCDNRaceResolvers.shift();
+  if (next) next();
+};
+
+const fetchSingleCandidate = (url, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS, winnerSignalRef = { won: false }, controllers = []) => {
+  const controller = new AbortController();
+  controllers.push(controller);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  return fetch(new Request(url, reqInit), { signal: controller.signal })
+    .then((r) => {
+      if (r && (r.status === 200 || r.type === 'opaque')) {
+        winnerSignalRef.won = true;
+        controllers.forEach((c) => {
+          if (c !== controller) c.abort();
+        });
+        return r;
+      }
+      markCDNFailed(url);
+      throw new Error('bad response: ' + url);
+    })
+    .catch((err) => {
+      if (timedOut) {
+        markCDNFailed(url);
+        throw new Error('timeout: ' + url);
+      }
+      if (err && err.name === 'AbortError' && winnerSignalRef.won) {
+        throw err;
+      }
+      if (!(err && err.name === 'AbortError')) {
+        markCDNFailed(url);
+      }
+      throw err;
+    })
+    .finally(() => {
+      clearTimeout(timer);
+    });
+};
+
+const FetchEngine = async (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
   if (!urls || urls.length === 0) throw new Error('empty urls');
-  return fetchParallel(urls, reqInit, timeoutMs);
+
+  await acquireCDNRaceSlot();
+  try {
+    const deduped = urls.filter((url, index, arr) => arr.indexOf(url) === index);
+    const controllers = [];
+    const winnerSignalRef = { won: false };
+    const errors = [];
+
+    for (let i = 0; i < deduped.length; i += 1) {
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, CDN_HEDGE_DELAY_MS));
+      }
+      if (winnerSignalRef.won) break;
+
+      try {
+        const response = await fetchSingleCandidate(deduped[i], reqInit, timeoutMs, winnerSignalRef, controllers);
+        return response;
+      } catch (e) {
+        errors.push(e);
+        continue;
+      }
+    }
+
+    throw new AggregateError(errors, 'all cdn candidates failed');
+  } finally {
+    releaseCDNRaceSlot();
+  }
 };
 
 const matchCDN = async (req) => {
@@ -432,9 +524,15 @@ const matchCDN = async (req) => {
     const pathType = matched.type;
     const pathTestRes = matched.base;
     const tailPath = reqUrl.replace(pathTestRes, '');
-    const urls = Object.values(cdn[pathType])
+    const mirrorUrls = Object.values(cdn[pathType])
       .filter(Boolean)
-      .map(base => base + tailPath);
+      .map(base => joinCDNUrl(base, tailPath))
+      .filter(Boolean)
+      .filter((url, index, arr) => arr.indexOf(url) === index)
+      .filter((url) => url !== reqUrl)
+      .filter((url) => !isCDNInCooldown(url));
+
+    const urls = [reqUrl, ...mirrorUrls].slice(0, CDN_RACE_LIMIT);
 
     if (urls.length === 0) {
       return fetch(req);
@@ -442,12 +540,19 @@ const matchCDN = async (req) => {
 
     return await FetchEngine(urls, {
       method: req.method,
-      headers: req.headers,
       mode: req.mode,
       credentials: req.credentials,
+      redirect: req.redirect,
+      referrer: req.referrer,
+      referrerPolicy: req.referrerPolicy,
+      integrity: req.integrity,
     });
   } catch (e) {
-    logger.warn('[matchCDN] fallback to native fetch', e);
+    logger.warn('[matchCDN] race failed, fallback to native fetch', {
+      url: req && req.url,
+      message: e && e.message,
+      errors: e && e.errors ? e.errors.map(err => err && err.message ? err.message : String(err)).slice(0, 5) : [],
+    });
     return fetch(req);
   }
 };
@@ -550,7 +655,7 @@ const cdn_match_list = Object.entries(cdn).flatMap(([type, mirrors]) =>
   Object.values(mirrors).filter(Boolean).map(base => ({
     type,
     base,
-    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')),
+    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
   }))
 );
 
