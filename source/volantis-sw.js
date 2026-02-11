@@ -1,357 +1,49 @@
-/* =====================================================
-   Volantis Service Worker — Merged & Refactored
-   - 将第二份 SW 的可选动态解析与精美 logger、前端进度推送
-     与第一份 SW 的高性能 CDN/缓存策略合并。
-   - 保留高性能 fetch/CDN 竞速与并发控制。
-   - 前端 <-> SW 通信尽量精简：
-       * 页面 -> SW: { type: 'FORCE_UPDATE' } 触发后台拉新并缓存（会有进度消息）
-       * 页面 -> SW: { type: 'SKIP_WAITING' } 在用户确认后跳过等待并激活
-       * SW -> 页面: 'UPDATE_STARTED' / 'UPDATE_PROGRESS' / 'NEW_VERSION_CACHED'
-   ===================================================== */
+/* Volantis Service Worker
+ * 目标：版本隔离、可观测更新、平滑切换。
+ */
 
-const prefix = 'volantis-community';
+const SW_PREFIX = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::'; // 构建时替换
-const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
-const debug = true;
+const ACTIVE_VERSION = cacheSuffixVersion;
 
-const PreCachlist = [
+const PRECACHE_NAME = `${SW_PREFIX}-v${ACTIVE_VERSION}-precache`;
+const RUNTIME_NAME = `${SW_PREFIX}-v${ACTIVE_VERSION}-runtime`;
+
+const DEBUG = true;
+const PRECACHE_ASSETS = [
+  '/',
   '/css/style.css',
   '/js/app.js',
   '/js/search/hexo.js',
-  '/',
 ];
 
-/* ==================== Logger ==================== */
+const UPDATE_CONCURRENCY = 3;
+const CDN_RACE_LIMIT = 3;
+const CDN_RACE_TIMEOUT_MS = 5000;
+const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
+
 const logger = (() => {
-  if (!debug) return { info: () => {}, warn: () => {}, error: () => {}, ready: () => {} };
+  if (!DEBUG) return { info: () => {}, warn: () => {}, error: () => {} };
   return {
-    info: (...a) => console.log('%c[SW]', 'color:#2196F3;font-weight:bold;', ...a),
-    ready: (...a) => console.log('%c[SW]', 'color:#42b983;font-weight:bold;', ...a),
-    warn: (...a) => console.warn('%c[SW]', 'color:#ff9800;font-weight:bold;', ...a),
-    error: (...a) => console.error('%c[SW]', 'color:#f44336;font-weight:bold;', ...a),
+    info: (...args) => console.log('%c[SW]', 'color:#2196F3;font-weight:bold;', ...args),
+    warn: (...args) => console.warn('%c[SW]', 'color:#FF9800;font-weight:bold;', ...args),
+    error: (...args) => console.error('%c[SW]', 'color:#F44336;font-weight:bold;', ...args),
   };
 })();
 
-/* ==================== Utilities ==================== */
-const requestFor = (urlOrReq, extra = {}) => {
-  if (urlOrReq instanceof Request) {
-    return new Request(urlOrReq, { credentials: 'same-origin', ...extra });
-  }
-  return new Request(urlOrReq, { credentials: 'same-origin', ...extra });
-};
-
-const normalizeLocalAssetPath = (rawUrl) => {
-  if (!rawUrl) return null;
-  if (/^(?:https?:)?\/\//i.test(rawUrl) || rawUrl.startsWith('data:') || rawUrl.startsWith('mailto:') || rawUrl.startsWith('javascript:')) {
-    return null;
-  }
-
-  let cleaned = rawUrl.trim();
-  if (!cleaned) return null;
-  cleaned = cleaned.split('#')[0].split('?')[0];
-  if (!cleaned) return null;
-
-  if (cleaned.startsWith('./')) cleaned = cleaned.slice(1);
-  if (!cleaned.startsWith('/')) cleaned = '/' + cleaned;
-  return cleaned;
-};
-
-let nextCacheSuffixVersion = cacheSuffixVersion;
-const cacheNameFor = (version, type) => `${prefix}-v${version}-${type}`;
-
-const CDN_URL_REGEXP = /(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/i;
-const isCDNUrl = (url) => CDN_URL_REGEXP.test(url);
-
-const normalizeAssetForUpdate = (rawUrl) => {
-  if (!rawUrl) return null;
-  const cleaned = rawUrl.trim().split('#')[0];
-  if (!cleaned) return null;
-
-  if (/^https?:\/\//i.test(cleaned)) {
-    return isCDNUrl(cleaned) ? cleaned : null;
-  }
-  if (cleaned.startsWith('//')) {
-    const httpsUrl = 'https:' + cleaned;
-    return isCDNUrl(httpsUrl) ? httpsUrl : null;
-  }
-  if (cleaned.startsWith('data:') || cleaned.startsWith('mailto:') || cleaned.startsWith('javascript:')) return null;
-
-  let local = cleaned;
-  if (local.startsWith('./')) local = local.slice(1);
-  if (!local.startsWith('/')) local = '/' + local;
-  return local;
-};
-
-
-/* ==================== Client messaging ==================== */
-const sendMessageToAllClients = async (msg) => {
-  try {
-    const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-    clients.forEach(c => {
-      try { c.postMessage(msg); } catch (e) {}
-    });
-  } catch (e) { logger.error('sendMessageToAllClients error:', e); }
-};
-
-/* ==================== Dynamic background caching with progress ==================== */
-let updateJob = null;
-const noRetryUpdateVersions = new Set();
+let hintedNextVersion = ACTIVE_VERSION;
+let updateJobPromise = null;
 const extraPendingUrls = new Set();
+const cdnFailureUntil = new Map();
 
-const parseHomePageAssets = async () => {
-  try {
-    // 增加版本参数以击穿 CDN/浏览器强缓存
-    const bustUrl = `/?sw_update=${nextCacheSuffixVersion}`;
-    const res = await fetch(requestFor(bustUrl, { cache: 'no-store' }));
-    if (!res || !res.ok) return [];
-    const html = await res.text();
-    const rx = /(?:href|src)=['"]([^'"\s>]+)['"]/g;
-    const result = new Set();
-
-    let m;
-    while ((m = rx.exec(html)) !== null) {
-      const normalized = normalizeAssetForUpdate(m[1]);
-      if (normalized) result.add(normalized);
-    }
-    return Array.from(result);
-  } catch (e) {
-    logger.warn('parseHomePageAssets failed:', e);
-    return [];
-  }
-};
-
-const fetchForBackgroundUpdate = async (req) => {
-  if (isCDNUrl(req.url)) {
-    return matchCDN(req);
-  }
-  return fetch(req);
-};
-
-async function cacheNewVersionResources() {
-  if (updateJob) return updateJob;
-
-  if (noRetryUpdateVersions.has(nextCacheSuffixVersion)) {
-    logger.warn('[update] skip FORCE_UPDATE because this version is marked as no-retry:', nextCacheSuffixVersion);
-    return;
-  }
-
-  updateJob = (async () => {
-    await sendMessageToAllClients({ type: 'UPDATE_STARTED', version: nextCacheSuffixVersion });
-
-    const latestList = Array.from(new Set([
-      ...PreCachlist,
-      ...(await parseHomePageAssets()),
-      ...Array.from(extraPendingUrls),
-    ].map(normalizeAssetForUpdate).filter(Boolean)));
-
-    const precache = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'precache'));
-    const runtime = await caches.open(cacheNameFor(nextCacheSuffixVersion, 'runtime'));
-
-    const total = latestList.length;
-    if (total === 0) {
-      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version: nextCacheSuffixVersion });
-      return;
-    }
-
-    let done = 0;
-    let success = 0;
-    const failed = [];
-    const MAX_CONCURRENT = 3;
-
-    for (let i = 0; i < latestList.length; i += MAX_CONCURRENT) {
-      const batch = latestList.slice(i, i + MAX_CONCURRENT).map(async (url) => {
-        try {
-          let fetchUrl = url;
-          // 对 HTML 增加版本参数以击穿中间缓存
-          if (url.endsWith('/') || url.endsWith('.html') || !url.includes('.')) {
-            const connector = url.includes('?') ? '&' : '?';
-            fetchUrl = `${url}${connector}sw_update=${nextCacheSuffixVersion}`;
-          }
-
-          const req = requestFor(fetchUrl, { cache: 'no-store' });
-          const res = await fetchForBackgroundUpdate(req);
-          if (!res || (!res.ok && res.type !== 'opaque')) throw new Error(`HTTP ${res ? res.status : 'NO_RESPONSE'}`);
-
-          const cacheKey = requestFor(url); // 以不带参数的 URL 作为缓存 Key
-          await precache.put(cacheKey, res.clone());
-          await runtime.put(cacheKey, res.clone());
-          success += 1;
-        } catch (e) {
-          failed.push(url);
-          logger.warn('[update] cache fail', url, e);
-        }
-
-        done += 1;
-        const pct = Math.round((done / total) * 100);
-        await sendMessageToAllClients({
-          type: 'UPDATE_PROGRESS',
-          version: nextCacheSuffixVersion,
-          progress: pct,
-          done,
-          total,
-          success,
-          failed: failed.length,
-        });
-      });
-      await Promise.all(batch);
-    }
-
-    if (failed.length === 0) {
-      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version: nextCacheSuffixVersion, total });
-    } else {
-      noRetryUpdateVersions.add(nextCacheSuffixVersion);
-      logger.warn('[update] mark version as no-retry, user should refresh manually:', nextCacheSuffixVersion, failed);
-      await sendMessageToAllClients({
-        type: 'UPDATE_FAILED',
-        version: nextCacheSuffixVersion,
-        total,
-        success,
-        failed: failed.length,
-        failedAssets: failed.slice(0, 20),
-        noRetry: true,
-      });
-    }
-  })().finally(() => {
-    updateJob = null;
-  });
-
-  return updateJob;
-}
-
-/* ==================== Install ==================== */
-self.addEventListener('install', event => {
-  logger.info('install event');
-  event.waitUntil((async () => {
-    try {
-      const cache = await caches.open(CACHE_NAME + '-precache');
-      const CONC = 2;
-      for (let i = 0; i < PreCachlist.length; i += CONC) {
-        const batch = PreCachlist.slice(i, i + CONC).map(async (u) => {
-          try {
-            const req = requestFor(u, { cache: 'no-store' });
-            const matched = await cache.match(req);
-            if (!matched) {
-              const r = await fetch(req);
-              if (r && r.ok) await cache.put(req, r.clone());
-            }
-          } catch (e) { logger.warn('[install] precache fail', u, e); }
-        });
-        await Promise.all(batch);
-      }
-
-      await cacheNewVersionResources();
-
-      logger.ready('install done');
-      try {
-        const allClients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-        allClients.forEach(c => {
-          try {
-            c.postMessage({ type: 'INSTALLED', version: cacheSuffixVersion });
-          } catch (e) {}
-        });
-      } catch (e) { logger.warn('notify clients after install failed', e); }
-
-    } catch (e) { logger.error('install error', e); }
-  })());
-});
-
-/* ==================== Activate ==================== */
-self.addEventListener('activate', event => {
-  logger.info('activate event');
-  event.waitUntil((async () => {
-    try {
-      const keys = await caches.keys();
-      const keepVersions = new Set([cacheSuffixVersion, nextCacheSuffixVersion]);
-      await Promise.all(keys.map(key => {
-        const shouldKeep = Array.from(keepVersions).some(version => key.includes(`-v${version}-`));
-        if (!shouldKeep) {
-          logger.info('Deleting old cache', key);
-          return caches.delete(key);
-        }
-      }));
-      await self.clients.claim();
-      logger.ready('activated and claimed');
-    } catch (e) { logger.error('activate error', e); }
-  })());
-});
-
-/* ==================== Fetch strategies ==================== */
-const NetworkOnly = async (event) => {
-  try {
-    return await fetch(event.request);
-  } catch (e) {
-    return new Response('Offline', { status: 503 });
-  }
-};
-
-const NetworkFirst = async (event) => {
-  const req = requestFor(event.request, { cache: 'no-store' });
-  const runtime = await caches.open(CACHE_NAME + '-runtime');
-  const precache = await caches.open(CACHE_NAME + '-precache');
-
-  try {
-    const res = await fetch(req);
-    if (res && res.ok) {
-      runtime.put(req, res.clone()).catch(() => {});
-      return res;
-    }
-    throw new Error('bad response');
-  } catch (e) {
-    const runtimeCached = await runtime.match(req);
-    if (runtimeCached) return runtimeCached;
-    const precached = await precache.match(req);
-    if (precached) return precached;
-    return new Response('Network error', { status: 504 });
-  }
-};
-
-const StaleWhileRevalidate = async (event) => {
-  const req = requestFor(event.request);
-  const url = new URL(req.url);
-
-  // 如果带有 _sw_refresh，强制走网络并更新缓存
-  if (url.searchParams.has('_sw_refresh')) {
-    try {
-      const res = await fetch(requestFor(req, { cache: 'no-store' }));
-      if (res && res.ok) {
-        // 剥离刷新参数后存入缓存，确保后续访问能命中
-        const cleanUrl = new URL(req.url);
-        cleanUrl.searchParams.delete('_sw_refresh');
-        const cleanReq = requestFor(cleanUrl.toString());
-        const runtime = await caches.open(CACHE_NAME + '-runtime');
-        runtime.put(cleanReq, res.clone()).catch(() => {});
-        return res;
-      }
-    } catch (e) {
-      logger.warn('[SWR] force refresh failed, fallback to cache', e);
-    }
-  }
-
-  const runtime = await caches.open(CACHE_NAME + '-runtime');
-  const precache = await caches.open(CACHE_NAME + '-precache');
-  const cached = (await runtime.match(req)) || (await precache.match(req));
-
-  const fetchAndCache = async () => {
-    try {
-      const res = await fetch(requestFor(req, { cache: 'no-store' }));
-      if (res && res.ok) {
-        const rt = await caches.open(CACHE_NAME + '-runtime');
-        await rt.put(req, res.clone());
-      }
-      return res;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  if (cached) {
-    // 使用 waitUntil 确保后台更新不会因为 SW 进程关闭而中断
-    event.waitUntil(fetchAndCache());
-    return cached;
-  }
-
-  const res = await fetchAndCache();
-  return res || new Response('Network error', { status: 504 });
+const cacheNameFor = (version, type) => `${SW_PREFIX}-v${version}-${type}`;
+const cleanPath = (url) => {
+  const stripped = String(url || '').trim().split('#')[0];
+  if (!stripped || stripped.startsWith('data:') || stripped.startsWith('javascript:') || stripped.startsWith('mailto:')) return null;
+  if (/^https?:\/\//i.test(stripped)) return stripped;
+  if (stripped.startsWith('//')) return `https:${stripped}`;
+  const relative = stripped.startsWith('./') ? stripped.slice(1) : stripped;
+  return relative.startsWith('/') ? relative : `/${relative}`;
 };
 
 const isHtmlRequest = (request) => {
@@ -359,114 +51,230 @@ const isHtmlRequest = (request) => {
   return request.mode === 'navigate' || accept.includes('text/html');
 };
 
-const CacheFirst = async (event) => {
-  const req = requestFor(event.request);
-  const cached = await caches.match(req);
-  if (cached) return cached;
-  try {
-    const res = await fetch(req);
-    if (res && res.ok) {
-      const cache = await caches.open(CACHE_NAME + '-runtime');
-      cache.put(req, res.clone()).catch(() => {});
+const isBingWallpaperRequest = (url) => /\/bing(?:-wallpaper)?\//i.test(url.pathname) || /HPImageArchive/i.test(url.href);
+const isListenerScript = (url) => /\/js\/sw-update-listener\.js(?:\?|$)/.test(url.pathname + url.search);
+const isAudioRequest = (request, url) => request.headers.has('range') || /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url.pathname) || /(music\.163\.com|music\.126\.net|qqmusic\.qq\.com)/i.test(url.hostname);
+
+const CDN_URL_REGEXP = /(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/i;
+const isCDNUrl = (url) => CDN_URL_REGEXP.test(url);
+
+async function sendMessageToAllClients(message) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
+  clients.forEach((client) => {
+    try {
+      client.postMessage(message);
+    } catch (_) {
+      // ignore
     }
-    return res;
-  } catch (e) {
-    return new Response('Network error', { status: 504 });
-  }
-};
+  });
+}
 
-const CacheAlways = async (event) => {
-  const req = requestFor(event.request);
-  const cache = await caches.open(CACHE_NAME + '-runtime');
-  const cached = await cache.match(req);
-  if (cached) return cached;
-  try {
-    const res = await fetch(req);
-    if (res && (res.ok || res.type === 'opaque')) {
-      cache.put(req, res.clone()).catch(() => {});
-    }
-    return res;
-  } catch (e) {
-    return new Response('Network error', { status: 504 });
-  }
-};
-
-const clearOldRuntimeCaches = async () => {
-  const keep = new Set([
-    cacheNameFor(cacheSuffixVersion, 'runtime'),
-    cacheNameFor(nextCacheSuffixVersion, 'runtime'),
-  ]);
-  const keys = await caches.keys();
-  await Promise.all(keys.map((key) => {
-    if (!key.startsWith(prefix + '-v') || !key.endsWith('-runtime')) return Promise.resolve();
-    if (keep.has(key)) return Promise.resolve();
-    return caches.delete(key);
-  }));
-};
-
-const putIntoRuntimeCache = async (req, res) => {
+async function putSafe(cacheName, req, res) {
   if (!res) return;
-  const runtime = await caches.open(CACHE_NAME + '-runtime');
-  try {
-    await runtime.put(req, res.clone());
-  } catch (e) {
-    if (e && e.name === 'QuotaExceededError') {
-      logger.warn('[runtime] quota exceeded, clearing old runtime caches');
-      await clearOldRuntimeCaches();
-      try {
-        await runtime.put(req, res.clone());
-      } catch (retryError) {
-        logger.warn('[runtime] retry cache put failed', retryError);
-      }
+  const cache = await caches.open(cacheName);
+  await cache.put(req, res.clone());
+}
+
+async function parseLatestHomeAssets(version) {
+  const result = new Set();
+  const req = new Request(`/?sw_update=${encodeURIComponent(version)}`, { cache: 'no-store', credentials: 'same-origin' });
+  const res = await fetch(req);
+  if (!res.ok) return result;
+
+  const html = await res.text();
+  const regexp = /(?:href|src)=['"]([^'"\s>]+)['"]/g;
+  let matched;
+  while ((matched = regexp.exec(html)) !== null) {
+    const url = cleanPath(matched[1]);
+    if (!url) continue;
+    if (/^https?:\/\//i.test(url) && !isCDNUrl(url)) continue;
+    result.add(url);
+  }
+  return result;
+}
+
+async function fetchAndCacheForVersion(url, version) {
+  const normalized = cleanPath(url);
+  if (!normalized) throw new Error('invalid url');
+
+  const cacheKey = new Request(normalized, { credentials: 'same-origin' });
+  const requestUrl = /^https?:\/\//i.test(normalized)
+    ? normalized
+    : `${normalized}${normalized.includes('?') ? '&' : '?'}sw_update=${encodeURIComponent(version)}`;
+
+  const fetchReq = new Request(requestUrl, { cache: 'no-store', credentials: 'same-origin' });
+  const response = isCDNUrl(fetchReq.url) ? await matchCDN(fetchReq) : await fetch(fetchReq);
+  if (!response || (!response.ok && response.type !== 'opaque')) {
+    throw new Error(`bad response: ${response ? response.status : 'EMPTY'}`);
+  }
+
+  await Promise.all([
+    putSafe(cacheNameFor(version, 'precache'), cacheKey, response),
+    putSafe(cacheNameFor(version, 'runtime'), cacheKey, response),
+  ]);
+}
+
+async function cacheNewVersionResources() {
+  if (updateJobPromise) return updateJobPromise;
+
+  updateJobPromise = (async () => {
+    const version = hintedNextVersion || ACTIVE_VERSION;
+    await sendMessageToAllClients({ type: 'UPDATE_STARTED', version });
+
+    const assets = new Set(PRECACHE_ASSETS.map(cleanPath).filter(Boolean));
+    extraPendingUrls.forEach((u) => {
+      const clean = cleanPath(u);
+      if (clean) assets.add(clean);
+    });
+
+    try {
+      const latestAssets = await parseLatestHomeAssets(version);
+      latestAssets.forEach((u) => assets.add(u));
+    } catch (err) {
+      logger.warn('parse latest homepage failed:', err);
+    }
+
+    const list = Array.from(assets);
+    const total = list.length;
+    if (total === 0) {
+      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version, total: 0 });
       return;
     }
-    throw e;
-  }
-};
 
-const CacheRuntime = async (event, fetcher) => {
-  const req = requestFor(event.request);
-  const runtime = await caches.open(CACHE_NAME + '-runtime');
-  const cached = await runtime.match(req);
-  if (cached) return cached;
+    let done = 0;
+    let success = 0;
+    const failedAssets = [];
 
-  try {
-    const res = await fetcher(req);
-    if (res && (res.status === 200 || res.type === 'opaque')) {
-      putIntoRuntimeCache(req, res).catch(() => {});
+    for (let i = 0; i < list.length; i += UPDATE_CONCURRENCY) {
+      const batch = list.slice(i, i + UPDATE_CONCURRENCY);
+      await Promise.all(batch.map(async (url) => {
+        try {
+          await fetchAndCacheForVersion(url, version);
+          success += 1;
+        } catch (err) {
+          failedAssets.push(url);
+          logger.warn('[FORCE_UPDATE] cache failed:', url, err && err.message ? err.message : err);
+        } finally {
+          done += 1;
+          await sendMessageToAllClients({
+            type: 'UPDATE_PROGRESS',
+            version,
+            done,
+            total,
+            success,
+            failed: failedAssets.length,
+            progress: Math.round((done / total) * 100),
+          });
+        }
+      }));
     }
-    return res;
-  } catch (e) {
-    logger.error('CacheRuntime error:', e);
-    return fetch(req);
+
+    if (failedAssets.length === 0) {
+      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version, total });
+      return;
+    }
+
+    await sendMessageToAllClients({
+      type: 'UPDATE_FAILED',
+      version,
+      total,
+      success,
+      failed: failedAssets.length,
+      failedAssets: failedAssets.slice(0, 20),
+      noRetry: true,
+    });
+  })().finally(() => {
+    updateJobPromise = null;
+  });
+
+  return updateJobPromise;
+}
+
+async function clearOutdatedCaches() {
+  const keys = await caches.keys();
+  await Promise.all(keys.map((key) => {
+    if (!key.startsWith(`${SW_PREFIX}-v`)) return Promise.resolve(false);
+    if (key === PRECACHE_NAME || key === RUNTIME_NAME) return Promise.resolve(false);
+    return caches.delete(key);
+  }));
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(PRECACHE_NAME);
+    for (const url of PRECACHE_ASSETS) {
+      try {
+        const req = new Request(url, { cache: 'no-store', credentials: 'same-origin' });
+        const res = await fetch(req);
+        if (res && res.ok) {
+          await cache.put(new Request(cleanPath(url), { credentials: 'same-origin' }), res.clone());
+        }
+      } catch (err) {
+        logger.warn('[install] precache failed:', url, err);
+      }
+    }
+  })());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    await clearOutdatedCaches();
+    await self.clients.claim();
+  })());
+});
+
+async function networkOnly(request) {
+  return fetch(request);
+}
+
+async function staleWhileRevalidate(event, cacheName, networkRequest) {
+  const request = networkRequest || event.request;
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+
+  const updateFromNetwork = async () => {
+    const fresh = await fetch(new Request(request, { cache: 'no-store' }));
+    if (fresh && fresh.ok) {
+      await cache.put(request, fresh.clone());
+    }
+    return fresh;
+  };
+
+  if (cached) {
+    event.waitUntil(updateFromNetwork().catch(() => null));
+    return cached;
   }
-};
 
-const shouldBypassCDNRace = () => {
-  try {
-    const connection = (self.navigator && self.navigator.connection) || null;
-    if (!connection) return false;
-    const saveData = !!connection.saveData;
-    const effectiveType = String(connection.effectiveType || '').toLowerCase();
-    return saveData || /2g/.test(effectiveType);
-  } catch (e) {
-    return false;
+  return updateFromNetwork();
+}
+
+async function cacheFirst(request, cacheName, fetcher = fetch) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const res = await fetcher(request);
+  if (res && (res.ok || res.type === 'opaque')) {
+    await cache.put(request, res.clone());
   }
-};
+  return res;
+}
 
-const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
-const CDN_RACE_LIMIT = 3;
-const CDN_RACE_TIMEOUT_MS = 5000;
-const cdnFailureUntil = new Map();
+function shouldBypassCDNRace() {
+  const connection = self.navigator && self.navigator.connection;
+  if (!connection) return false;
+  return Boolean(connection.saveData) || /2g/i.test(String(connection.effectiveType || ''));
+}
 
-const markCDNFailed = (url) => {
+function markCDNFailed(url) {
   try {
     const host = new URL(url).host;
     cdnFailureUntil.set(host, Date.now() + CDN_FAIL_COOLDOWN_MS);
-  } catch (e) {}
-};
+  } catch (_) {
+    // noop
+  }
+}
 
-const isCDNInCooldown = (url) => {
+function isCDNInCooldown(url) {
   try {
     const host = new URL(url).host;
     const until = cdnFailureUntil.get(host) || 0;
@@ -475,207 +283,167 @@ const isCDNInCooldown = (url) => {
       return false;
     }
     return true;
-  } catch (e) {
+  } catch (_) {
     return false;
   }
-};
-
-const joinCDNUrl = (base, tailPath) => {
-  if (!base) return null;
-  if (!tailPath) return base;
-  const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-  const cleanTail = tailPath.startsWith('/') ? tailPath : '/' + tailPath;
-  return cleanBase + cleanTail;
-};
-
-const createPromiseAny = () => {
-  if (Promise.any) return;
-  Promise.any = (promises) => {
-    return new Promise((resolve, reject) => {
-      let errors = [];
-      let pending = promises.length;
-      promises.forEach((p) => {
-        Promise.resolve(p).then(resolve).catch((e) => {
-          errors.push(e);
-          if (--pending === 0) {
-            reject(new AggregateError(errors, 'All promises rejected'));
-          }
-        });
-      });
-    });
-  };
-};
-
-function fetchParallel(urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) {
-  const abortEvent = "abortOtherInstance";
-  const eventTarget = new EventTarget();
-
-  return urls.map(url => {
-    const controller = new AbortController();
-    let tagged = false;
-
-    const onAbort = () => {
-      if (!tagged) controller.abort();
-    };
-    eventTarget.addEventListener(abortEvent, onAbort);
-
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        if (!tagged) {
-          controller.abort();
-          reject(new Error("Timeout"));
-        }
-      }, timeoutMs);
-
-      fetch(new Request(url, reqInit), { signal: controller.signal }).then(res => {
-        if (res && (res.status === 200 || res.type === 'opaque')) {
-          tagged = true;
-          eventTarget.dispatchEvent(new Event(abortEvent));
-          resolve(res);
-        } else {
-          markCDNFailed(url);
-          reject(new Error("Bad response"));
-        }
-      }).catch(err => {
-        if (err.name !== 'AbortError') markCDNFailed(url);
-        reject(err);
-      }).finally(() => {
-        clearTimeout(timer);
-        eventTarget.removeEventListener(abortEvent, onAbort);
-      });
-    });
-  });
 }
 
-const FetchEngine = async (urls, reqInit = {}, timeoutMs = CDN_RACE_TIMEOUT_MS) => {
-  if (!urls || urls.length === 0) throw new Error('empty urls');
-  createPromiseAny();
-  return Promise.any(fetchParallel(urls, reqInit, timeoutMs));
-};
+function joinCDNUrl(base, tailPath) {
+  const b = base.endsWith('/') ? base.slice(0, -1) : base;
+  const t = tailPath.startsWith('/') ? tailPath : `/${tailPath}`;
+  return `${b}${t}`;
+}
 
-const matchCDN = async (req) => {
+function raceFetch(urls, templateRequest) {
+  const controllers = [];
+  let settled = false;
+
+  const abortOthers = () => {
+    controllers.forEach((controller) => controller.abort());
+  };
+
+  return Promise.any(urls.map((url) => {
+    const controller = new AbortController();
+    controllers.push(controller);
+
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(new Error('timeout'));
+      }, CDN_RACE_TIMEOUT_MS);
+
+      fetch(new Request(url, {
+        method: templateRequest.method,
+        mode: templateRequest.mode,
+        credentials: templateRequest.credentials,
+        redirect: templateRequest.redirect,
+        referrer: templateRequest.referrer,
+        referrerPolicy: templateRequest.referrerPolicy,
+        integrity: templateRequest.integrity,
+      }), { signal: controller.signal }).then((res) => {
+        clearTimeout(timeoutId);
+        if (!res || (!res.ok && res.type !== 'opaque')) {
+          markCDNFailed(url);
+          reject(new Error('bad response'));
+          return;
+        }
+        if (!settled) {
+          settled = true;
+          abortOthers();
+        }
+        resolve(res);
+      }).catch((err) => {
+        clearTimeout(timeoutId);
+        if (err && err.name !== 'AbortError') {
+          markCDNFailed(url);
+        }
+        reject(err);
+      });
+    });
+  }));
+}
+
+async function matchCDN(request) {
+  if (shouldBypassCDNRace()) return fetch(request);
+
+  const reqUrl = request.url;
+  const matched = cdnMatchList.find((item) => item.regexp.test(reqUrl));
+  if (!matched) return fetch(request);
+
+  const tailPath = reqUrl.replace(matched.base, '');
+  const mirrorUrls = Object.values(cdn[matched.type])
+    .filter(Boolean)
+    .map((base) => joinCDNUrl(base, tailPath))
+    .filter((url, i, arr) => arr.indexOf(url) === i)
+    .filter((url) => url !== reqUrl)
+    .filter((url) => !isCDNInCooldown(url));
+
+  const urls = [reqUrl, ...mirrorUrls].slice(0, CDN_RACE_LIMIT);
   try {
-    if (shouldBypassCDNRace()) {
-      return fetch(req);
-    }
-
-    const reqUrl = req.url;
-    const matched = cdn_match_list.find((item) => item.regexp.test(reqUrl));
-    if (!matched || !matched.type || !matched.base) {
-      return fetch(req);
-    }
-
-    const pathType = matched.type;
-    const pathTestRes = matched.base;
-    const tailPath = reqUrl.replace(pathTestRes, '');
-    const mirrorUrls = Object.values(cdn[pathType])
-      .filter(Boolean)
-      .map(base => joinCDNUrl(base, tailPath))
-      .filter(Boolean)
-      .filter((url, index, arr) => arr.indexOf(url) === index)
-      .filter((url) => url !== reqUrl)
-      .filter((url) => !isCDNInCooldown(url));
-
-    const urls = [reqUrl, ...mirrorUrls].slice(0, CDN_RACE_LIMIT);
-
-    if (urls.length === 0) {
-      return fetch(req);
-    }
-
-    return await FetchEngine(urls, {
-      method: req.method,
-      mode: req.mode,
-      credentials: req.credentials,
-      redirect: req.redirect,
-      referrer: req.referrer,
-      referrerPolicy: req.referrerPolicy,
-      integrity: req.integrity,
-    });
-  } catch (e) {
-    logger.warn('[matchCDN] race failed, fallback to native fetch', {
-      url: req && req.url,
-      message: e && e.message,
-      errors: e && e.errors ? e.errors.map(err => err && err.message ? err.message : String(err)).slice(0, 5) : [],
-    });
-    return fetch(req);
+    return await raceFetch(urls, request);
+  } catch (err) {
+    logger.warn('[CDN] race failed, fallback native fetch:', err && err.message ? err.message : err);
+    return fetch(request);
   }
-};
+}
 
-/* ==================== Fetch routing ==================== */
-const handleFetch = async (event) => {
-  const url = event.request.url;
+async function handleFetch(event) {
+  const request = event.request;
+  const url = new URL(request.url);
 
-  if (/sw-update-listener\.js$/.test(url)) {
-    return fetch(event.request);
-  }
-  if (
-    event.request.headers.has('range') ||
-    /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url) ||
-    /(music\.163\.com|music\.126\.net|qqmusic\.qq\.com)/i.test(url)
-  ) {
-    return fetch(event.request);
+  if (request.method !== 'GET') return fetch(request);
+
+  if (isListenerScript(url)) {
+    return fetch(new Request(request, { cache: 'no-store' }));
   }
 
-  if (/nocache/.test(url)) return NetworkOnly(event);
-  if (isHtmlRequest(event.request)) return StaleWhileRevalidate(event);
-  if (/@latest/.test(url)) return CacheFirst(event);
-
-  if (isCDNUrl(url)) {
-    return CacheRuntime(event, matchCDN);
+  if (isAudioRequest(request, url)) {
+    return networkOnly(request);
   }
 
-  if (/\.(png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/i.test(url)) {
-    return CacheAlways(event);
-  }
-  if (/\.(css|js)$/i.test(url)) {
-    return CacheAlways(event);
+  if (url.searchParams.has('nocache') || url.searchParams.has('_sw_refresh')) {
+    return networkOnly(new Request(request, { cache: 'reload' }));
   }
 
-  return CacheFirst(event);
-};
+  if (isHtmlRequest(request)) {
+    const htmlRequest = new Request(request.url, { cache: 'no-store', credentials: 'same-origin' });
+    return staleWhileRevalidate(event, RUNTIME_NAME, htmlRequest);
+  }
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  if (isBingWallpaperRequest(url)) {
+    return staleWhileRevalidate(event, RUNTIME_NAME, request);
+  }
+
+  if (isCDNUrl(url.href)) {
+    return cacheFirst(request, RUNTIME_NAME, matchCDN);
+  }
+
+  if (/\.(css|js|png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname)) {
+    return cacheFirst(request, RUNTIME_NAME);
+  }
+
+  return fetch(request);
+}
+
+self.addEventListener('fetch', (event) => {
   event.respondWith(
-    handleFetch(event).catch(err => {
-      logger.error('handleFetch critical error:', err);
+    handleFetch(event).catch((err) => {
+      logger.error('fetch failed:', err);
       return fetch(event.request).catch(() => new Response('Service Worker Error', { status: 503 }));
     })
   );
 });
 
-/* ==================== Message listener ==================== */
 self.addEventListener('message', (event) => {
-  if (!event.data) return;
-  if (event.data.type === 'SKIP_WAITING') {
-    logger.info('SKIP_WAITING received');
+  const data = event.data || {};
+  if (!data.type) return;
+
+  if (data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
   }
-  if (event.data.type === 'FORCE_UPDATE') {
-    logger.info('FORCE_UPDATE received — starting background update');
+
+  if (data.type === 'SET_NEXT_VERSION' && data.version) {
+    hintedNextVersion = data.version;
+    return;
+  }
+
+  if (data.type === 'PRECACHE_URL' && data.url) {
+    extraPendingUrls.add(data.url);
+    return;
+  }
+
+  if (data.type === 'FORCE_UPDATE') {
     event.waitUntil(cacheNewVersionResources());
-  }
-  if (event.data.type === 'SET_NEXT_VERSION') {
-    if (event.data.version) {
-      nextCacheSuffixVersion = event.data.version;
-      logger.info('SET_NEXT_VERSION received', nextCacheSuffixVersion);
-    }
-  }
-  if (event.data.type === 'PRECACHE_URL') {
-    if (event.data.url) {
-      extraPendingUrls.add(event.data.url);
-      logger.info('PRECACHE_URL received', event.data.url);
-    }
   }
 });
 
-/* ==================== End ==================== */
 const cdn = {
   gh: {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
-    testingcf: 'https://testingcf.jsdelivr.net/gh'
+    testingcf: 'https://testingcf.jsdelivr.net/gh',
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',
@@ -688,7 +456,6 @@ const cdn = {
     gcore: 'https://gcore.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
-    admincdn: 'https://jsd.admincdn.com/npm/',
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
@@ -696,17 +463,15 @@ const cdn = {
     bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
     bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
     sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
-    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
-  }
+  },
 };
 
-
-const cdn_match_list = Object.entries(cdn).flatMap(([type, mirrors]) =>
-  Object.values(mirrors).filter(Boolean).map(base => ({
+const cdnMatchList = Object.entries(cdn).flatMap(([type, mirrors]) =>
+  Object.values(mirrors).filter(Boolean).map((base) => ({
     type,
     base,
-    regexp: new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    regexp: new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
   }))
 );
 
-logger.ready('Volantis SW (merged) loaded');
+logger.info('Volantis SW loaded:', ACTIVE_VERSION);
