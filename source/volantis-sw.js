@@ -1,3 +1,5 @@
+// volantis-sw.js — cleaned (npm mirror removed)
+
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
 const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
@@ -7,11 +9,10 @@ const PreCachlist = [
   "/js/app.js",
   "/js/search/hexo.js",
 ];
-let NPMMirror = false;
-const NPMPackage = "@mhg/volantis-community";
-let NPMPackageVersion = "1.0.1674055760561";
+
 let debug = false;
-// location.hostname == 'localhost' && (debug = true) && (NPMMirror = false);
+// location.hostname == 'localhost' && (debug = true);
+
 const handleFetch = async (event) => {
   const url = event.request.url;
   if (/nocache/.test(url)) {
@@ -38,6 +39,7 @@ const handleFetch = async (event) => {
     return CacheFirst(event)
   }
 }
+
 const cdn = {
   gh: {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
@@ -70,12 +72,14 @@ const cdn = {
     admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
   }
 }
+
 const cdn_match_list = []
 for (const type in cdn) {
   for (const key in cdn[type]) {
     cdn_match_list.push({ type: type, key: cdn[type][key] })
   }
 }
+
 const _console = console;
 const color = {
   black: '#000000',
@@ -87,6 +91,7 @@ const color = {
   cyan: '#00FFFF',
   white: '#FFFFFF',
 };
+
 const add = (...arr) => {
   let fi = [
     []
@@ -98,8 +103,8 @@ const add = (...arr) => {
   }
   return fi;
 };
+
 const createlog = (util) => (...args) => {
-  // const fun = _console[util] ? _console[util] : _console.log;
   const fun = util == "error" ? _console[util] : _console.log;
   fun.apply(void 0, args);
 };
@@ -107,6 +112,7 @@ const creategroup = (util) => (...args) => {
   const fun = _console.groupCollapsed;
   fun.apply(void 0, args);
 };
+
 const colorUtils = {
   bold: (str) => {
     if (typeof str === 'string' || typeof str === 'number') {
@@ -118,6 +124,7 @@ const colorUtils = {
     return str;
   }
 };
+
 const colorHash = {
   log: 'black',
   wait: 'cyan',
@@ -127,6 +134,7 @@ const colorHash = {
   info: 'blue',
   event: 'magenta',
 };
+
 const createChalk = (name) => (...str) => {
   if (typeof str[0] === 'object') {
     createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
@@ -138,6 +146,7 @@ const createChalk = (name) => (...str) => {
   }
   createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
 };
+
 const createChalkBg = (name) => (...str) => {
   if (typeof str[0] === 'object') {
     createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), ...str));
@@ -149,6 +158,7 @@ const createChalkBg = (name) => (...str) => {
   }
   createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), strArr));
 };
+
 const createChalkGroup = (name) => (...str) => {
   if (typeof str[0] === 'object') {
     creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
@@ -160,6 +170,7 @@ const createChalkGroup = (name) => (...str) => {
   }
   creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
 };
+
 const chalk = {
   group: {
     end: _console.groupEnd
@@ -171,7 +182,9 @@ Object.keys(colorHash).forEach(key => {
   chalk.group[key] = createChalkGroup(key);
   chalk.bg[key] = createChalkBg(key);
 });
+
 const firstToUpperCase = (str) => str.toLowerCase().replace(/( |^)[a-z]/g, (L) => L.toUpperCase());
+
 Object.keys(color).forEach(key => {
   colorUtils[key] = (str) => {
     if (typeof str === 'string' || typeof str === 'number') {
@@ -192,6 +205,7 @@ Object.keys(color).forEach(key => {
     return str;
   };
 });
+
 self.logger = {
   add,
   ...chalk,
@@ -236,6 +250,7 @@ const generate_uuid = () => {
     return v.toString(16);
   });
 }
+
 self.db = {
   read: (key, config) => {
     if (!config) { config = { type: "text" } }
@@ -261,6 +276,7 @@ self.db = {
     })
   }
 }
+
 const compareVersion = (a, b) => {
   let v1 = a.split('.');
   let v2 = b.split('.');
@@ -283,47 +299,7 @@ const compareVersion = (a, b) => {
   return a;
 }
 
-const mirrors = [
-  `https://registry.npmjs.org/${NPMPackage}/latest`,
-  `https://registry.npmmirror.com/${NPMPackage}/latest`,
-  `https://mirrors.cloud.tencent.com/npm/${NPMPackage}/latest`
-]
-const getLocalVersion = async () => {
-  NPMPackageVersion = await db.read('blog_version') || NPMPackageVersion
-  logger.bg.info(`Local Version: ${NPMPackage}@${NPMPackageVersion}`)
-}
-let mirror_time = 0;
-const setNewestVersion = async () => {
-  if (!NPMMirror) {
-    return
-  }
-  let f = null;
-  if (!(mirror_time % (mirrors.length + 1))) {
-    f = FetchEngine(mirrors);
-  } else {
-    f = fetch(mirrors[(mirror_time % (mirrors.length + 1)) - 1]);
-  }
-  mirror_time++;
-  return f
-    .then(res => res.json())
-    .then(async res => {
-      if (!res.version) throw ('No Version Found!')
-      NPMPackageVersion = compareVersion(res.version, await db.read('blog_version') || NPMPackageVersion)
-      logger.bg.ready(`${NPMPackage}@${NPMPackageVersion}`)
-      await db.write('blog_version', NPMPackageVersion)
-    })
-    .catch(error => {
-      logger.error('[Set Newest Version] ' + (error.stack || error))
-    })
-}
-setInterval(async () => {
-  await setNewestVersion()
-}, 60 * 1000);
-setTimeout(async () => {
-  await setNewestVersion()
-}, 5000)
 const installFunction = async () => {
-  await getLocalVersion();
   return caches.open(CACHE_NAME + "-precache")
     .then(async function (cache) {
       if (!await db.read('uuid')) {
@@ -352,6 +328,7 @@ const installFunction = async () => {
       logger.error('[install] ' + (error.stack || error));
     })
 }
+
 self.addEventListener('install', async function (event) {
   logger.bg.event("service worker install event listening");
   try {
@@ -362,6 +339,7 @@ self.addEventListener('install', async function (event) {
     logger.error('[install] ' + (error.stack || error));
   }
 });
+
 self.addEventListener('activate', async event => {
   logger.bg.event("service worker activate event listening");
   try {
@@ -383,6 +361,7 @@ self.addEventListener('activate', async event => {
     logger.error('[activate] ' + (error.stack || error));
   }
 })
+
 self.addEventListener('fetch', async event => {
   event.respondWith(
     handleFetch(event).catch((error) => {
@@ -391,13 +370,13 @@ self.addEventListener('fetch', async event => {
   )
 });
 
-
 const NetworkOnly = async (event) => {
   logger.group.info('NetworkOnly: ' + new URL(event.request.url).pathname);
   logger.wait('service worker fetch: ' + event.request.url)
   logger.group.end();
   return fetch(event.request)
 }
+
 const CacheFirst = async (event) => {
   return caches.match(event.request).then(function (resp) {
     logger.group.info('CacheFirst: ' + new URL(event.request.url).pathname);
@@ -416,6 +395,7 @@ const CacheFirst = async (event) => {
     }
   })
 }
+
 const CacheAlways = async (event) => {
   return caches.match(event.request).then(function (resp) {
     logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
@@ -450,6 +430,7 @@ const matchCache = async (event) => {
     }
   })
 }
+
 async function CacheRuntime(request) {
   const url = new URL(request.url);
   let response = await matchCDN(request);
@@ -489,34 +470,22 @@ const matchCDN = async (req) => {
   let pathType = urlObj.pathname.split('/')[1]
   let pathTestRes = "";
 
-  if (NPMMirror && new RegExp(location.origin).test(req.url)) {
-    logger.group.ready(`Match NPM Mirror: ` + req.url);
-    for (const key in cdn.npm) {
-      let url = cdn.npm[key] + "/" + NPMPackage + "@" + NPMPackageVersion + req.url.replace(location.origin, '')
-      url = fullPath(fullPath(url))
-      console.log(url);
-      urls.push(url)
+  for (const item of cdn_match_list) {
+    if (new RegExp(item.key).test(req.url)) {
+      pathType = item.type
+      pathTestRes = new RegExp(item.key).exec(req.url)[0]
+      break;
     }
-    logger.group.end()
   }
-  if (!urls.length) {
-    for (const item of cdn_match_list) {
-      if (new RegExp(item.key).test(req.url)) {
-        pathType = item.type
-        pathTestRes = new RegExp(item.key).exec(req.url)[0]
-        break;
+  for (const type in cdn) {
+    if (type === pathType) {
+      logger.group.ready(`Match CDN ${pathType}: ` + req.url);
+      for (const key in cdn[type]) {
+        const url = cdn[type][key] + req.url.replace(pathTestRes, '')
+        console.log(url);
+        urls.push(url)
       }
-    }
-    for (const type in cdn) {
-      if (type === pathType) {
-        logger.group.ready(`Match CDN ${pathType}: ` + req.url);
-        for (const key in cdn[type]) {
-          const url = cdn[type][key] + req.url.replace(pathTestRes, '')
-          console.log(url);
-          urls.push(url)
-        }
-        logger.group.end()
-      }
+      logger.group.end()
     }
   }
 
@@ -525,34 +494,10 @@ const matchCDN = async (req) => {
     res = FetchEngine(urls)
   else
     res = fetch(req)
-  if (res && NPMMirror && new RegExp(location.origin).test(req.url)) {
-    const ext = fullPath(fullPath(req.url)).split('.').pop()
-    const contentType = getContentType(ext)
-    res = res
-      .then(res => res.arrayBuffer())
-      .then(buffer => new Response(buffer, {
-        headers: {
-          "Content-Type": contentType
-        }
-      }))
-      .catch(() => null)
-  }
+
   return res
 }
 
-const fullPath = (url) => {
-  url = url.split('?')[0].split('#')[0]
-  if (url.endsWith('/')) {
-    url += 'index.html'
-  } else {
-    const list = url.split('/')
-    const last = list[list.length - 1]
-    if (last.indexOf('.') === -1) {
-      url += '.html'
-    }
-  }
-  return url
-}
 async function progress(res) {
   return new Response(await res.arrayBuffer(), {
     status: res.status,
@@ -643,154 +588,3 @@ const FetchEngine = (reqs) => {
       return null;
     });
 };
-
-const getContentType = (ext) => {
-  switch (ext) {
-    case 'js':
-      return 'text/javascript'
-    case 'html':
-      return 'text/html'
-    case 'css':
-      return 'text/css'
-    case 'json':
-      return 'application/json'
-    case 'webp':
-      return 'image/webp'
-    case 'jpg':
-      return 'image/jpg'
-    case 'jpeg':
-      return 'image/jpeg'
-    case 'png':
-      return 'image/png'
-    case 'gif':
-      return 'image/gif'
-    case 'xml':
-      return 'text/xml'
-    case 'xsl':
-      return 'text/xml'
-    case 'webmanifest':
-      return 'text/webmanifest'
-    case 'map':
-      return 'application/json'
-    case 'bcmap':
-      return 'image/vnd.wap.wbmp'
-    case 'wbmp':
-      return 'image/vnd.wap.wbmp'
-    case 'bmp':
-      return 'image/bmp'
-    case 'ico':
-      return 'image/vnd.microsoft.icon'
-    case 'tiff':
-      return 'image/tiff'
-    case 'tif':
-      return 'image/tiff'
-    case 'svg':
-      return 'image/svg+xml'
-    case 'svgz':
-      return 'image/svg+xml'
-    case 'woff':
-      return 'application/font-woff'
-    case 'woff2':
-      return 'application/font-woff2'
-    case 'ttf':
-      return 'application/font-ttf'
-    case 'otf':
-      return 'application/font-otf'
-    case 'eot':
-      return 'application/vnd.ms-fontobject'
-    case 'zip':
-      return 'application/zip'
-    case 'tar':
-      return 'application/x-tar'
-    case 'gz':
-      return 'application/gzip'
-    case 'bz2':
-      return 'application/x-bzip2'
-    case 'rar':
-      return 'application/x-rar-compressed'
-    case '7z':
-      return 'application/x-7z-compressed'
-    case 'doc':
-      return 'application/msword'
-    case 'docx':
-      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    case 'xls':
-      return 'application/vnd.ms-excel'
-    case 'xlsx':
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    case 'ppt':
-      return 'application/vnd.ms-powerpoint'
-    case 'pptx':
-      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    case 'pdf':
-      return 'application/pdf'
-    case 'txt':
-      return 'text/plain'
-    case 'rtf':
-      return 'application/rtf'
-    case 'mp3':
-      return 'audio/mpeg'
-    case 'wav':
-      return 'audio/x-wav'
-    case 'ogg':
-      return 'audio/ogg'
-    case 'mp4':
-      return 'video/mp4'
-    case 'm4v':
-      return 'video/x-m4v'
-    case 'mov':
-      return 'video/quicktime'
-    case 'avi':
-      return 'video/x-msvideo'
-    case 'wmv':
-      return 'video/x-ms-wmv'
-    case 'flv':
-      return 'video/x-flv'
-    case 'swf':
-      return 'application/x-shockwave-flash'
-    case 'mpg':
-      return 'video/mpeg'
-    case 'mpeg':
-      return 'video/mpeg'
-    case 'mpe':
-      return 'video/mpeg'
-    case 'mpv':
-      return 'video/mpeg'
-    case 'm2v':
-      return 'video/mpeg'
-    case 'm4a':
-      return 'audio/mp4'
-    case 'aac':
-      return 'audio/aac'
-    case 'm3u':
-      return 'audio/x-mpegurl'
-    case 'm3u8':
-      return 'application/vnd.apple.mpegurl'
-    case 'pls':
-      return 'audio/x-scpls'
-    case 'cue':
-      return 'application/x-cue'
-    case 'wma':
-      return 'audio/x-ms-wma'
-    case 'flac':
-      return 'audio/flac'
-    case 'aif':
-      return 'audio/x-aiff'
-    case 'aiff':
-      return 'audio/x-aiff'
-    case 'aifc':
-      return 'audio/x-aiff'
-    case 'au':
-      return 'audio/basic'
-    case 'snd':
-      return 'audio/basic'
-    case 'mid':
-      return 'audio/midi'
-    case 'midi':
-      return 'audio/midi'
-    case 'kar':
-      return 'audio/midi'
-    default:
-      return 'text/plain'
-  }
-}
