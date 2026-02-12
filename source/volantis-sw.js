@@ -1,4 +1,4 @@
-// volantis-sw.js — cleaned (npm mirror removed)
+// volantis-sw.js — cleaned (npm mirror, db, and uuid removed)
 
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
@@ -244,67 +244,9 @@ if (!debug) {
   console.log = () => { };
 }
 
-const generate_uuid = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
-self.db = {
-  read: (key, config) => {
-    if (!config) { config = { type: "text" } }
-    return new Promise((resolve, reject) => {
-      caches.open(CACHE_NAME).then(cache => {
-        cache.match(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`)).then(function (res) {
-          if (!res) resolve(null)
-          res.text().then(text => resolve(text))
-        }).catch(() => {
-          resolve(null)
-        })
-      })
-    })
-  },
-  write: (key, value) => {
-    return new Promise((resolve, reject) => {
-      caches.open(CACHE_NAME).then(function (cache) {
-        cache.put(new Request(`https://LOCALCACHE/${encodeURIComponent(key)}`), new Response(value));
-        resolve()
-      }).catch(() => {
-        reject()
-      })
-    })
-  }
-}
-
-const compareVersion = (a, b) => {
-  let v1 = a.split('.');
-  let v2 = b.split('.');
-  const len = Math.max(v1.length, v2.length);
-  while (v1.length < len) {
-    v1.push('0');
-  }
-  while (v2.length < len) {
-    v2.push('0');
-  }
-  for (let i = 0; i < len; i++) {
-    const num1 = parseInt(v1[i]);
-    const num2 = parseInt(v2[i]);
-    if (num1 > num2) {
-      return a;
-    } else if (num1 < num2) {
-      return b;
-    }
-  }
-  return a;
-}
-
 const installFunction = async () => {
   return caches.open(CACHE_NAME + "-precache")
     .then(async function (cache) {
-      if (!await db.read('uuid')) {
-        await db.write('uuid', generate_uuid())
-      }
       if (PreCachlist.length) {
         logger.group.event(`Precaching ${PreCachlist.length} files.`);
         let index = 0;
@@ -400,23 +342,6 @@ const CacheAlways = async (event) => {
   return caches.match(event.request).then(function (resp) {
     logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
-    if (resp) {
-      logger.group.ready(`Cache Hit`);
-      console.log(resp)
-      logger.group.end();
-      logger.group.end();
-      return resp;
-    } else {
-      logger.warn(`Cache Miss`);
-      logger.group.end();
-      return CacheRuntime(event.request)
-    }
-  })
-}
-
-const matchCache = async (event) => {
-  return caches.match(event.request).then(function (resp) {
-    logger.group.info('service worker fetch: ' + event.request.url)
     if (resp) {
       logger.group.ready(`Cache Hit`);
       console.log(resp)
