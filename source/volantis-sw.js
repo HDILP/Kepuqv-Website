@@ -328,11 +328,33 @@ self.addEventListener('activate', async event => {
 
 self.addEventListener('fetch', async event => {
   event.respondWith(
-    handleFetch(event).catch((error) => {
-      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
-    })
+    handleFetch(event)
+      .then((response) => ensureResponse(response, event.request))
+      .catch((error) => {
+        logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
+        return fetch(event.request).catch(() => createNetworkErrorResponse());
+      })
   )
 });
+
+const createNetworkErrorResponse = () => {
+  return new Response('Network error', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store'
+    }
+  });
+};
+
+const ensureResponse = async (response, request) => {
+  if (response instanceof Response) {
+    return response;
+  }
+  logger.warn('[fetch] non-Response returned, fallback to network: ' + request.url);
+  return fetch(request).catch(() => createNetworkErrorResponse());
+};
 
 const NetworkOnly = async (event) => {
   logger.group.info('NetworkOnly: ' + new URL(event.request.url).pathname);
@@ -387,6 +409,11 @@ async function CacheRuntime(request) {
   logger.group.event(`Cache Runtime ${url.pathname}`);
   logger.wait(`Caching url: ${request.url}`);
   console.log(response);
+
+  if (!(response instanceof Response)) {
+    logger.warn(`[Cache Runtime] fallback response for: ${request.url}`);
+    return createNetworkErrorResponse();
+  }
 
   if (request.method === "GET" && (url.protocol == "https:")) {
     // 2. 缓存结构：Runtime 使用全局无版本号缓存池
