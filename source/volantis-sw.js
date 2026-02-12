@@ -14,6 +14,7 @@ const CACHE_RUNTIME = prefix + '-runtime';
 const PreCachlist = [
   "/",
   "/css/style.css",
+  "/css/first.css",
   "/js/app.js",
   "/js/search/hexo.js",
   "/css/izitotal.css",
