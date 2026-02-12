@@ -16,6 +16,7 @@ const PreCachlist = [
   "/css/style.css",
   "/js/app.js",
   "/js/search/hexo.js",
+  "/css/izitotal.css",
   "https://bing-wallpaper.hdilp.top/bing.jpg"
 ];
 
