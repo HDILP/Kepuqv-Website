@@ -1,442 +1,54 @@
-/* Volantis Service Worker
- * 目标：版本隔离、可观测更新、平滑切换。
- */
+// volantis-sw.js — Gradient Update Model (Double Pool)
 
-const SW_PREFIX = 'volantis-community';
-const cacheSuffixVersion = '00000018-::cacheSuffixVersion::'; // 构建时替换
-const ACTIVE_VERSION = cacheSuffixVersion;
+// 全站打包上传 npm，sw 并发请求 cdn
+const prefix = 'volantis-community';
+const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
 
-const PRECACHE_NAME = `${SW_PREFIX}-v${ACTIVE_VERSION}-precache`;
-const RUNTIME_NAME = `${SW_PREFIX}-v${ACTIVE_VERSION}-runtime`;
+// 1. 缓存结构设计：双池模型
+// CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
+const CACHE_PRECACHE = prefix + '-v' + cacheSuffixVersion + '-precache';
+// CACHE_RUNTIME: 包含静态资源，全局不带版本号，永久保留（除非配额溢出）
+const CACHE_RUNTIME = prefix + '-runtime';
 
-const DEBUG = true;
-const PRECACHE_ASSETS = [
-  '/',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/search/hexo.js',
+// 2. Precache 列表 (设计稿 V.3)
+const PreCachlist = [
+  "/",
+  "/css/style.css",
+  "/js/app.js",
+  "/js/search/hexo.js",
+  "https://bing-wallpaper.hdilp.top/bing.jpg"
 ];
 
-const UPDATE_CONCURRENCY = 3;
-const CDN_RACE_LIMIT = 3;
-const CDN_RACE_TIMEOUT_MS = 5000;
-const CDN_FAIL_COOLDOWN_MS = 5 * 60 * 1000;
+let debug = false;
+// location.hostname == 'localhost' && (debug = true);
 
-const logger = (() => {
-  if (!DEBUG) return { info: () => {}, warn: () => {}, error: () => {} };
-  return {
-    info: (...args) => console.log('%c[SW]', 'color:#2196F3;font-weight:bold;', ...args),
-    warn: (...args) => console.warn('%c[SW]', 'color:#FF9800;font-weight:bold;', ...args),
-    error: (...args) => console.error('%c[SW]', 'color:#F44336;font-weight:bold;', ...args),
-  };
-})();
-
-let hintedNextVersion = ACTIVE_VERSION;
-let updateJobPromise = null;
-const extraPendingUrls = new Set();
-const cdnFailureUntil = new Map();
-
-const cacheNameFor = (version, type) => `${SW_PREFIX}-v${version}-${type}`;
-const cleanPath = (url) => {
-  const stripped = String(url || '').trim().split('#')[0];
-  if (!stripped || stripped.startsWith('data:') || stripped.startsWith('javascript:') || stripped.startsWith('mailto:')) return null;
-  if (/^https?:\/\//i.test(stripped)) return stripped;
-  if (stripped.startsWith('//')) return `https:${stripped}`;
-  const relative = stripped.startsWith('./') ? stripped.slice(1) : stripped;
-  return relative.startsWith('/') ? relative : `/${relative}`;
-};
-
-const isHtmlRequest = (request) => {
-  const accept = request.headers.get('accept') || '';
-  return request.mode === 'navigate' || accept.includes('text/html');
-};
-
-const isBingWallpaperRequest = (url) => /\/bing(?:-wallpaper)?\//i.test(url.pathname) || /HPImageArchive/i.test(url.href);
-const isListenerScript = (url) => /\/js\/sw-update-listener\.js(?:\?|$)/.test(url.pathname + url.search);
-const isAudioRequest = (request, url) => request.headers.has('range') || /\.(mp3|aac|m4a|ogg|wav|flac)$/i.test(url.pathname) || /(music\.163\.com|music\.126\.net|qqmusic\.qq\.com)/i.test(url.hostname);
-
-const CDN_URL_REGEXP = /(cdn\.jsdelivr\.net|fastly\.jsdelivr\.net|gcore\.jsdelivr\.net|testingcf\.jsdelivr\.net|unpkg\.com|npm\.elemecdn\.com|cdnjs\.cloudflare\.com)/i;
-const isCDNUrl = (url) => CDN_URL_REGEXP.test(url);
-
-async function sendMessageToAllClients(message) {
-  const clients = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
-  clients.forEach((client) => {
-    try {
-      client.postMessage(message);
-    } catch (_) {
-      // ignore
-    }
-  });
-}
-
-async function putSafe(cacheName, req, res) {
-  if (!res) return;
-  const cache = await caches.open(cacheName);
-  await cache.put(req, res.clone());
-}
-
-async function parseLatestHomeAssets(version) {
-  const result = new Set();
-  const req = new Request(`/?sw_update=${encodeURIComponent(version)}`, { cache: 'no-store', credentials: 'same-origin' });
-  const res = await fetch(req);
-  if (!res.ok) return result;
-
-  const html = await res.text();
-  const regexp = /(?:href|src)=['"]([^'"\s>]+)['"]/g;
-  let matched;
-  while ((matched = regexp.exec(html)) !== null) {
-    const url = cleanPath(matched[1]);
-    if (!url) continue;
-    if (/^https?:\/\//i.test(url) && !isCDNUrl(url)) continue;
-    result.add(url);
-  }
-  return result;
-}
-
-async function fetchAndCacheForVersion(url, version) {
-  const normalized = cleanPath(url);
-  if (!normalized) throw new Error('invalid url');
-
-  const cacheKey = new Request(normalized, { credentials: 'same-origin' });
-  const requestUrl = /^https?:\/\//i.test(normalized)
-    ? normalized
-    : `${normalized}${normalized.includes('?') ? '&' : '?'}sw_update=${encodeURIComponent(version)}`;
-
-  const fetchReq = new Request(requestUrl, { cache: 'no-store', credentials: 'same-origin' });
-  const response = isCDNUrl(fetchReq.url) ? await matchCDN(fetchReq) : await fetch(fetchReq);
-  if (!response || (!response.ok && response.type !== 'opaque')) {
-    throw new Error(`bad response: ${response ? response.status : 'EMPTY'}`);
-  }
-
-  await Promise.all([
-    putSafe(cacheNameFor(version, 'precache'), cacheKey, response),
-    putSafe(cacheNameFor(version, 'runtime'), cacheKey, response),
-  ]);
-}
-
-async function cacheNewVersionResources() {
-  if (updateJobPromise) return updateJobPromise;
-
-  updateJobPromise = (async () => {
-    const version = hintedNextVersion || ACTIVE_VERSION;
-    await sendMessageToAllClients({ type: 'UPDATE_STARTED', version });
-
-    const assets = new Set(PRECACHE_ASSETS.map(cleanPath).filter(Boolean));
-    extraPendingUrls.forEach((u) => {
-      const clean = cleanPath(u);
-      if (clean) assets.add(clean);
-    });
-
-    try {
-      const latestAssets = await parseLatestHomeAssets(version);
-      latestAssets.forEach((u) => assets.add(u));
-    } catch (err) {
-      logger.warn('parse latest homepage failed:', err);
-    }
-
-    const list = Array.from(assets);
-    const total = list.length;
-    if (total === 0) {
-      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version, total: 0 });
-      return;
-    }
-
-    let done = 0;
-    let success = 0;
-    const failedAssets = [];
-
-    for (let i = 0; i < list.length; i += UPDATE_CONCURRENCY) {
-      const batch = list.slice(i, i + UPDATE_CONCURRENCY);
-      await Promise.all(batch.map(async (url) => {
-        try {
-          await fetchAndCacheForVersion(url, version);
-          success += 1;
-        } catch (err) {
-          failedAssets.push(url);
-          logger.warn('[FORCE_UPDATE] cache failed:', url, err && err.message ? err.message : err);
-        } finally {
-          done += 1;
-          await sendMessageToAllClients({
-            type: 'UPDATE_PROGRESS',
-            version,
-            done,
-            total,
-            success,
-            failed: failedAssets.length,
-            progress: Math.round((done / total) * 100),
-          });
-        }
-      }));
-    }
-
-    if (failedAssets.length === 0) {
-      await sendMessageToAllClients({ type: 'NEW_VERSION_CACHED', version, total });
-      return;
-    }
-
-    await sendMessageToAllClients({
-      type: 'UPDATE_FAILED',
-      version,
-      total,
-      success,
-      failed: failedAssets.length,
-      failedAssets: failedAssets.slice(0, 20),
-      noRetry: true,
-    });
-  })().finally(() => {
-    updateJobPromise = null;
-  });
-
-  return updateJobPromise;
-}
-
-async function clearOutdatedCaches() {
-  const keys = await caches.keys();
-  await Promise.all(keys.map((key) => {
-    if (!key.startsWith(`${SW_PREFIX}-v`)) return Promise.resolve(false);
-    if (key === PRECACHE_NAME || key === RUNTIME_NAME) return Promise.resolve(false);
-    return caches.delete(key);
-  }));
-}
-
-self.addEventListener('install', (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(PRECACHE_NAME);
-    for (const url of PRECACHE_ASSETS) {
-      try {
-        const req = new Request(url, { cache: 'no-store', credentials: 'same-origin' });
-        const res = await fetch(req);
-        if (res && res.ok) {
-          await cache.put(new Request(cleanPath(url), { credentials: 'same-origin' }), res.clone());
-        }
-      } catch (err) {
-        logger.warn('[install] precache failed:', url, err);
-      }
-    }
-  })());
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    await clearOutdatedCaches();
-    await self.clients.claim();
-  })());
-});
-
-async function networkOnly(request) {
-  return fetch(request);
-}
-
-async function staleWhileRevalidate(event, cacheName, networkRequest) {
-  const request = networkRequest || event.request;
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-
-  const updateFromNetwork = async () => {
-    const fresh = await fetch(new Request(request, { cache: 'no-store' }));
-    if (fresh && fresh.ok) {
-      await cache.put(request, fresh.clone());
-    }
-    return fresh;
-  };
-
-  if (cached) {
-    event.waitUntil(updateFromNetwork().catch(() => null));
-    return cached;
-  }
-
-  return updateFromNetwork();
-}
-
-async function cacheFirst(request, cacheName, fetcher = fetch) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-  const res = await fetcher(request);
-  if (res && (res.ok || res.type === 'opaque')) {
-    await cache.put(request, res.clone());
-  }
-  return res;
-}
-
-function shouldBypassCDNRace() {
-  const connection = self.navigator && self.navigator.connection;
-  if (!connection) return false;
-  return Boolean(connection.saveData) || /2g/i.test(String(connection.effectiveType || ''));
-}
-
-function markCDNFailed(url) {
-  try {
-    const host = new URL(url).host;
-    cdnFailureUntil.set(host, Date.now() + CDN_FAIL_COOLDOWN_MS);
-  } catch (_) {
-    // noop
+const handleFetch = async (event) => {
+  const url = event.request.url;
+  // 6. Fetch 策略：排除更新监听脚本与音频范围请求
+  if (/nocache/.test(url) || /sw-update-listener\.js/.test(url)) {
+    return NetworkOnly(event)
+  } else if (/@latest/.test(url)) {
+    return CacheFirst(event)
+  } else if (/cdnjs\.cloudflare\.com/.test(url)) {
+    return CacheAlways(event)
+  } else if (/music\.126\.net/.test(url)) {
+    return NetworkOnly(event)
+  } else if (/qqmusic\.qq\.com/.test(url)) {
+    return NetworkOnly(event)
+  } else if (/jsdelivr\.net/.test(url)) {
+    return CacheAlways(event)
+  } else if (/npm\.elemecdn\.com/.test(url)) {
+    return CacheAlways(event)
+  } else if (/unpkg\.com/.test(url)) {
+    return CacheAlways(event)
+  } else if (/.*\.(?:png|jpg|jpeg|svg|gif|webp|ico|eot|ttf|woff|woff2)$/.test(url)) {
+    return CacheAlways(event)
+  } else if (/.*\.(css|js)$/.test(url)) {
+    return CacheAlways(event)
+  } else {
+    return CacheFirst(event)
   }
 }
-
-function isCDNInCooldown(url) {
-  try {
-    const host = new URL(url).host;
-    const until = cdnFailureUntil.get(host) || 0;
-    if (until <= Date.now()) {
-      cdnFailureUntil.delete(host);
-      return false;
-    }
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-function joinCDNUrl(base, tailPath) {
-  const b = base.endsWith('/') ? base.slice(0, -1) : base;
-  const t = tailPath.startsWith('/') ? tailPath : `/${tailPath}`;
-  return `${b}${t}`;
-}
-
-function raceFetch(urls, templateRequest) {
-  const controllers = [];
-  let settled = false;
-
-  const abortOthers = () => {
-    controllers.forEach((controller) => controller.abort());
-  };
-
-  return Promise.any(urls.map((url) => {
-    const controller = new AbortController();
-    controllers.push(controller);
-
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        reject(new Error('timeout'));
-      }, CDN_RACE_TIMEOUT_MS);
-
-      fetch(new Request(url, {
-        method: templateRequest.method,
-        mode: templateRequest.mode,
-        credentials: templateRequest.credentials,
-        redirect: templateRequest.redirect,
-        referrer: templateRequest.referrer,
-        referrerPolicy: templateRequest.referrerPolicy,
-        integrity: templateRequest.integrity,
-      }), { signal: controller.signal }).then((res) => {
-        clearTimeout(timeoutId);
-        if (!res || (!res.ok && res.type !== 'opaque')) {
-          markCDNFailed(url);
-          reject(new Error('bad response'));
-          return;
-        }
-        if (!settled) {
-          settled = true;
-          abortOthers();
-        }
-        resolve(res);
-      }).catch((err) => {
-        clearTimeout(timeoutId);
-        if (err && err.name !== 'AbortError') {
-          markCDNFailed(url);
-        }
-        reject(err);
-      });
-    });
-  }));
-}
-
-async function matchCDN(request) {
-  if (shouldBypassCDNRace()) return fetch(request);
-
-  const reqUrl = request.url;
-  const matched = cdnMatchList.find((item) => item.regexp.test(reqUrl));
-  if (!matched) return fetch(request);
-
-  const tailPath = reqUrl.replace(matched.base, '');
-  const mirrorUrls = Object.values(cdn[matched.type])
-    .filter(Boolean)
-    .map((base) => joinCDNUrl(base, tailPath))
-    .filter((url, i, arr) => arr.indexOf(url) === i)
-    .filter((url) => url !== reqUrl)
-    .filter((url) => !isCDNInCooldown(url));
-
-  const urls = [reqUrl, ...mirrorUrls].slice(0, CDN_RACE_LIMIT);
-  try {
-    return await raceFetch(urls, request);
-  } catch (err) {
-    logger.warn('[CDN] race failed, fallback native fetch:', err && err.message ? err.message : err);
-    return fetch(request);
-  }
-}
-
-async function handleFetch(event) {
-  const request = event.request;
-  const url = new URL(request.url);
-
-  if (request.method !== 'GET') return fetch(request);
-
-  if (isListenerScript(url)) {
-    return fetch(new Request(request, { cache: 'no-store' }));
-  }
-
-  if (isAudioRequest(request, url)) {
-    return networkOnly(request);
-  }
-
-  if (url.searchParams.has('nocache') || url.searchParams.has('_sw_refresh')) {
-    return networkOnly(new Request(request, { cache: 'reload' }));
-  }
-
-  if (isHtmlRequest(request)) {
-    const htmlRequest = new Request(request.url, { cache: 'no-store', credentials: 'same-origin' });
-    return staleWhileRevalidate(event, RUNTIME_NAME, htmlRequest);
-  }
-
-  if (isBingWallpaperRequest(url)) {
-    return staleWhileRevalidate(event, RUNTIME_NAME, request);
-  }
-
-  if (isCDNUrl(url.href)) {
-    return cacheFirst(request, RUNTIME_NAME, matchCDN);
-  }
-
-  if (/\.(css|js|png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname)) {
-    return cacheFirst(request, RUNTIME_NAME);
-  }
-
-  return fetch(request);
-}
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    handleFetch(event).catch((err) => {
-      logger.error('fetch failed:', err);
-      return fetch(event.request).catch(() => new Response('Service Worker Error', { status: 503 }));
-    })
-  );
-});
-
-self.addEventListener('message', (event) => {
-  const data = event.data || {};
-  if (!data.type) return;
-
-  if (data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-    return;
-  }
-
-  if (data.type === 'SET_NEXT_VERSION' && data.version) {
-    hintedNextVersion = data.version;
-    return;
-  }
-
-  if (data.type === 'PRECACHE_URL' && data.url) {
-    extraPendingUrls.add(data.url);
-    return;
-  }
-
-  if (data.type === 'FORCE_UPDATE') {
-    event.waitUntil(cacheNewVersionResources());
-  }
-});
 
 const cdn = {
   gh: {
@@ -444,11 +56,14 @@ const cdn = {
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
     testingcf: 'https://testingcf.jsdelivr.net/gh',
+    test1: 'https://test1.jsdelivr.net/gh',
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',
     fastly: 'https://fastly.jsdelivr.net/combine',
     gcore: 'https://gcore.jsdelivr.net/combine',
+    testingcf: 'https://testingcf.jsdelivr.net/combine',
+    test1: 'https://test1.jsdelivr.net/combine',
   },
   npm: {
     jsdelivr: 'https://cdn.jsdelivr.net/npm',
@@ -456,6 +71,7 @@ const cdn = {
     gcore: 'https://gcore.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
+    admincdn: 'https://jsd.admincdn.com/npm/',
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
@@ -463,15 +79,458 @@ const cdn = {
     bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
     bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
     sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
-  },
+    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
+  }
+}
+
+const cdn_match_list = []
+for (const type in cdn) {
+  for (const key in cdn[type]) {
+    cdn_match_list.push({ type: type, key: cdn[type][key] })
+  }
+}
+
+const _console = console;
+const color = {
+  black: '#000000',
+  red: '#FF0000',
+  green: '#008000',
+  yellow: '#FFFF00',
+  blue: '#0000FF',
+  magenta: '#FF00FF',
+  cyan: '#00FFFF',
+  white: '#FFFFFF',
 };
 
-const cdnMatchList = Object.entries(cdn).flatMap(([type, mirrors]) =>
-  Object.values(mirrors).filter(Boolean).map((base) => ({
-    type,
-    base,
-    regexp: new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
-  }))
-);
+const add = (...arr) => {
+  let fi = [
+    []
+  ];
+  for (let key = 0; key < arr.length; key++) {
+    const [first, ...other] = arr[key];
+    fi[0] += first;
+    fi = fi.concat(other);
+  }
+  return fi;
+};
 
-logger.info('Volantis SW loaded:', ACTIVE_VERSION);
+const createlog = (util) => (...args) => {
+  const fun = util == "error" ? _console[util] : _console.log;
+  fun.apply(void 0, args);
+};
+const creategroup = (util) => (...args) => {
+  const fun = _console.groupCollapsed;
+  fun.apply(void 0, args);
+};
+
+const colorUtils = {
+  bold: (str) => {
+    if (typeof str === 'string' || typeof str === 'number') {
+      return `${str};font-weight: bold;`;
+    }
+    for (let key = 1; key < str.length; key++) {
+      str[key] += `;font-weight: bold;`;
+    }
+    return str;
+  }
+};
+
+const colorHash = {
+  log: 'black',
+  wait: 'cyan',
+  error: 'red',
+  warn: 'yellow',
+  ready: 'green',
+  info: 'blue',
+  event: 'magenta',
+};
+
+const createChalk = (name) => (...str) => {
+  if (typeof str[0] === 'object') {
+    createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
+    return;
+  }
+  let strArr = str;
+  if (typeof str === 'string' || typeof str === 'number') {
+    strArr = colorUtils[colorHash[name]](str);
+  }
+  createlog(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
+};
+
+const createChalkBg = (name) => (...str) => {
+  if (typeof str[0] === 'object') {
+    createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), ...str));
+    return;
+  }
+  let strArr = str;
+  if (typeof str === 'string' || typeof str === 'number') {
+    strArr = colorUtils[colorHash[name]](str);
+  }
+  createlog(name)(...add(colorUtils.bold(colorUtils[`bg${firstToUpperCase(colorHash[name])}`](`[${firstToUpperCase(name)}] `)), strArr));
+};
+
+const createChalkGroup = (name) => (...str) => {
+  if (typeof str[0] === 'object') {
+    creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), ...str));
+    return;
+  }
+  let strArr = str;
+  if (typeof str === 'string' || typeof str === 'number') {
+    strArr = colorUtils[colorHash[name]](str);
+  }
+  creategroup(name)(...add(colorUtils.bold(colorUtils[colorHash[name]](`[${firstToUpperCase(name)}] `)), strArr));
+};
+
+const chalk = {
+  group: {
+    end: _console.groupEnd
+  },
+  bg: {}
+};
+Object.keys(colorHash).forEach(key => {
+  chalk[key] = createChalk(key);
+  chalk.group[key] = createChalkGroup(key);
+  chalk.bg[key] = createChalkBg(key);
+});
+
+const firstToUpperCase = (str) => str.toLowerCase().replace(/( |^)[a-z]/g, (L) => L.toUpperCase());
+
+Object.keys(color).forEach(key => {
+  colorUtils[key] = (str) => {
+    if (typeof str === 'string' || typeof str === 'number') {
+      return [`%c${str}`, `color:${color[key]}`];
+    }
+    for (let i = 1; i < str.length; i++) {
+      str[i] += `;color:${color[key]}`;
+    }
+    return str;
+  };
+  colorUtils[`bg${firstToUpperCase(key)}`] = (str) => {
+    if (typeof str === 'string' || typeof str === 'number') {
+      return [`%c${str}`, `padding: 2px 4px; border-radius: 3px; color: ${key === 'white' ? '#000' : '#fff'}; font-weight: bold; background:${color[key]};`];
+    }
+    for (let i = 1; i < str.length; i++) {
+      str[i] += `;padding: 2px 4px; border-radius: 3px; font-weight: bold; background:${color[key]};`;
+    }
+    return str;
+  };
+});
+
+self.logger = {
+  add,
+  ...chalk,
+  ...colorUtils,
+};
+
+if (!debug) {
+  logger = {
+    log: () => { },
+    wait: () => { },
+    error: () => { },
+    warn: () => { },
+    ready: () => { },
+    info: () => { },
+    event: () => { },
+    group: {
+      log: () => { },
+      wait: () => { },
+      error: () => { },
+      warn: () => { },
+      ready: () => { },
+      info: () => { },
+      event: () => { },
+      end: () => { },
+    },
+    bg: {
+      log: () => { },
+      wait: () => { },
+      error: () => { },
+      warn: () => { },
+      ready: () => { },
+      info: () => { },
+      event: () => { },
+    }
+  };
+  console.log = () => { };
+}
+
+const installFunction = async () => {
+  return caches.open(CACHE_PRECACHE) // 使用版本化 Precache
+    .then(async function (cache) {
+      if (PreCachlist.length) {
+        logger.group.event(`Precaching ${PreCachlist.length} files.`);
+        let index = 0;
+        PreCachlist.forEach(function (url) {
+          cache.match(new Request(url)).then(function (response) {
+            if (response) {
+              logger.ready(`Precaching ${url}`);
+            } else {
+              logger.wait(`Precaching ${url}`);
+              cache.add(new Request(url));
+            }
+            index++;
+            if (index === PreCachlist.length) {
+              logger.ready(`Precached ${PreCachlist.length} files.`);
+              logger.group.end();
+            }
+          })
+        })
+      }
+    }).catch((error) => {
+      logger.error('[install] ' + (error.stack || error));
+    })
+}
+
+self.addEventListener('install', async function (event) {
+  logger.bg.event("service worker install event listening");
+  try {
+    // 5. 更新流程：禁止自动 skipWaiting，等待用户触发
+    // self.skipWaiting(); <--- REMOVED
+    event.waitUntil(installFunction());
+    logger.bg.ready('service worker install sucess!');
+  } catch (error) {
+    logger.error('[install] ' + (error.stack || error));
+  }
+});
+
+// 5. 更新流程：监听用户刷新触发的 SKIP_WAITING
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('activate', async event => {
+  logger.bg.event("service worker activate event listening");
+  try {
+    event.waitUntil(
+      caches.keys().then((keys) => {
+        return Promise.all(keys.map((key) => {
+          // 5. 更新流程：Activate 阶段只删除旧的 Precache，保留 Runtime
+          if (key.includes(prefix) && key.includes('-precache') && key !== CACHE_PRECACHE) {
+            caches.delete(key);
+            logger.bg.ready('Deleted Outdated Cache: ' + key);
+          }
+          // Runtime cache (no version in name) persists naturally
+        }));
+      }).catch((error) => {
+        logger.error('[activate] ' + (error.stack || error));
+      })
+    );
+    await self.clients.claim()
+    logger.bg.ready('service worker activate sucess!');
+  } catch (error) {
+    logger.error('[activate] ' + (error.stack || error));
+  }
+})
+
+self.addEventListener('fetch', async event => {
+  event.respondWith(
+    handleFetch(event).catch((error) => {
+      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
+    })
+  )
+});
+
+const NetworkOnly = async (event) => {
+  logger.group.info('NetworkOnly: ' + new URL(event.request.url).pathname);
+  logger.wait('service worker fetch: ' + event.request.url)
+  logger.group.end();
+  return fetch(event.request)
+}
+
+const CacheFirst = async (event) => {
+  return caches.match(event.request).then(function (resp) {
+    logger.group.info('CacheFirst: ' + new URL(event.request.url).pathname);
+    logger.wait('service worker fetch: ' + event.request.url)
+    if (resp) {
+      logger.group.ready(`Cache Hit`);
+      console.log(resp)
+      logger.group.end();
+      logger.group.end();
+      event.waitUntil(CacheRuntime(event.request))
+      return resp;
+    } else {
+      logger.warn(`Cache Miss`);
+      logger.group.end();
+      return CacheRuntime(event.request)
+    }
+  })
+}
+
+const CacheAlways = async (event) => {
+  return caches.match(event.request).then(function (resp) {
+    logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
+    logger.wait('service worker fetch: ' + event.request.url)
+    if (resp) {
+      logger.group.ready(`Cache Hit`);
+      console.log(resp)
+      logger.group.end();
+      logger.group.end();
+      return resp;
+    } else {
+      logger.warn(`Cache Miss`);
+      logger.group.end();
+      return CacheRuntime(event.request)
+    }
+  })
+}
+
+async function CacheRuntime(request) {
+  const url = new URL(request.url);
+  let response = await matchCDN(request);
+  if (!response) {
+    response = await fetch(request).catch(() => null)
+  }
+  logger.group.event(`Cache Runtime ${url.pathname}`);
+  logger.wait(`Caching url: ${request.url}`);
+  console.log(response);
+
+  if (request.method === "GET" && (url.protocol == "https:")) {
+    // 2. 缓存结构：Runtime 使用全局无版本号缓存池
+    const cache = await caches.open(CACHE_RUNTIME);
+    cache.put(request, response.clone()).catch(error => {
+      logger.error('[Cache Runtime] ' + (error.stack || error));
+      if (error.name === 'QuotaExceededError') {
+        caches.delete(CACHE_RUNTIME); // Clean global runtime on quota error
+        logger.ready("deleted cache")
+      }
+    })
+    logger.ready(`Cached url: ${request.url}`);
+  } else {
+    logger.warn(`Not Cached url: ${request.url}`);
+  }
+  logger.group.end();
+  return response;
+}
+
+const matchCDN = async (req) => {
+  const nav = navigator
+  const { saveData, effectiveType } = nav.connection || nav.mozConnection || nav.webkitConnection || {}
+  if (saveData || /2g/.test(effectiveType)) {
+    logger.warn("Slow Network: Transparent Proxy");
+    return fetch(req);
+  }
+  const urls = []
+  let urlObj = new URL(req.url)
+  let pathType = urlObj.pathname.split('/')[1]
+  let pathTestRes = "";
+
+  for (const item of cdn_match_list) {
+    if (new RegExp(item.key).test(req.url)) {
+      pathType = item.type
+      pathTestRes = new RegExp(item.key).exec(req.url)[0]
+      break;
+    }
+  }
+  for (const type in cdn) {
+    if (type === pathType) {
+      logger.group.ready(`Match CDN ${pathType}: ` + req.url);
+      for (const key in cdn[type]) {
+        const url = cdn[type][key] + req.url.replace(pathTestRes, '')
+        console.log(url);
+        urls.push(url)
+      }
+      logger.group.end()
+    }
+  }
+
+  let res;
+  if (urls.length)
+    res = FetchEngine(urls)
+  else
+    res = fetch(req)
+
+  return res
+}
+
+async function progress(res) {
+  return new Response(await res.arrayBuffer(), {
+    status: res.status,
+    headers: res.headers
+  })
+}
+
+function createPromiseAny() {
+  Promise.any = function (promises) {
+    return new Promise((resolve, reject) => {
+      promises = Array.isArray(promises) ? promises : []
+      let len = promises.length
+      let errs = []
+      if (len === 0) return reject(new AggregateError('All promises were rejected'))
+      promises.forEach((p) => {
+        if (p instanceof Promise) {
+          p.then(
+            (res) => resolve(res),
+            (err) => {
+              len--
+              errs.push(err)
+              if (len === 0) reject(new AggregateError(errs))
+            }
+          )
+        } else {
+          reject(p)
+        }
+      })
+    })
+  }
+}
+
+function fetchAny(reqs) {
+  const controller = new AbortController()
+
+  return reqs.map(req => {
+    return new Promise((resolve, reject) => {
+      fetch(req, {
+        signal: controller.signal
+      })
+        .then(progress)
+        .then(res => {
+          controller.abort()
+          if (res.status !== 200)
+            reject(null)
+          else
+            resolve(res)
+        })
+        .catch(() => reject(null))
+    })
+  })
+}
+
+function fetchParallel(reqs) {
+  const abortEvent = new Event("abortOtherInstance")
+  const eventTarget = new EventTarget();
+
+  return reqs.map(async req => {
+    const controller = new AbortController();
+    let tagged = false;
+    eventTarget.addEventListener(abortEvent.type, () => {
+      if (!tagged) controller.abort();
+    })
+    return new Promise((resolve, reject) => {
+      fetch(req, {
+        signal: controller.signal,
+      }).then(res => {
+        tagged = true;
+        eventTarget.dispatchEvent(abortEvent)
+        if (res.status !== 200)
+          reject(null)
+        else
+          resolve(res)
+      }).catch(() => reject(null))
+    })
+  });
+}
+
+const FetchEngine = (reqs) => {
+  if (!Promise.any) createPromiseAny();
+  return Promise.any(fetchParallel(reqs)).then(res => res)
+    .catch((e) => {
+      if (e == "AggregateError: All promises were rejected") {
+        return Promise.any(fetchAny(reqs))
+          .then((res) => res)
+          .catch(() => null);
+      }
+      return null;
+    });
+};
