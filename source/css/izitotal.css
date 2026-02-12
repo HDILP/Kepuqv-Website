@@ -1,31 +1,32 @@
-/* 🌸 Service Worker 更新提示 · 温柔版 */
+/* 🌸 Service Worker 更新提示 · 极简温柔版 */
 
 .iziToast.sw-update-toast {
-  border-radius: 14px;
-  padding: 14px 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 16px 24px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 
   background: rgba(255, 245, 248, 0.88);
   box-shadow:
-    0 12px 30px rgba(255, 170, 190, 0.25),
-    0 0 0 1px rgba(255, 170, 190, 0.15);
+    0 14px 32px rgba(255, 170, 190, 0.2),
+    0 0 0 1px rgba(255, 170, 190, 0.12);
 
   color: #5a3b45;
   font-family: inherit;
+  position: relative;
 }
 
 /* 标题 */
 .iziToast.sw-update-toast .iziToast-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 /* 正文 */
 .iziToast.sw-update-toast .iziToast-message {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
   opacity: 0.9;
   white-space: pre-line;
@@ -33,60 +34,39 @@
 
 /* 按钮区域 */
 .iziToast.sw-update-toast .iziToast-buttons {
-  margin-top: 10px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* 按钮本身 */
 .iziToast.sw-update-toast .iziToast-btn {
   border-radius: 999px;
-  padding: 6px 14px;
-  margin-left: 6px;
-
-  font-size: 12.5px;
+  padding: 6px 16px;
+  font-size: 13px;
   font-weight: 500;
-
   border: none;
   cursor: pointer;
-
+  background: linear-gradient(135deg, #ffaab2, #ffb7c4);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 170, 190, 0.45);
   transition:
     background 0.25s ease,
     transform 0.15s ease,
     box-shadow 0.15s ease;
 }
 
-/* 「现在刷新」 */
-.iziToast.sw-update-toast .iziToast-btn:first-child {
-  background: linear-gradient(
-    135deg,
-    #ffaab2,
-    #ffb7c4
-  );
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 170, 190, 0.45);
-}
-
-.iziToast.sw-update-toast .iziToast-btn:first-child:hover {
+.iziToast.sw-update-toast .iziToast-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(255, 170, 190, 0.6);
+  box-shadow: 0 6px 18px rgba(255, 170, 190, 0.6);
 }
 
-/* 「稍后再说」 */
-.iziToast.sw-update-toast .iziToast-btn:last-child {
-  background: transparent;
-  color: #8a5c6a;
-}
-
-.iziToast.sw-update-toast .iziToast-btn:last-child:hover {
-  background: rgba(255, 170, 190, 0.12);
-}
-
-/* 🌬 更轻的出现方式：像雾一样落下 */
-
+/* 🌬 浮动动画：像云雾轻轻落下 */
 @keyframes sw-toast-float-in {
   0% {
     opacity: 0;
-    transform: translate(-50%, -6px) scale(0.985);
-    filter: blur(1.5px);
+    transform: translate(-50%, -8px) scale(0.985);
+    filter: blur(2px);
   }
   60% {
     opacity: 1;
@@ -98,19 +78,18 @@
   }
 }
 
-/* 覆盖 iziToast 的默认动画 */
 .iziToast.sw-update-toast {
   animation: sw-toast-float-in 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 让阴影稍微“慢半拍”出现 */
+/* 阴影轻柔出现 */
 .iziToast.sw-update-toast::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: 0 12px 30px rgba(255, 170, 190, 0.25);
+  box-shadow: 0 14px 32px rgba(255, 170, 190, 0.2);
   opacity: 0;
   animation: sw-toast-shadow-in 0.9s ease forwards;
 }
@@ -120,9 +99,27 @@
   100% { opacity: 1; }
 }
 
-.sw-update-progress {
-  height: 100%;
-  border-radius: 8px;
-  background: linear-gradient(90deg,#ffaab2,#ffb7c4);
-  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+/* 🌬 小精灵晃动动画 */
+@keyframes sw-toast-floating {
+  0% {
+    transform: translate(-50%, 0) rotate(-1deg);
+  }
+  25% {
+    transform: translate(-50%, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-50%, 0) rotate(-1deg);
+  }
+  75% {
+    transform: translate(-50%, 1px) rotate(1deg);
+  }
+  100% {
+    transform: translate(-50%, 0) rotate(0deg);
+  }
+}
+
+/* 给浮动动画叠加晃动 */
+.iziToast.sw-update-toast {
+  animation: sw-toast-float-in 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+             sw-toast-floating 4s ease-in-out infinite alternate;
 }
