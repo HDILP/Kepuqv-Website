@@ -1,7 +1,10 @@
 /* sw-update-listener.js */
 (function() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
+    let initialized = false;
+    const init = function() {
+      if (initialized) return;
+      initialized = true;
       const pingListenerAlive = () => {
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({ type: 'LISTENER_ALIVE' });
@@ -50,7 +53,14 @@
         refreshing = true;
         window.location.reload();
       });
-    });
+    };
+
+    // 兼容脚本在 load 之后才注入的场景，避免监听器初始化丢失
+    if (document.readyState === 'complete') {
+      init();
+    } else {
+      window.addEventListener('load', init, { once: true });
+    }
   }
 
   function showUpdateToast(worker) {
