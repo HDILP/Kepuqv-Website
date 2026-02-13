@@ -29,6 +29,14 @@ const LISTENER_ALIVE_TTL = 5 * 60 * 1000;
 
 const handleFetch = async (event) => {
   const url = event.request.url;
+  const urlObject = new URL(url);
+  const isHomePageRequest = urlObject.origin === self.location.origin && urlObject.pathname === '/';
+  const isBingWallpaperRequest = urlObject.origin === 'https://bing-wallpaper.hdilp.top' && urlObject.pathname === '/bing.jpg';
+
+  if (isHomePageRequest || isBingWallpaperRequest) {
+    return StaleWhileRevalidate(event)
+  }
+
   // 6. Fetch 策略：排除更新监听脚本与音频范围请求
   if (/nocache/.test(url) || /sw-update-listener\.js/.test(url)) {
     return NetworkOnly(event)
@@ -280,18 +288,25 @@ const installFunction = async () => {
   const cache = await caches.open(CACHE_PRECACHE);
   if (PreCachlist.length) {
     logger.group.event(`Precaching ${PreCachlist.length} files.`);
-    
+
     // 使用 Promise.all 确保所有资源下载完成后才返回
     return Promise.all(
       PreCachlist.map(url => {
         logger.wait(`Precaching ${url}`);
-        // install 阶段强制走 reload，避免命中旧 SW 周期中的 HTTP 缓存导致不新鲜
-        const req = new Request(url, { cache: 'reload' });
-        return fetch(req).then((response) => {
+
+        // 旧 active SW 可能拦截 waiting SW 的预缓存请求；追加 nocache 参数触发旧 SW 的 NetworkOnly 分支
+        const precacheURL = new URL(url, self.location.origin);
+        precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+
+        // 预缓存写入 key 使用原始 URL，实际拉取使用带 nocache 的 URL
+        const cacheKey = new Request(url);
+        const networkReq = new Request(precacheURL.toString(), { cache: 'no-store' });
+
+        return fetch(networkReq).then((response) => {
           if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
             throw new Error(`Precache failed: ${url}`);
           }
-          return cache.put(req, response.clone()).then(() => {
+          return cache.put(cacheKey, response.clone()).then(() => {
             logger.ready(`Precaching ${url}`);
             return response;
           });
@@ -436,6 +451,25 @@ const CacheAlways = async (event) => {
       console.log(resp)
       logger.group.end();
       logger.group.end();
+      return resp;
+    } else {
+      logger.warn(`Cache Miss`);
+      logger.group.end();
+      return CacheRuntime(event.request)
+    }
+  })
+}
+
+const StaleWhileRevalidate = async (event) => {
+  return caches.match(event.request).then(function (resp) {
+    logger.group.info('StaleWhileRevalidate: ' + new URL(event.request.url).pathname);
+    logger.wait('service worker fetch: ' + event.request.url)
+    if (resp) {
+      logger.group.ready(`Cache Hit`);
+      console.log(resp)
+      logger.group.end();
+      logger.group.end();
+      event.waitUntil(CacheRuntime(event.request))
       return resp;
     } else {
       logger.warn(`Cache Miss`);
