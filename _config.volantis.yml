@@ -213,7 +213,7 @@ article:
       # 文章推荐 (for layout: post/docs)
       # 推荐算法需要依赖中文分词工具，nodejieba只支持中英文 npm i nodejieba -S
       recommended_article:
-        enable: true
+        enable: false
         layout: ["post", "docs"]
         title: 推荐阅读
         icon: fa-solid fa-bookmark
