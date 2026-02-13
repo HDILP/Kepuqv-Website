@@ -5,8 +5,9 @@
     const init = function() {
       if (initialized) return;
       initialized = true;
+      const canPromptForUpdate = () => typeof iziToast !== 'undefined' || typeof window.confirm === 'function';
       const pingListenerAlive = () => {
-        if (navigator.serviceWorker.controller) {
+        if (navigator.serviceWorker.controller && canPromptForUpdate()) {
           navigator.serviceWorker.controller.postMessage({ type: 'LISTENER_ALIVE' });
         }
       };
@@ -64,9 +65,17 @@
   }
 
   function showUpdateToast(worker) {
-    if (typeof iziToast === 'undefined') return;
     if (!worker || worker.state !== 'installed') return;
     if (showUpdateToast.shown) return;
+
+    if (typeof iziToast === 'undefined') {
+      const shouldUpdate = window.confirm('发现新版本，是否立即刷新以应用更新？');
+      if (shouldUpdate) {
+        worker.postMessage('SKIP_WAITING');
+      }
+      return;
+    }
+
     showUpdateToast.shown = true;
 
     iziToast.info({
