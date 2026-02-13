@@ -257,31 +257,29 @@ if (!debug) {
 }
 
 const installFunction = async () => {
-  return caches.open(CACHE_PRECACHE) // 使用版本化 Precache
-    .then(async function (cache) {
-      if (PreCachlist.length) {
-        logger.group.event(`Precaching ${PreCachlist.length} files.`);
-        let index = 0;
-        PreCachlist.forEach(function (url) {
-          cache.match(new Request(url)).then(function (response) {
-            if (response) {
-              logger.ready(`Precaching ${url}`);
-            } else {
-              logger.wait(`Precaching ${url}`);
-              cache.add(new Request(url));
-            }
-            index++;
-            if (index === PreCachlist.length) {
-              logger.ready(`Precached ${PreCachlist.length} files.`);
-              logger.group.end();
-            }
-          })
-        })
-      }
-    }).catch((error) => {
-      logger.error('[install] ' + (error.stack || error));
-    })
-}
+  const cache = await caches.open(CACHE_PRECACHE);
+  if (PreCachlist.length) {
+    logger.group.event(`Precaching ${PreCachlist.length} files.`);
+    
+    // 使用 Promise.all 确保所有资源下载完成后才返回
+    return Promise.all(
+      PreCachlist.map(url => {
+        return cache.match(new Request(url)).then(response => {
+          if (response) {
+            logger.ready(`Precaching ${url}`);
+            return response;
+          } else {
+            logger.wait(`Precaching ${url}`);
+            return cache.add(new Request(url));
+          }
+        });
+      })
+    ).then(() => {
+      logger.ready(`Precached ${PreCachlist.length} files.`);
+      logger.group.end();
+    });
+  }
+};
 
 self.addEventListener('install', async function (event) {
   logger.bg.event("service worker install event listening");
@@ -305,38 +303,32 @@ self.addEventListener('message', (event) => {
 self.addEventListener('activate', async event => {
   logger.bg.event("service worker activate event listening");
   try {
-    event.waitUntil(
-      caches.keys().then((keys) => {
-        return Promise.all(keys.map((key) => {
-          // 5. 更新流程：Activate 阶段只删除旧的 Precache，保留 Runtime
-          if (key.includes(prefix) && key.includes('-precache') && key !== CACHE_PRECACHE) {
-            caches.delete(key);
+    // 把 claim 也放进 waitUntil，保证 activate 完成前 claim 已完成
+    event.waitUntil((async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => {
+        if (key.includes(prefix) && key.includes('-precache') && key !== CACHE_PRECACHE) {
+          logger.bg.ready('Deleting outdated cache: ' + key);
+          return caches.delete(key).then((deleted) => {
             logger.bg.ready('Deleted Outdated Cache: ' + key);
-          }
-          // Runtime cache (no version in name) persists naturally
-        }));
-      }).catch((error) => {
-        logger.error('[activate] ' + (error.stack || error));
-      })
-    );
-    await self.clients.claim()
-    logger.bg.ready('service worker activate sucess!');
+            return deleted;
+          });
+        } else {
+          return Promise.resolve();
+        }
+      }));
+      // clients.claim() 放到 waitUntil 内部以保证 activate 生命周期等待它完成
+      await self.clients.claim();
+    })()).catch((error) => {
+      logger.error('[activate] ' + (error.stack || error));
+    });
+    logger.bg.ready('service worker activate success!');
   } catch (error) {
     logger.error('[activate] ' + (error.stack || error));
   }
-})
-
-self.addEventListener('fetch', async event => {
-  event.respondWith(
-    handleFetch(event)
-      .then((response) => ensureResponse(response, event.request))
-      .catch((error) => {
-        logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
-        return fetch(event.request).catch(() => createNetworkErrorResponse());
-      })
-  )
 });
 
+// 安全的网络错误响应（用于兜底）
 const createNetworkErrorResponse = () => {
   return new Response('Network error', {
     status: 503,
@@ -348,13 +340,36 @@ const createNetworkErrorResponse = () => {
   });
 };
 
+// ensureResponse：确保 handleFetch 返回的是 Response，否则回退到网络或 createNetworkErrorResponse
 const ensureResponse = async (response, request) => {
   if (response instanceof Response) {
     return response;
   }
   logger.warn('[fetch] non-Response returned, fallback to network: ' + request.url);
-  return fetch(request).catch(() => createNetworkErrorResponse());
+  try {
+    return await fetch(request);
+  } catch (e) {
+    return createNetworkErrorResponse();
+  }
 };
+
+// fetch 事件：统一使用 async IIFE，并通过 ensureResponse 保证最终返回 Response
+self.addEventListener('fetch', event => {
+  event.respondWith((async () => {
+    try {
+      const candidate = await handleFetch(event);
+      const finalResp = await ensureResponse(candidate, event.request);
+      return finalResp;
+    } catch (error) {
+      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error && (error.stack || error)));
+      try {
+        return await fetch(event.request);
+      } catch (e) {
+        return createNetworkErrorResponse();
+      }
+    }
+  })());
+});
 
 const NetworkOnly = async (event) => {
   logger.group.info('NetworkOnly: ' + new URL(event.request.url).pathname);
@@ -402,33 +417,40 @@ const CacheAlways = async (event) => {
 
 async function CacheRuntime(request) {
   const url = new URL(request.url);
-  let response = await matchCDN(request);
+  // 先尝试通过 CDN 竞速获取
+  let response = await matchCDN(request).catch(() => null);
   if (!response) {
-    response = await fetch(request).catch(() => null)
+    response = await fetch(request).catch(() => null);
   }
+
   logger.group.event(`Cache Runtime ${url.pathname}`);
   logger.wait(`Caching url: ${request.url}`);
-  console.log(response);
 
+  // 如果拿不到有效的 Response，返回网络错误响应（保证类型安全）
   if (!(response instanceof Response)) {
     logger.warn(`[Cache Runtime] fallback response for: ${request.url}`);
+    logger.group.end();
     return createNetworkErrorResponse();
   }
 
-  if (request.method === "GET" && (url.protocol == "https:")) {
-    // 2. 缓存结构：Runtime 使用全局无版本号缓存池
+  // 仅 GET 且 https 才写入 runtime
+  if (request.method === "GET" && (url.protocol === "https:")) {
     const cache = await caches.open(CACHE_RUNTIME);
-    cache.put(request, response.clone()).catch(error => {
+    try {
+      await cache.put(request, response.clone());
+      logger.ready(`Cached url: ${request.url}`);
+    } catch (error) {
       logger.error('[Cache Runtime] ' + (error.stack || error));
-      if (error.name === 'QuotaExceededError') {
-        caches.delete(CACHE_RUNTIME); // Clean global runtime on quota error
-        logger.ready("deleted cache")
+      if (error && error.name === 'QuotaExceededError') {
+        // 发生配额问题时清理 runtime（谨慎）
+        await caches.delete(CACHE_RUNTIME);
+        logger.ready("Deleted runtime cache due to quota error");
       }
-    })
-    logger.ready(`Cached url: ${request.url}`);
+    }
   } else {
     logger.warn(`Not Cached url: ${request.url}`);
   }
+
   logger.group.end();
   return response;
 }
@@ -481,6 +503,8 @@ async function progress(res) {
 }
 
 function createPromiseAny() {
+  // 仅在环境不支持 Promise.any 时定义 polyfill
+  if (typeof Promise.any === 'function') return;
   Promise.any = function (promises) {
     return new Promise((resolve, reject) => {
       promises = Array.isArray(promises) ? promises : []
