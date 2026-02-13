@@ -316,12 +316,22 @@ const installFunction = async () => {
 
       return fetch(fetchURL).then((response) => {
         if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
+          if (url === '/bing.jpg') {
+            logger.warn('[precache] optional resource failed: /bing.jpg');
+            return null;
+          }
           throw new Error(`Precache failed: ${url}`);
         }
         return cache.put(cacheKey, response.clone()).then(() => {
           logger.ready(`Precaching ${url}`);
           return response;
           });
+        }).catch((error) => {
+          if (url === '/bing.jpg') {
+            logger.warn('[precache] optional resource skipped: /bing.jpg, reason: ' + (error && (error.message || error)));
+            return null;
+          }
+          throw error;
         });
       })
     ).then(() => {
