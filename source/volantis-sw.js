@@ -2,7 +2,7 @@
 
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
-const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
+const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
 
 // 1. 缓存结构设计：双池模型
 // CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
@@ -13,10 +13,13 @@ const CACHE_RUNTIME = prefix + '-runtime';
 // 2. Precache 列表 (设计稿 V.3)
 const PreCachlist = [
   "/",
+  "/index.html",
   "/css/style.css",
   "/css/first.css",
+  "/css/dark.css",
   "/js/app.js",
   "/js/search/hexo.js",
+  "/js/sw-update-listener.js",
   "/css/izitotal.css",
   "https://bing-wallpaper.hdilp.top/bing.jpg"
 ];

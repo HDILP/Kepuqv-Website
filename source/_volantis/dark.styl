@@ -1,61 +1,40 @@
-#l_side .widget
-  background linear-gradient(
-    135deg,
-    rgba(28, 32, 40, 0.72),
-    rgba(36, 30, 42, 0.72)
-  ) !important
+// 文章卡片磨砂玻璃质感（深色适配）
+.post.white-box
+  background rgba(30, 30, 30, 0.65) !important
+  background-color rgba(30, 30, 30, 0.65) !important
 
-  backdrop-filter blur(16px) saturate(150%)
-  -webkit-backdrop-filter blur(16px) saturate(150%)
+  backdrop-filter blur(12px)
+  -webkit-backdrop-filter blur(12px)
 
-  border 1px solid rgba(255, 170, 178, 0.08)
-  border-radius 18px
+  background-image none !important
+  border 1px solid rgba(255, 255, 255, 0.1)
 
-  box-shadow 0 12px 40px rgba(0, 0, 0, 0.45)
-#l_side .widget .content
-  background transparent !important
-
-
-.post,
-.post-v3,
-.white-box
-  background linear-gradient(
-    135deg,
-    rgba(24, 28, 36, 0.75),
-    rgba(32, 26, 40, 0.75)
-  ) !important
-
-  backdrop-filter blur(18px) saturate(150%)
-  -webkit-backdrop-filter blur(18px) saturate(150%)
-
-  border 1px solid rgba(255, 170, 178, 0.06)
-  border-radius 22px
-
-  box-shadow 0 20px 60px rgba(0, 0, 0, 0.55)
-
-.post .content,
-.post article,
-.post .post-body
-  background transparent !important
-
-.post
-  color rgba(255, 255, 255, 0.88)
-
-.post a
-  color #ffaab2
-
-
+// 可选：文章内描述区同步磨砂
+.post .article-desc
+  background: transparent !important
+  backdrop-filter: none !important
+  
+// 顶部导航栏 · 深色磨砂玻璃
 #l_header.l_header
-  background linear-gradient(
-    135deg,
-    rgba(28, 32, 40, 0.72),
-    rgba(36, 30, 42, 0.72)
-  ) !important
+  background rgba(25, 25, 25, 0.7) !important
+  background-color rgba(25, 25, 25, 0.7) !important
+  background-image none !important
 
-  backdrop-filter blur(16px) saturate(150%)
-  -webkit-backdrop-filter blur(16px) saturate(150%)
+  backdrop-filter blur(10px) saturate(150%)
+  -webkit-backdrop-filter blur(10px) saturate(150%)
 
-  border 1px solid rgba(255, 170, 178, 0.08)
-  border-radius 18px
+  border-bottom 1px solid rgba(255, 255, 255, 0.08)
+  box-shadow 0 4px 20px rgba(0, 0, 0, 0.4)
+  
+// 侧边栏 Widget · 深色磨砂玻璃
+#l_side .widget
+  background rgba(35, 35, 35, 0.65) !important
+  background-color rgba(35, 35, 35, 0.65) !important
+  background-image none !important
 
-  box-shadow 0 12px 40px rgba(0, 0, 0, 0.45)
+  backdrop-filter blur(12px) saturate(130%)
+  -webkit-backdrop-filter blur(12px) saturate(130%)
+
+  border-radius 16px
+  border 1px solid rgba(255, 255, 255, 0.08)
+  box-shadow 0 6px 24px rgba(0, 0, 0, 0.3)
