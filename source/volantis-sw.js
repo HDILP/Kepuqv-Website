@@ -13,19 +13,19 @@ const CACHE_RUNTIME = prefix + '-runtime';
 // 2. Precache 列表 (设计稿 V.3)
 const PreCachlist = [
   "/",
-  "/index.html",
   "/css/style.css",
   "/css/first.css",
-  "/css/dark.css",
   "/js/app.js",
   "/js/search/hexo.js",
-  "/js/sw-update-listener.js",
-  "/css/izitotal.css",
   "https://bing-wallpaper.hdilp.top/bing.jpg"
 ];
 
 let debug = false;
 // location.hostname == 'localhost' && (debug = true);
+
+// listener 心跳：用于判断前端更新监听是否可用
+let listenerAliveAt = 0;
+const LISTENER_ALIVE_TTL = 5 * 60 * 1000;
 
 const handleFetch = async (event) => {
   const url = event.request.url;
@@ -259,6 +259,23 @@ if (!debug) {
   console.log = () => { };
 }
 
+const notifyUpdateReady = async () => {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  clients.forEach((client) => {
+    client.postMessage({ type: 'UPDATE_READY' });
+  });
+};
+
+const tryAutoPromoteWaitingWorker = async (event) => {
+  // listener 不可用时：当用户发生一次导航（通常是刷新）即自动切换到 waiting 新版 SW
+  if (event.request.mode !== 'navigate') return;
+  if (Date.now() - listenerAliveAt < LISTENER_ALIVE_TTL) return;
+  const waiting = self.registration && self.registration.waiting;
+  if (!waiting) return;
+  logger.warn('[update] listener offline fallback: promote waiting worker on navigation');
+  waiting.postMessage('SKIP_WAITING');
+};
+
 const installFunction = async () => {
   const cache = await caches.open(CACHE_PRECACHE);
   if (PreCachlist.length) {
@@ -267,19 +284,24 @@ const installFunction = async () => {
     // 使用 Promise.all 确保所有资源下载完成后才返回
     return Promise.all(
       PreCachlist.map(url => {
-        return cache.match(new Request(url)).then(response => {
-          if (response) {
+        logger.wait(`Precaching ${url}`);
+        // install 阶段强制走 reload，避免命中旧 SW 周期中的 HTTP 缓存导致不新鲜
+        const req = new Request(url, { cache: 'reload' });
+        return fetch(req).then((response) => {
+          if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
+            throw new Error(`Precache failed: ${url}`);
+          }
+          return cache.put(req, response.clone()).then(() => {
             logger.ready(`Precaching ${url}`);
             return response;
-          } else {
-            logger.wait(`Precaching ${url}`);
-            return cache.add(new Request(url));
-          }
+          });
         });
       })
     ).then(() => {
       logger.ready(`Precached ${PreCachlist.length} files.`);
       logger.group.end();
+      // 仅在新版本核心资源预缓存完成后通知前端可更新
+      return notifyUpdateReady();
     });
   }
 };
@@ -300,6 +322,10 @@ self.addEventListener('install', async function (event) {
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+  if (event.data && event.data.type === 'LISTENER_ALIVE') {
+    listenerAliveAt = Date.now();
   }
 });
 
@@ -358,6 +384,7 @@ const ensureResponse = async (response, request) => {
 
 // fetch 事件：统一使用 async IIFE，并通过 ensureResponse 保证最终返回 Response
 self.addEventListener('fetch', event => {
+  event.waitUntil(tryAutoPromoteWaitingWorker(event));
   event.respondWith((async () => {
     try {
       const candidate = await handleFetch(event);
