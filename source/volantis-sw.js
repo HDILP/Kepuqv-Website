@@ -2,7 +2,7 @@
 
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
-const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
+const cacheSuffixVersion = '00000019-::cacheSuffixVersion::';
 
 // 1. 缓存结构设计：双池模型
 // CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
@@ -17,7 +17,7 @@ const PreCachlist = [
   "/css/first.css",
   "/js/app.js",
   "/js/search/hexo.js",
-  "https://bing-wallpaper.hdilp.top/bing.jpg"
+  "/bing.jpg"
 ];
 
 let debug = false;
@@ -291,24 +291,36 @@ const installFunction = async () => {
 
     // 使用 Promise.all 确保所有资源下载完成后才返回
     return Promise.all(
-      PreCachlist.map(url => {
-        logger.wait(`Precaching ${url}`);
+    PreCachlist.map(url => {
+      logger.wait(`Precaching ${url}`);
 
-        // 旧 active SW 可能拦截 waiting SW 的预缓存请求；追加 nocache 参数触发旧 SW 的 NetworkOnly 分支
+      let fetchURL;
+      let cacheKey;
+
+      if (url === '/bing.jpg') {
+        // 从远程抓
+        const remote = 'https://bing-wallpaper.hdilp.top/bing.jpg';
+        const u = new URL(remote);
+        u.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+        fetchURL = new Request(u.toString(), { cache: 'no-store' });
+
+        // 但写入本地 key
+        cacheKey = new Request('/bing.jpg');
+      } else {
         const precacheURL = new URL(url, self.location.origin);
         precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+        fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
 
-        // 预缓存写入 key 使用原始 URL，实际拉取使用带 nocache 的 URL
-        const cacheKey = new Request(url);
-        const networkReq = new Request(precacheURL.toString(), { cache: 'no-store' });
+        cacheKey = new Request(url);
+      }
 
-        return fetch(networkReq).then((response) => {
-          if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
-            throw new Error(`Precache failed: ${url}`);
-          }
-          return cache.put(cacheKey, response.clone()).then(() => {
-            logger.ready(`Precaching ${url}`);
-            return response;
+      return fetch(fetchURL).then((response) => {
+        if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
+          throw new Error(`Precache failed: ${url}`);
+        }
+        return cache.put(cacheKey, response.clone()).then(() => {
+          logger.ready(`Precaching ${url}`);
+          return response;
           });
         });
       })
@@ -498,7 +510,7 @@ async function CacheRuntime(request) {
   }
 
   // 仅 GET 且 https 才写入 runtime
-  if (request.method === "GET" && (url.protocol === "https:")) {
+  if (request.method === "GET" && (url.protocol === "https:" || self.location.hostname === "localhost")) {
     const cache = await caches.open(CACHE_RUNTIME);
     try {
       await cache.put(request, response.clone());

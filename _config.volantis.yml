@@ -74,6 +74,8 @@ dns_prefetch:
   - https://unpkg.com
   - https://cdn.bootcdn.net
   - https://imgcdn.yaerxing.com
+  - https://fontsapi.zeoseven.com
+  - https://api.i-meto.com
 
 # analytics:
 #   busuanzi: volantis-static/libs/busuanzi/bsz.pure.mini.js
@@ -570,13 +572,12 @@ color_scheme:
 ############################### Site Footer ############################### > start
 site_footer:
   # layout of footer: [aplayer, social, license, info, copyright]
-  layout: [aplayer, license, info, copyright, br, love]
-  # social:
-    # - icon: #fa-duotone fa-rss
-      # url:
-    # or
-    # - img:
-      # url:
+  layout: [aplayer, social,license, info, copyright, br, love]
+  social:
+    - img: volantis-static/media/org.volantis/icon/1322024-social-media/029-github.svg
+      url: https://github.com/HDILP/Kepuqv-Website
+    - img: volantis-static/media/org.volantis/icon/1322024-social-media/020-rss.svg
+      url: atom.xml
     # or
     # - avatar:
       # url:
@@ -662,7 +663,7 @@ plugins:
     duration: 30000       # Duration (ms)
     fade: 1500            # fade duration (ms) (Not more than 1500)
     images: # For personal use only. At your own risk if used for commercial purposes !!!
-      - https://bing-wallpaper.hdilp.top/bing.jpg
+      - /bing.jpg
 
   aplayer:
     enable: true
@@ -674,7 +675,7 @@ plugins:
     # fixed: true      # enable fixed mode
     theme: '#FFAAB2'  # main color
     autoplay: true   # audio autoplay
-    order: random       # player play order, values: 'list', 'random'
+    order: list       # player play order, values: 'list', 'random'
     loop: all         # player loop play, values: 'all', 'one', 'none'
     volume: 0.3       # default volume, notice that player will remember user setting, default volume will not work after user set volume themselves
     # list_max_height: 320px # list max height
