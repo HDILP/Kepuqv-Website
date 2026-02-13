@@ -158,7 +158,6 @@ SW 版本号未变化：
 批量抓取全站资源
 使用 DB 存储版本列表
 在 activate 阶段清空 runtime
-自动 skipWaiting
 
 允许浏览器兜底缺失资源。
 
@@ -207,6 +206,11 @@ runtime 永远不得删除
 不改变现有 fetch 路由策略
 修改必须最小化
 在关键逻辑处添加清晰注释
+
+---
+
+工作逻辑：
+> 用户首次访问网站→sw激活→cdn race&cache→缓存空间已有资源→如果无新版(sw版本号没变)→秒开→如果sw版本号变化(网站更新)→旧版本sw仍然接管页面（swr）→新版本Installing→新sw为了新版本首屏，提前下载新版本的precache（包含/、首屏样式和app.js还有当天的bing.jpg)→前端通知更新→刷新→旧sw不删除runtime→秒开（→cdn race）
 
 ---
 
