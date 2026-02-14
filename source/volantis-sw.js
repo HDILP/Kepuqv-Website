@@ -27,6 +27,25 @@ let debug = false;
 let listenerAliveAt = 0;
 const LISTENER_ALIVE_TTL = 5 * 60 * 1000;
 
+const isPrecacheManagedRequest = (request) => {
+  try {
+    const reqURL = new URL(request.url);
+    if (reqURL.origin !== self.location.origin) return false;
+    return PreCachlist.includes(reqURL.pathname);
+  } catch (e) {
+    return false;
+  }
+};
+
+const matchCacheWithPriority = async (request) => {
+  const precache = await caches.open(CACHE_PRECACHE);
+  const precacheResp = await precache.match(request);
+  if (precacheResp) return precacheResp;
+
+  const runtime = await caches.open(CACHE_RUNTIME);
+  return runtime.match(request);
+};
+
 const handleFetch = async (event) => {
   const url = event.request.url;
   const urlObject = new URL(url);
@@ -446,7 +465,7 @@ const NetworkOnly = async (event) => {
 }
 
 const CacheFirst = async (event) => {
-  return caches.match(event.request).then(function (resp) {
+  return matchCacheWithPriority(event.request).then(function (resp) {
     logger.group.info('CacheFirst: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
     if (resp) {
@@ -465,7 +484,7 @@ const CacheFirst = async (event) => {
 }
 
 const CacheAlways = async (event) => {
-  return caches.match(event.request).then(function (resp) {
+  return matchCacheWithPriority(event.request).then(function (resp) {
     logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
     if (resp) {
@@ -483,7 +502,7 @@ const CacheAlways = async (event) => {
 }
 
 const StaleWhileRevalidate = async (event) => {
-  return caches.match(event.request).then(function (resp) {
+  return matchCacheWithPriority(event.request).then(function (resp) {
     logger.group.info('StaleWhileRevalidate: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
     if (resp) {
@@ -517,6 +536,13 @@ async function CacheRuntime(request) {
     logger.warn(`[Cache Runtime] fallback response for: ${request.url}`);
     logger.group.end();
     return createNetworkErrorResponse();
+  }
+
+  // 核心资源由 precache 独占管理，避免 runtime 覆盖新版本
+  if (isPrecacheManagedRequest(request)) {
+    logger.ready(`Skip runtime cache for precache resource: ${request.url}`);
+    logger.group.end();
+    return response;
   }
 
   // 仅 GET 且 https 才写入 runtime
