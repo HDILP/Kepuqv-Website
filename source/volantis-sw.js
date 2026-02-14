@@ -2,7 +2,7 @@
 
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
-const cacheSuffixVersion = '00000019-::cacheSuffixVersion::';
+const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
 
 // 1. 缓存结构设计：双池模型
 // CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
@@ -52,7 +52,11 @@ const handleFetch = async (event) => {
   const isHomePageRequest = urlObject.origin === self.location.origin && urlObject.pathname === '/';
   const isBingWallpaperRequest = urlObject.origin === 'https://bing-wallpaper.hdilp.top' && urlObject.pathname === '/bing.jpg';
 
-  if (isHomePageRequest || isBingWallpaperRequest) {
+  if (isHomePageRequest) {
+    return CacheFirst(event)
+  }
+
+  if (isBingWallpaperRequest) {
     return StaleWhileRevalidate(event)
   }
 
@@ -470,7 +474,6 @@ const CacheFirst = async (event) => {
       console.log(resp)
       logger.group.end();
       logger.group.end();
-      event.waitUntil(CacheRuntime(event.request))
       return resp;
     } else {
       logger.warn(`Cache Miss`);
@@ -519,8 +522,12 @@ const StaleWhileRevalidate = async (event) => {
 
 async function CacheRuntime(request) {
   const url = new URL(request.url);
-  // 先尝试通过 CDN 竞速获取
-  let response = await matchCDN(request).catch(() => null);
+  const isSameOrigin = url.origin === self.location.origin;
+
+  // 同源静态资源直接走原始网络，避免每次 miss 都进入 CDN 竞速决策
+  let response = isSameOrigin
+    ? await fetch(request).catch(() => null)
+    : await matchCDN(request).catch(() => null);
   if (!response) {
     response = await fetch(request).catch(() => null);
   }
