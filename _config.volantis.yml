@@ -304,7 +304,7 @@ sidebar:
       class: blogger
       display: [desktop, mobile] # [desktop, mobile]
       avatar: /imgs/icon.jpg
-      shape: rectangle # circle, rectangle
+      shape: circle # circle, rectangle
       url: /about/
       title: 科普区
       subtitle: 开卷有益
@@ -332,7 +332,7 @@ sidebar:
         icon: fa-brands fa-qq
         title: '加入 QQ 群'
       content:
-        - '如果你在使用中遇到问题，请到 [留言板](/about/#comments) 进行反馈，你也可以加入**QQ 群**<br>[![](https://s3.bmp.ovh/2026/02/14/7Moe7X0O.png)](https://qm.qq.com/q/vzXBiXmfgA)'
+        - '如果你在使用中遇到问题，请到 [留言板](/about/#comments) 进行反馈，你也可以加入**QQ 群**<br>[![](/imgs/qqgroup.webp)](https://qm.qq.com/q/vzXBiXmfgA)'
     # toc widget (valid only in articles)
     toc:
       class: toc
