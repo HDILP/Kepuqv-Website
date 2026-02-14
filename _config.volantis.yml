@@ -632,7 +632,7 @@ plugins:
   parallax:
     enable: true
     position: fixed       # cover: sticky on the cover.   fixed: Fixed as background for the site.
-    shuffle: true         # shuffle playlist
+    shuffle: false         # shuffle playlist
     duration: 30000       # Duration (ms)
     fade: 1500            # fade duration (ms) (Not more than 1500)
     images: # For personal use only. At your own risk if used for commercial purposes !!!

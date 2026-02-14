@@ -151,6 +151,7 @@ bing.jpg： Stale-While-Revalidate
 以下资源必须直连网络：
 - sw-update-listener.js
 - 带 Range 的音频资源
+- https://api.i-meto.com
 
 ---
 

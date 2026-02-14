@@ -8,7 +8,7 @@ const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
 // CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
 const CACHE_PRECACHE = prefix + '-v' + cacheSuffixVersion + '-precache';
 // CACHE_RUNTIME: 包含静态资源，全局不带版本号，永久保留（除非配额溢出）
-const CACHE_RUNTIME = prefix + '-runtime';
+const CACHE_RUNTIME = prefix + '-runtime-v2';
 
 // 2. Precache 列表 (设计稿 V.3)
 const PreCachlist = [
@@ -70,6 +70,8 @@ const handleFetch = async (event) => {
   } else if (/music\.126\.net/.test(url)) {
     return NetworkOnly(event)
   } else if (/qqmusic\.qq\.com/.test(url)) {
+    return NetworkOnly(event)
+  } else if (/api\.i-meto\.com/.test(url)) {
     return NetworkOnly(event)
   } else if (/jsdelivr\.net/.test(url)) {
     return CacheAlways(event)
@@ -386,32 +388,29 @@ self.addEventListener('message', (event) => {
   }
 });
 
-self.addEventListener('activate', async event => {
+self.addEventListener('activate', event => {
   logger.bg.event("service worker activate event listening");
-  try {
-    // 把 claim 也放进 waitUntil，保证 activate 完成前 claim 已完成
-    event.waitUntil((async () => {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((key) => {
-        if (key.includes(prefix) && key.includes('-precache') && key !== CACHE_PRECACHE) {
+
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+
+    await Promise.all(
+      keys.map(key => {
+        if (!key.startsWith(prefix)) return;
+
+        if (key !== CACHE_PRECACHE && key !== CACHE_RUNTIME) {
           logger.bg.ready('Deleting outdated cache: ' + key);
-          return caches.delete(key).then((deleted) => {
-            logger.bg.ready('Deleted Outdated Cache: ' + key);
-            return deleted;
-          });
-        } else {
-          return Promise.resolve();
+          return caches.delete(key);
         }
-      }));
-      // clients.claim() 放到 waitUntil 内部以保证 activate 生命周期等待它完成
-      await self.clients.claim();
-    })()).catch((error) => {
-      logger.error('[activate] ' + (error.stack || error));
-    });
+      })
+    );
+
+    await self.clients.claim();
+
     logger.bg.ready('service worker activate success!');
-  } catch (error) {
+  })().catch(error => {
     logger.error('[activate] ' + (error.stack || error));
-  }
+  }));
 });
 
 // 安全的网络错误响应（用于兜底）
