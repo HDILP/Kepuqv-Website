@@ -60,6 +60,7 @@ Service Worker 的职责只有三件事：
   "/js/app.js",
   "/js/search/hexo.js",
   "https://bing-wallpaper.hdilp.top/bing.jpg"
+  "/"
 
 
 与 SW 版本号绑定，每次版本更新重新下载
@@ -139,7 +140,9 @@ SW 版本号未变化：
 
 六、Fetch 策略
 
-首页： Stale-While-Revalidate
+首页： Cache First （依赖 precache + 版本）
+
+bing.jpg： Stale-While-Revalidate
 
 核心 CSS / JS： Cache First（来自 precache）
 
