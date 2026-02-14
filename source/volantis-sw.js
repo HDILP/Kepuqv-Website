@@ -87,23 +87,20 @@ const cdn = {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
-    testingcf: 'https://testingcf.jsdelivr.net/gh',
-    test1: 'https://test1.jsdelivr.net/gh',
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',
     fastly: 'https://fastly.jsdelivr.net/combine',
     gcore: 'https://gcore.jsdelivr.net/combine',
-    testingcf: 'https://testingcf.jsdelivr.net/combine',
-    test1: 'https://test1.jsdelivr.net/combine',
   },
   npm: {
     jsdelivr: 'https://cdn.jsdelivr.net/npm',
-    fastly: 'https://fastly.jsdelivr.net/npm',
-    gcore: 'https://gcore.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
-    admincdn: 'https://jsd.admincdn.com/npm/',
+    admincdn: 'https://jsd.admincdn.com/npm',
+    mhuig: 'https://static.mhuig.top/npm',
+    yb: 'https://cdn.osyb.cn/npm',
+    ygxz: 'jsd-proxy.ygxz.in/npm'
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
