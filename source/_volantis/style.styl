@@ -1,29 +1,48 @@
 // 文章卡片磨砂玻璃质感（替换原白色背景）
 .post.white-box {
-  /* 1. 底色：不再用纯白，而是用带有 2% 灰度的冷色，防止在亮色壁纸下与背景混在一起 */
-  background: rgba(250, 251, 252, 0.55) !important;
-  
-  /* 2. 核心滤镜：
-     - blur(20px): 模糊度稍微拉高，减少背景复杂线条对文字的干扰
-     - contrast(0.85): 降低背景对比度！这是护眼关键，让背景的风景变得柔和、不刺眼
-     - brightness(1.05): 微量提亮
+  /* 1. 核心颜色：使用带一点点偏色的极浅梯度，模拟光的折射 */
+  background: linear-gradient(
+    160deg, 
+    rgba(255, 255, 255, 0.5) 0%, 
+    rgba(240, 245, 255, 0.35) 100%
+  ) !important;
+
+  /* 2. 滤镜进阶：引入 contrast 和 saturate 的微妙平衡 */
+  backdrop-filter: blur(16px) saturate(160%) contrast(1.1) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) contrast(1.1) brightness(1.1) !important;
+
+  /* 3. 不普通的秘诀：微纹理叠加 (Noise Texture)
+     这层淡淡的噪点会让玻璃看起来像有触感的磨砂实体，而不是软件画出来的色块
   */
-  backdrop-filter: blur(20px) saturate(130%) contrast(0.85) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(130%) contrast(0.85) brightness(1.05) !important;
+  // background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E") !important;
+  // background-blend-mode: soft-light;
 
-  /* 3. 去掉 text-shadow，直接上纯净颜色 */
-  color: #222222 !important; 
-  font-weight: 500;
-  letter-spacing: 0.01em; /* 微调字间距，提升可读性 */
+  /* 4. 这里的边框是点睛之笔：模拟“液态银”边缘 */
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.8) !important;  /* 顶部的“受光面” */
+  border-left: 1.5px solid rgba(255, 255, 255, 0.8) !important;
 
-  /* 4. 视觉重心：用双重边框来定义盒子的存在感，而不是靠文字阴影 */
-  border: 1px solid rgba(255, 255, 255, 0.1) !important; /* 不明显的亮边 */
+  /* 5. 阴影：使用多重阴影营造“悬浮景深” */
   box-shadow: 
-    0 10px 40px rgba(0, 0, 0, 0.05),        /* 柔和的外阴影 */
-    inset 0 0 0 1px rgba(0, 0, 0, 0.03);    /* 极细的内轮廓线，给亮色背景兜底 */
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 20px -5px rgba(0, 0, 0, 0.1),
+    inset 0 0 12px rgba(255, 255, 255, 0.3); /* 内部微光 */
 
-  border-radius: 18px;
-  padding: 24px;
+  /* 6. 文字：纯净且加深，抗干扰 */
+  color: #111 !important;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+
+  border-radius: 22px;
+  overflow: hidden; /* 保证噪点图不溢出圆角 */
+}
+
+/* 7. 给它一点“生命力”：悬停时的动态折射 */
+.post.white-box:hover {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  border-top-color: rgba(255, 255, 255, 1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-2px);
 }
 
 
