@@ -467,87 +467,63 @@ color_scheme:
     # 选中区域文字的背景颜色
     selection: 'alpha(#2196f3, 0.2)'
   # ------------
-  # 新：绿卡·素纸风格（v1.1）
   light:
-    # 网站背景色 —— 米白，保持轻盈通透
     site_bg: '#fcfcfc'
-    # 网站背景上的文字（如 banner 文案）
-    site_inner: '#fff'
-    # 网站页脚文字
-    site_footer: '#666'
+    site_inner: '#ffffff'
+    site_footer: '#444444' # 加深页脚，防止被壁纸淹没
   
-    # 卡片背景色 —— 柔和浅绿，模拟护眼纸张 ✅
-    card: '#f0f8f2'
-    # 卡片上的普通文字 —— 回归深灰系，更稳重易读
-    text: '#333'
+    # 稍微压低卡片文字基调，确保在 55% 透明度的玻璃上依然清晰
+    card: '#ffffff' 
+    text: '#1a1a1a' # 提高到近乎纯黑，增强对比
   
-    # 区块和代码块背景色 —— 稍深一层绿灰，区分层级
-    block: '#e8f1ea'
-    # 代码块高亮时的背景色 —— 暖米黄，保护专注阅读
-    codeblock: '#FFF7EA'
-    # 行内代码颜色 —— 橄榄棕，语义明确
-    inlinecode: '#7c5c2f'
+    block: '#f0f2f5'
+    codeblock: '#f8f9fa'
+    inlinecode: '#d56128' # 保持醒目
   
-    # 标题系列 —— 统一使用深灰，结构清晰
-    h1: '#262626'
-    h2: '#2d2d2d'
-    h3: '#333'
-    h4: '#3a3a3a'
-    h5: '#444'
-    h6: '#555'
-    p: '#333'  # 正文颜色
+    # 标题系列：使用纯黑，利用字重和大小区分
+    h1: '#000000'
+    h2: '#080808'
+    h3: '#111111'
+    h4: '#1a1a1a'
+    h5: '#222222'
+    h6: '#333333'
+    p: '#222222' # 正文稍微松口气，用深灰，减轻阅读疲劳
   
-    # 列表文字
-    list: '#555'
-    list_hl: 'mix($color-theme, #000, 80)'
-    # 辅助性文字
-    meta: '#777'
-  
-    # 版权卡片背景色
-    copyright_bkg: '#eef5ee'
+    list: '#333333'
+    meta: '#666666' # 辅助信息
+    copyright_bkg: 'rgba(0,0,0,0.03)'
+
   # ------------
   # 暗色主题
   # https://www.maijisheji.com/2094.html
   dark:
-    # 网站最深底色            # Dark Grey 1
-    site_bd: '#121212'
-    # 网站背景色              # Dark Grey 2
-    site_bg: '#1f1f1f'
-    # 卡片背景色              # Dark Grey 3
-    card: '#262626'
-    # 网站背景上的文字
-    site_inner: '#eeeeeede'
-    # 网站页脚文字
-    site_footer: '#aaaaaade'
-    # 卡片上的普通文字
-    text: '#eeeeeede'
+    site_bd: '#0a0a0a'
+    site_bg: '#121212'
+    card: '#1e1e1e'
+    site_inner: '#ffffffee'
+    site_footer: '#999999'
 
-    # 区块和代码块背景色       # Dark Grey 4
-    block: '#434343'
-    # 代码块高亮时的背景色     # Dark Grey 2
-    codeblock: '#1f1f1f'
-    # 行内代码颜色
-    inlinecode: '#D56D28'
+    # 卡片文字：提高不透明度，从 87% 提升到 92% 左右
+    text: '#f2f2f2'
 
-    # 文章部分 高强度文本的不透明度应为87％ 中等重点文字适用于60％
-    h1: '#FFFFFFde'            #  Dark Grey 8
-    h2: '#FFFFFFde'
-    h3: '#FFFFFF99'            #  Dark Grey 7
-    h4: '#FFFFFF99'
-    h5: '#FFFFFF99'
-    h6: '#FFFFFF99'
-    p: '#d9d9d9de'           #  Dark Grey 6
+    block: '#2d2d2d'
+    codeblock: '#181818'
+    inlinecode: '#ff9045' # 提高暗色下行内代码的亮度
 
-    # 列表文字                #  Dark Grey 6
-    list: '#d9d9d9de'
-    # 列表 hover 时的文字
-    list_hl: 'mix($color-theme, #fff, 80)'
-    # 辅助性文字              #  Dark Grey 5
-    meta: '#bfbfbfde'
-    # 版权卡片背景色
-    copyright_bkg: '#21252b'
-    # 夜间图片亮度
-    brightness: 70%
+    # 标题系列：暗色模式下标题必须够亮才能压住磨砂背景
+    h1: '#ffffff'
+    h2: '#fafafa'
+    h3: '#f0f0f0'
+    h4: '#e6e6e6'
+    h5: '#dcdcdc'
+    h6: '#cccccc'
+    p: '#e0e0e0' # 正文使用高亮灰
+
+    list: '#d9d9d9'
+    meta: '#a0a0a0'
+    copyright_bkg: '#1a1c21'
+    brightness: 65% # 稍微再压低一点图片亮度，保护视网膜
+
 ############################### Color Scheme ############################### > end
 
 ############################### Site Footer ############################### > start
