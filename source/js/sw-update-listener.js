@@ -6,6 +6,16 @@
       if (initialized) return;
       initialized = true;
       const canPromptForUpdate = () => typeof iziToast !== 'undefined' || typeof window.confirm === 'function';
+      const isReloadNavigation = () => {
+        const entries = performance.getEntriesByType && performance.getEntriesByType('navigation');
+        return !!(entries && entries[0] && entries[0].type === 'reload');
+      };
+      const shouldForceUpdateOnReload = isReloadNavigation();
+      const forceUpdateIfWaiting = (worker) => {
+        if (!shouldForceUpdateOnReload || !worker || worker.state !== 'installed') return false;
+        worker.postMessage('SKIP_WAITING');
+        return true;
+      };
       const pingListenerAlive = () => {
         if (navigator.serviceWorker.controller && canPromptForUpdate()) {
           navigator.serviceWorker.controller.postMessage({ type: 'LISTENER_ALIVE' });
@@ -14,6 +24,7 @@
       navigator.serviceWorker.register('/volantis-sw.js').then(reg => {
         // 仍保留 waiting 兜底，处理监听器加载前已完成安装的情况
         if (reg.waiting) {
+          if (forceUpdateIfWaiting(reg.waiting)) return;
           showUpdateToast(reg.waiting);
         }
 
@@ -26,6 +37,7 @@
         if (data.type !== 'UPDATE_READY') return;
         navigator.serviceWorker.getRegistration().then(reg => {
           if (reg && reg.waiting) {
+            if (forceUpdateIfWaiting(reg.waiting)) return;
             showUpdateToast(reg.waiting);
           }
         });
@@ -34,6 +46,7 @@
       const checkWaitingWorker = () => {
         navigator.serviceWorker.getRegistration().then(reg => {
           if (reg && reg.waiting) {
+            if (forceUpdateIfWaiting(reg.waiting)) return;
             // listener 曾丢过 UPDATE_READY 时，仍可通过 waiting 状态恢复提示
             showUpdateToast(reg.waiting);
           }
