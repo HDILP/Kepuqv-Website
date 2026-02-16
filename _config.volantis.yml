@@ -66,11 +66,11 @@ replace:
   - stretch::6::two => stretch::2::two
 
 dns_prefetch:
-  - https://unpkg.com
+  # - https://unpkg.com
   - https://cdn.bootcdn.net
   - https://imgcdn.yaerxing.com
   - https://fontsapi.zeoseven.com
-  - https://api.i-meto.com
+  - https://cdn.osyb.cn
 
 scroll_smooth: true
 
@@ -624,10 +624,17 @@ plugins:
 
   aplayer:
     enable: true
+    source: local
     # Required
     server: netease   # netease, tencent, kugou, xiami, baidu
-    type: album    # song, playlist, album, search, artist
-    id: 130304697    # song id / playlist id / album id / search keyword
+    type: song    # song, playlist, album, search, artist
+    id: 29713218    # song id / playlist id / album id / search keyword
+    audio:
+      - name: 'rain'
+        artist: 'ねこぼーろ'
+        url: '/music/rain.mp3'
+        lrc: '/music/rain.lrc'
+        cover: '/music/rain.jpg'
     # Optional
     # fixed: true      # enable fixed mode
     theme: '#FFAAB2'  # main color
@@ -847,13 +854,13 @@ custom_css:
     logofont:
       fontfamily: 'Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Dosis'
-      url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
+      url: /font/Dosis-Medium.ttf
       weight: normal
       style: normal
     bodyfont:
       fontfamily: '"DouyinSans", Dosis, "PingFang SC", "Microsoft YaHei", Helvetica, Arial'
       name: 'Dosis'
-      url: volantis-static/media/fonts/Dosis/Dosis-Medium.ttf
+      url: /font/Dosis-Medium.ttf
       weight: normal
       style: normal
 

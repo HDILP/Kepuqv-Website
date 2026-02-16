@@ -99,13 +99,12 @@ const cdn = {
     gcore: 'https://gcore.jsdelivr.net/combine',
   },
   npm: {
-    jsdelivr: 'https://cdn.jsdelivr.net/npm',
+    // jsdelivr: 'https://cdn.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
-    admincdn: 'https://jsd.admincdn.com/npm',
+    // admincdn: 'https://jsd.admincdn.com/npm',
     mhuig: 'https://static.mhuig.top/npm',
     yb: 'https://cdn.osyb.cn/npm',
-    ygxz: 'jsd-proxy.ygxz.in/npm'
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
@@ -113,7 +112,6 @@ const cdn = {
     bootcdn: 'https://cdn.bootcdn.net/ajax/libs',
     bytedance: 'https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M',
     sustech: 'https://mirrors.sustech.edu.cn/cdnjs/ajax/libs',
-    admincdn: 'https://cdnjs.admincdn.com/ajax/libs',
   }
 }
 
@@ -312,40 +310,40 @@ const installFunction = async () => {
 
     // 使用 Promise.all 确保所有资源下载完成后才返回
     return Promise.all(
-    PreCachlist.map(url => {
-      logger.wait(`Precaching ${url}`);
+      PreCachlist.map(url => {
+        logger.wait(`Precaching ${url}`);
 
-      let fetchURL;
-      let cacheKey;
+        let fetchURL;
+        let cacheKey;
 
-      if (url === '/bing.jpg') {
-        // 从远程抓
-        const remote = 'https://bing-wallpaper.hdilp.top/bing.jpg';
-        const u = new URL(remote);
-        u.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
-        fetchURL = new Request(u.toString(), { cache: 'no-store' });
+        if (url === '/bing.jpg') {
+          // 从远程抓
+          const remote = 'https://bing-wallpaper.hdilp.top/bing.jpg';
+          const u = new URL(remote);
+          u.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+          fetchURL = new Request(u.toString(), { cache: 'no-store' });
 
-        // 但写入本地 key
-        cacheKey = new Request('/bing.jpg');
-      } else {
-        const precacheURL = new URL(url, self.location.origin);
-        precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
-        fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
+          // 但写入本地 key
+          cacheKey = new Request('/bing.jpg');
+        } else {
+          const precacheURL = new URL(url, self.location.origin);
+          precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+          fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
 
-        cacheKey = new Request(url);
-      }
-
-      return fetch(fetchURL).then((response) => {
-        if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
-          if (url === '/bing.jpg') {
-            logger.warn('[precache] optional resource failed: /bing.jpg');
-            return null;
-          }
-          throw new Error(`Precache failed: ${url}`);
+          cacheKey = new Request(url);
         }
-        return cache.put(cacheKey, response.clone()).then(() => {
-          logger.ready(`Precaching ${url}`);
-          return response;
+
+        return fetch(fetchURL).then((response) => {
+          if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
+            if (url === '/bing.jpg') {
+              logger.warn('[precache] optional resource failed: /bing.jpg');
+              return null;
+            }
+            throw new Error(`Precache failed: ${url}`);
+          }
+          return cache.put(cacheKey, response.clone()).then(() => {
+            logger.ready(`Precaching ${url}`);
+            return response;
           });
         }).catch((error) => {
           if (url === '/bing.jpg') {
