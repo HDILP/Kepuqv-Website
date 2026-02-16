@@ -31,7 +31,7 @@ function createDengContainer() {
         card.appendChild(shine);
         card.appendChild(textSpan);
         card.appendChild(tassel);
-        
+
         box.appendChild(line);
         box.appendChild(card);
         container.appendChild(box);
@@ -66,14 +66,14 @@ function addStyles() {
 
         /* 桌面端间距与位置 */
         .deng-box1 { left: 5%; }
-        .deng-box2 { left: calc(5% + 100px); animation-delay: 0.4s; }
-        .deng-box3 { right: calc(5% + 100px); animation-delay: 0.8s; }
+        .deng-box2 { left: calc(5% + 80px); animation-delay: 0.4s; }
+        .deng-box3 { right: calc(5% + 80px); animation-delay: 0.8s; }
         .deng-box4 { right: 5%; animation-delay: 1.2s; }
 
         /* 加长版提线 - 避开导航栏 */
         .deng-line {
             width: 2px;
-            height: 100px; /* 增加到100px，让灯笼下沉 */
+            height: 80px; /* 减小高度 */
             background-color: var(--deng-gold);
             margin: 0 auto;
             position: relative;
@@ -93,22 +93,22 @@ function addStyles() {
         /* 灯笼主体 */
         .deng-card {
             position: relative;
-            width: 85px;
-            height: 75px;
+            width: 70px;
+            height: 60px;
             background-color: var(--deng-red);
-            border-radius: 22px;
+            border-radius: 18px;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.1); 
-            border: 3px solid var(--deng-gold);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1); 
+            border: 2px solid var(--deng-gold);
         }
 
         .deng-card::before, .deng-card::after {
             content: '';
             position: absolute;
-            width: 45px;
-            height: 8px;
+            width: 38px;
+            height: 6px;
             background-color: var(--deng-gold);
             border-radius: 4px;
             left: 50%;
@@ -121,15 +121,15 @@ function addStyles() {
             position: absolute;
             top: 8px;
             left: 8px;
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background-color: rgba(255,255,255,0.25);
             border-radius: 50%;
         }
 
         .deng-text {
             font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            font-size: 2.2rem;
+            font-size: 1.8rem;
             font-weight: 900;
             color: var(--deng-white);
             user-select: none;
@@ -138,11 +138,11 @@ function addStyles() {
         /* 几何穗子 */
         .deng-tassel {
             position: absolute;
-            bottom: -40px;
+            bottom: -32px;
             left: 50%;
             transform: translateX(-50%);
-            width: 3px;
-            height: 35px;
+            width: 2px;
+            height: 28px;
             background-color: var(--deng-gold);
         }
         .deng-tassel::after {
@@ -151,8 +151,8 @@ function addStyles() {
             bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 14px;
-            height: 14px;
+            width: 10px;
+            height: 10px;
             background-color: var(--deng-red);
             border-radius: 4px; /* 方形圆角，更现代 */
             border: 2px solid var(--deng-gold);
@@ -167,11 +167,11 @@ function addStyles() {
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            .deng-box { transform: scale(0.6); top: -30px; }
-            .deng-line { height: 70px; } /* 移动端绳子稍短一点，避免挡住手机屏内容 */
+            .deng-box { transform: scale(0.7); top: -25px; } /* 稍微调大点比例，因为底数变小了 */
+            .deng-line { height: 50px; } /* 绳子缩短 */
             .deng-box1 { left: 2%; }
-            .deng-box2 { left: 18%; }
-            .deng-box3 { right: 18%; }
+            .deng-box2 { left: 20%; }
+            .deng-box3 { right: 20%; }
             .deng-box4 { right: 2%; }
         }
     `;
