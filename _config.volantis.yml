@@ -656,6 +656,11 @@ plugins:
   darkmode:
     enable: true
 
+  pace:
+    enable: true
+    color: pink # black, blue, green, orange, pink, purple, red, silver, white, yellow
+    theme: flat-top # big-counter, bounce, barber-shop, center-atom, center-circle, center-radar, center-simple, corner-indicator, fill-left, flat-top, flash, loading-bar, mac-osx, material, minimal
+
   busuanzi:
     enable: false
 
@@ -710,7 +715,6 @@ rightmenus:
     - plugins.seletctText
     - plugins.elementCheck
     - plugins.elementImage
-    - menus.link
     - hr
     - menus.darkMode
     - menus.print
