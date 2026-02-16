@@ -1,0 +1,108 @@
+// 文章卡片磨砂玻璃质感（替换原白色背景）
+.post.white-box {
+  /* 1. 核心颜色：使用带一点点偏色的极浅梯度，模拟光的折射 */
+  background: linear-gradient(
+    160deg, 
+    rgba(255, 255, 255, 0.5) 0%, 
+    rgba(240, 245, 255, 0.35) 100%
+  ) !important;
+
+  /* 2. 滤镜进阶：引入 contrast 和 saturate 的微妙平衡 */
+  backdrop-filter: blur(16px) saturate(160%) contrast(1.1) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) contrast(1.1) brightness(1.1) !important;
+
+  /* 3. 不普通的秘诀：微纹理叠加 (Noise Texture)
+     这层淡淡的噪点会让玻璃看起来像有触感的磨砂实体，而不是软件画出来的色块
+  */
+  // background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E") !important;
+  // background-blend-mode: soft-light;
+
+  /* 4. 这里的边框是点睛之笔：模拟“液态银”边缘 */
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.8) !important;  /* 顶部的“受光面” */
+  border-left: 1.5px solid rgba(255, 255, 255, 0.8) !important;
+
+  /* 5. 阴影：使用多重阴影营造“悬浮景深” */
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 20px -5px rgba(0, 0, 0, 0.1),
+    inset 0 0 12px rgba(255, 255, 255, 0.3); /* 内部微光 */
+
+  /* 6. 文字：纯净且加深，抗干扰 */
+  // color: #111 !important;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+
+  border-radius: 22px;
+  overflow: hidden; /* 保证噪点图不溢出圆角 */
+}
+
+/* 7. 给它一点“生命力”：悬停时的动态折射 */
+.post.white-box:hover {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  border-top-color: rgba(255, 255, 255, 1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-2px);
+}
+
+
+
+// ---
+// 可选：文章内描述区同步磨砂（防止内部背景冲突）
+.post .article-desc
+  background: transparent !important
+  backdrop-filter: none !important
+  
+// 顶部导航栏 · 磨砂玻璃
+// 顶部 Header · 磨砂玻璃（最终正确层）
+#l_header.l_header
+  background rgba(255, 255, 255, 0.65) !important
+  background-color rgba(255, 255, 255, 0.65) !important
+  background-image none !important
+
+  backdrop-filter blur(10px) saturate(120%)
+  -webkit-backdrop-filter blur(10px) saturate(120%)
+
+  border-bottom 1px solid rgba(255, 255, 255, 0.35)
+  box-shadow 0 6px 24px rgba(0, 0, 0, 0.08)
+  
+// 侧边栏 Widget · 磨砂玻璃
+#l_side .widget
+  // 1. 更加通透的底色，甚至带一点点渐变
+  background: linear-gradient(
+    180deg, 
+    rgba(255, 255, 255, 0.25) 0%, 
+    rgba(255, 255, 255, 0.15) 100%
+  ) !important
+  
+  // 2. 增强饱和度与对比度，让背景风景在侧边栏里像“滤镜过后的糖果色”
+  backdrop-filter: blur(10px) saturate(180%) contrast(1.1) brightness(1.05)
+  -webkit-backdrop-filter: blur(10px) saturate(180%) contrast(1.1) brightness(1.05)
+
+  // 3. 核心差异化设计：【不对称光感边框】
+  // 只给顶部和左侧加高光，模拟光线照在冰块棱角上的感觉
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important
+  border-left: 1.5px solid rgba(255, 255, 255, 0.45) !important
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important
+  
+  // 4. 让侧边栏更“软”一点：更大的圆角和呼吸感
+  border-radius: 20px
+  margin-bottom: 16px
+  
+  // 5. 极轻的悬浮阴影，避免喧宾夺主
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04)
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1)
+
+  // 6. 解决“目录显示”的对比度问题
+  // 侧边栏内的链接和文字，增加一点点字重，防止在透出的风景里看花眼
+  .widget-title, .toc-link, a
+    color: rgba(0, 0, 0, 0.8)
+    font-weight: 500
+    text-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, 0.2) // 极细的护眼底色
+
+  // 7. 交互：鼠标划过时，侧边栏稍微变亮并“聚焦”
+  &:hover
+    background: rgba(255, 255, 255, 0.4) !important
+    backdrop-filter: blur(15px) saturate(200%)
+    transform: translateX(4px) // 小动作：往右边轻轻挪一点，像被推了一下

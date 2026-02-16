@@ -1,0 +1,67 @@
+// --- 暗色模式全家桶 ---
+
+// 1. 文章卡片：黑曜石质感
+.post.white-box
+  background: linear-gradient(
+    160deg, 
+    rgba(30, 30, 35, 0.7) 0%, 
+    rgba(15, 15, 20, 0.55) 100%
+  ) !important
+  
+  // 滤镜：降低亮度，稍微提升对比度，让背景风景变成深邃的衬托
+  backdrop-filter: blur(18px) saturate(140%) contrast(1.2) brightness(0.8) !important
+  -webkit-backdrop-filter: blur(18px) saturate(140%) contrast(1.2) brightness(0.8) !important
+
+  // 边框：从白色高光变为极细的深色/半透明灰，模拟石材边缘
+  border: 1px solid rgba(255, 255, 255, 0.1) !important
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important
+  border-left: 1px solid rgba(255, 255, 255, 0.15) !important
+
+  // 阴影：暗色下阴影要更重、更深邃
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 0 12px rgba(255, 255, 255, 0.05)
+
+  // 文字：换成柔和的米白或纯白
+  color: rgba(255, 255, 255, 0.9) !important
+  font-weight: 400
+  
+  &:hover
+    background-color: rgba(40, 40, 45, 0.8) !important
+    backdrop-filter: blur(20px) brightness(0.9) !important
+
+// 2. 顶部 Header：深色半透明
+#l_header.l_header
+  background: rgba(15, 15, 20, 0.6) !important
+  backdrop-filter: blur(12px) saturate(150%) brightness(0.8)
+  -webkit-backdrop-filter: blur(12px) saturate(150%) brightness(0.8)
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4)
+
+// 3. 侧边栏 Widget：幽灵玻璃效果
+#l_side .widget
+  background: linear-gradient(
+    180deg, 
+    rgba(20, 20, 25, 0.4) 0%, 
+    rgba(10, 10, 15, 0.3) 100%
+  ) !important
+  
+  backdrop-filter: blur(12px) saturate(160%) contrast(1.2) brightness(0.7)
+  -webkit-backdrop-filter: blur(12px) saturate(160%) contrast(1.2) brightness(0.7)
+
+  // 非对称边框：暗色下高光要克制
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important
+  border-left: 1px solid rgba(255, 255, 255, 0.12) !important
+  border-right: 1px solid rgba(0, 0, 0, 0.2) !important
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2) !important
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2)
+
+  // 侧边栏文字
+  .widget-title, .toc-link, a
+    color: rgba(255, 255, 255, 0.85)
+    text-shadow: none // 去掉亮色的护眼底色，暗色下纯净为主
+
+  &:hover
+    background: rgba(30, 30, 35, 0.6) !important
+    transform: translateX(4px)

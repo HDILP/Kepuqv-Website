@@ -1,21 +1,66 @@
-// volantis-sw.js — cleaned (npm mirror, db, and uuid removed)
+// volantis-sw.js — Gradient Update Model (Double Pool)
 
 // 全站打包上传 npm，sw 并发请求 cdn
 const prefix = 'volantis-community';
-const cacheSuffixVersion = '00000018-::cacheSuffixVersion::';
-const CACHE_NAME = prefix + '-v' + cacheSuffixVersion;
+const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
+
+// 1. 缓存结构设计：双池模型
+// CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
+const CACHE_PRECACHE = prefix + '-v' + cacheSuffixVersion + '-precache';
+// CACHE_RUNTIME: 包含静态资源，带版本号
+const CACHE_RUNTIME = prefix + '-v' + cacheSuffixVersion + '-runtime';
+
+// 2. Precache 列表 (设计稿 V.3)
 const PreCachlist = [
+  "/",
   "/css/style.css",
   "/js/app.js",
   "/js/search/hexo.js",
+  "/bing.jpg"
 ];
 
 let debug = false;
 // location.hostname == 'localhost' && (debug = true);
 
+// listener 心跳：用于判断前端更新监听是否可用
+let listenerAliveAt = 0;
+const LISTENER_ALIVE_TTL = 5 * 60 * 1000;
+
+const isPrecacheManagedRequest = (request) => {
+  try {
+    const reqURL = new URL(request.url);
+    if (reqURL.origin !== self.location.origin) return false;
+    return PreCachlist.includes(reqURL.pathname);
+  } catch (e) {
+    return false;
+  }
+};
+
+const matchCacheWithPriority = async (request) => {
+  const precache = await caches.open(CACHE_PRECACHE);
+  const precacheResp = await precache.match(request);
+  if (precacheResp) return precacheResp;
+
+  const runtime = await caches.open(CACHE_RUNTIME);
+  return runtime.match(request);
+};
+
 const handleFetch = async (event) => {
   const url = event.request.url;
-  if (/nocache/.test(url)) {
+  const urlObject = new URL(url);
+  const isHomePageRequest = urlObject.origin === self.location.origin && urlObject.pathname === '/';
+  const isBingWallpaperRequest = urlObject.origin === 'https://bing-wallpaper.hdilp.top' && urlObject.pathname === '/bing.jpg';
+
+  if (isHomePageRequest) {
+    return CacheFirst(event)
+  }
+
+  if (isBingWallpaperRequest) {
+    return StaleWhileRevalidate(event)
+  }
+
+  // 6. Fetch 策略：排除更新监听脚本与音频范围请求
+  if (/nocache/.test(url) || /sw-update-listener\.js/.test(url)) {
     return NetworkOnly(event)
   } else if (/@latest/.test(url)) {
     return CacheFirst(event)
@@ -24,6 +69,8 @@ const handleFetch = async (event) => {
   } else if (/music\.126\.net/.test(url)) {
     return NetworkOnly(event)
   } else if (/qqmusic\.qq\.com/.test(url)) {
+    return NetworkOnly(event)
+  } else if (/api\.i-meto\.com/.test(url)) {
     return NetworkOnly(event)
   } else if (/jsdelivr\.net/.test(url)) {
     return CacheAlways(event)
@@ -45,23 +92,20 @@ const cdn = {
     jsdelivr: 'https://cdn.jsdelivr.net/gh',
     fastly: 'https://fastly.jsdelivr.net/gh',
     gcore: 'https://gcore.jsdelivr.net/gh',
-    testingcf: 'https://testingcf.jsdelivr.net/gh',
-    test1: 'https://test1.jsdelivr.net/gh',
   },
   combine: {
     jsdelivr: 'https://cdn.jsdelivr.net/combine',
     fastly: 'https://fastly.jsdelivr.net/combine',
     gcore: 'https://gcore.jsdelivr.net/combine',
-    testingcf: 'https://testingcf.jsdelivr.net/combine',
-    test1: 'https://test1.jsdelivr.net/combine',
   },
   npm: {
     jsdelivr: 'https://cdn.jsdelivr.net/npm',
-    fastly: 'https://fastly.jsdelivr.net/npm',
-    gcore: 'https://gcore.jsdelivr.net/npm',
     unpkg: 'https://unpkg.com',
     eleme: 'https://npm.elemecdn.com',
-    admincdn: 'https://jsd.admincdn.com/npm/',
+    admincdn: 'https://jsd.admincdn.com/npm',
+    mhuig: 'https://static.mhuig.top/npm',
+    yb: 'https://cdn.osyb.cn/npm',
+    ygxz: 'jsd-proxy.ygxz.in/npm'
   },
   cdnjs: {
     cdnjs: 'https://cdnjs.cloudflare.com/ajax/libs',
@@ -244,37 +288,87 @@ if (!debug) {
   console.log = () => { };
 }
 
+const notifyUpdateReady = async () => {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  clients.forEach((client) => {
+    client.postMessage({ type: 'UPDATE_READY' });
+  });
+};
+
+const tryAutoPromoteWaitingWorker = async (event) => {
+  // listener 不可用时：当用户发生一次导航（通常是刷新）即自动切换到 waiting 新版 SW
+  if (event.request.mode !== 'navigate') return;
+  if (Date.now() - listenerAliveAt < LISTENER_ALIVE_TTL) return;
+  const waiting = self.registration && self.registration.waiting;
+  if (!waiting) return;
+  logger.warn('[update] listener offline fallback: promote waiting worker on navigation');
+  waiting.postMessage('SKIP_WAITING');
+};
+
 const installFunction = async () => {
-  return caches.open(CACHE_NAME + "-precache")
-    .then(async function (cache) {
-      if (PreCachlist.length) {
-        logger.group.event(`Precaching ${PreCachlist.length} files.`);
-        let index = 0;
-        PreCachlist.forEach(function (url) {
-          cache.match(new Request(url)).then(function (response) {
-            if (response) {
-              logger.ready(`Precaching ${url}`);
-            } else {
-              logger.wait(`Precaching ${url}`);
-              cache.add(new Request(url));
-            }
-            index++;
-            if (index === PreCachlist.length) {
-              logger.ready(`Precached ${PreCachlist.length} files.`);
-              logger.group.end();
-            }
-          })
-        })
+  const cache = await caches.open(CACHE_PRECACHE);
+  if (PreCachlist.length) {
+    logger.group.event(`Precaching ${PreCachlist.length} files.`);
+
+    // 使用 Promise.all 确保所有资源下载完成后才返回
+    return Promise.all(
+    PreCachlist.map(url => {
+      logger.wait(`Precaching ${url}`);
+
+      let fetchURL;
+      let cacheKey;
+
+      if (url === '/bing.jpg') {
+        // 从远程抓
+        const remote = 'https://bing-wallpaper.hdilp.top/bing.jpg';
+        const u = new URL(remote);
+        u.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+        fetchURL = new Request(u.toString(), { cache: 'no-store' });
+
+        // 但写入本地 key
+        cacheKey = new Request('/bing.jpg');
+      } else {
+        const precacheURL = new URL(url, self.location.origin);
+        precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+        fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
+
+        cacheKey = new Request(url);
       }
-    }).catch((error) => {
-      logger.error('[install] ' + (error.stack || error));
-    })
-}
+
+      return fetch(fetchURL).then((response) => {
+        if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
+          if (url === '/bing.jpg') {
+            logger.warn('[precache] optional resource failed: /bing.jpg');
+            return null;
+          }
+          throw new Error(`Precache failed: ${url}`);
+        }
+        return cache.put(cacheKey, response.clone()).then(() => {
+          logger.ready(`Precaching ${url}`);
+          return response;
+          });
+        }).catch((error) => {
+          if (url === '/bing.jpg') {
+            logger.warn('[precache] optional resource skipped: /bing.jpg, reason: ' + (error && (error.message || error)));
+            return null;
+          }
+          throw error;
+        });
+      })
+    ).then(() => {
+      logger.ready(`Precached ${PreCachlist.length} files.`);
+      logger.group.end();
+      // 仅在新版本核心资源预缓存完成后通知前端可更新
+      return notifyUpdateReady();
+    });
+  }
+};
 
 self.addEventListener('install', async function (event) {
   logger.bg.event("service worker install event listening");
   try {
-    self.skipWaiting();
+    // 5. 更新流程：禁止自动 skipWaiting，等待用户触发
+    // self.skipWaiting(); <--- REMOVED
     event.waitUntil(installFunction());
     logger.bg.ready('service worker install sucess!');
   } catch (error) {
@@ -282,34 +376,84 @@ self.addEventListener('install', async function (event) {
   }
 });
 
-self.addEventListener('activate', async event => {
+// 5. 更新流程：监听用户刷新触发的 SKIP_WAITING
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+  if (event.data && event.data.type === 'LISTENER_ALIVE') {
+    listenerAliveAt = Date.now();
+  }
+});
+
+self.addEventListener('activate', event => {
   logger.bg.event("service worker activate event listening");
-  try {
-    event.waitUntil(
-      caches.keys().then((keys) => {
-        return Promise.all(keys.map((key) => {
-          if (!key.includes(cacheSuffixVersion)) {
-            caches.delete(key);
-            logger.bg.ready('Deleted Outdated Cache: ' + key);
-          }
-        }));
-      }).catch((error) => {
-        logger.error('[activate] ' + (error.stack || error));
+
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+
+    await Promise.all(
+      keys.map(key => {
+        if (!key.startsWith(prefix)) return;
+
+        if (key !== CACHE_PRECACHE && key !== CACHE_RUNTIME) {
+          logger.bg.ready('Deleting outdated cache: ' + key);
+          return caches.delete(key);
+        }
       })
     );
-    await self.clients.claim()
-    logger.bg.ready('service worker activate sucess!');
-  } catch (error) {
-    logger.error('[activate] ' + (error.stack || error));
-  }
-})
 
-self.addEventListener('fetch', async event => {
-  event.respondWith(
-    handleFetch(event).catch((error) => {
-      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error.stack || error));
-    })
-  )
+    await self.clients.claim();
+
+    logger.bg.ready('service worker activate success!');
+  })().catch(error => {
+    logger.error('[activate] ' + (error.stack || error));
+  }));
+});
+
+// 安全的网络错误响应（用于兜底）
+const createNetworkErrorResponse = () => {
+  return new Response('Network error', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store'
+    }
+  });
+};
+
+// ensureResponse：确保 handleFetch 返回的是 Response，否则回退到网络或 createNetworkErrorResponse
+const ensureResponse = async (response, request) => {
+  if (response instanceof Response) {
+    return response;
+  }
+  logger.warn('[fetch] non-Response returned, fallback to network: ' + request.url);
+  try {
+    return await fetch(request);
+  } catch (e) {
+    return createNetworkErrorResponse();
+  }
+};
+
+// fetch 事件：统一使用 async IIFE，并通过 ensureResponse 保证最终返回 Response
+self.addEventListener('fetch', event => {
+  event.waitUntil(tryAutoPromoteWaitingWorker(event));
+  event.respondWith((async () => {
+    try {
+      const candidate = await handleFetch(event);
+      const finalResp = await ensureResponse(candidate, event.request);
+      return finalResp;
+    } catch (error) {
+      logger.error('[fetch] ' + event.request.url + '\n[error] ' + (error && (error.stack || error)));
+      try {
+        return await fetch(event.request);
+      } catch (e) {
+        return createNetworkErrorResponse();
+      }
+    }
+  })());
 });
 
 const NetworkOnly = async (event) => {
@@ -320,7 +464,7 @@ const NetworkOnly = async (event) => {
 }
 
 const CacheFirst = async (event) => {
-  return caches.match(event.request).then(function (resp) {
+  return matchCacheWithPriority(event.request).then(function (resp) {
     logger.group.info('CacheFirst: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
     if (resp) {
@@ -328,7 +472,6 @@ const CacheFirst = async (event) => {
       console.log(resp)
       logger.group.end();
       logger.group.end();
-      event.waitUntil(CacheRuntime(event.request))
       return resp;
     } else {
       logger.warn(`Cache Miss`);
@@ -339,7 +482,7 @@ const CacheFirst = async (event) => {
 }
 
 const CacheAlways = async (event) => {
-  return caches.match(event.request).then(function (resp) {
+  return matchCacheWithPriority(event.request).then(function (resp) {
     logger.group.info('CacheAlways: ' + new URL(event.request.url).pathname);
     logger.wait('service worker fetch: ' + event.request.url)
     if (resp) {
@@ -356,29 +499,72 @@ const CacheAlways = async (event) => {
   })
 }
 
+const StaleWhileRevalidate = async (event) => {
+  return matchCacheWithPriority(event.request).then(function (resp) {
+    logger.group.info('StaleWhileRevalidate: ' + new URL(event.request.url).pathname);
+    logger.wait('service worker fetch: ' + event.request.url)
+    if (resp) {
+      logger.group.ready(`Cache Hit`);
+      console.log(resp)
+      logger.group.end();
+      logger.group.end();
+      event.waitUntil(CacheRuntime(event.request))
+      return resp;
+    } else {
+      logger.warn(`Cache Miss`);
+      logger.group.end();
+      return CacheRuntime(event.request)
+    }
+  })
+}
+
 async function CacheRuntime(request) {
   const url = new URL(request.url);
-  let response = await matchCDN(request);
+  const isSameOrigin = url.origin === self.location.origin;
+
+  // 同源静态资源直接走原始网络，避免每次 miss 都进入 CDN 竞速决策
+  let response = isSameOrigin
+    ? await fetch(request).catch(() => null)
+    : await matchCDN(request).catch(() => null);
   if (!response) {
-    response = await fetch(request).catch(() => null)
+    response = await fetch(request).catch(() => null);
   }
+
   logger.group.event(`Cache Runtime ${url.pathname}`);
   logger.wait(`Caching url: ${request.url}`);
-  console.log(response);
 
-  if (request.method === "GET" && (url.protocol == "https:")) {
-    const cache = await caches.open(CACHE_NAME + "-runtime");
-    cache.put(request, response.clone()).catch(error => {
+  // 如果拿不到有效的 Response，返回网络错误响应（保证类型安全）
+  if (!(response instanceof Response)) {
+    logger.warn(`[Cache Runtime] fallback response for: ${request.url}`);
+    logger.group.end();
+    return createNetworkErrorResponse();
+  }
+
+  // 核心资源由 precache 独占管理，避免 runtime 覆盖新版本
+  if (isPrecacheManagedRequest(request)) {
+    logger.ready(`Skip runtime cache for precache resource: ${request.url}`);
+    logger.group.end();
+    return response;
+  }
+
+  // 仅 GET 且 https 才写入 runtime
+  if (request.method === "GET" && (url.protocol === "https:" || self.location.hostname === "localhost")) {
+    const cache = await caches.open(CACHE_RUNTIME);
+    try {
+      await cache.put(request, response.clone());
+      logger.ready(`Cached url: ${request.url}`);
+    } catch (error) {
       logger.error('[Cache Runtime] ' + (error.stack || error));
-      if (error.name === 'QuotaExceededError') {
-        caches.delete(CACHE_NAME + "-runtime");
-        logger.ready("deleted cache")
+      if (error && error.name === 'QuotaExceededError') {
+        // 发生配额问题时清理 runtime（谨慎）
+        await caches.delete(CACHE_RUNTIME);
+        logger.ready("Deleted runtime cache due to quota error");
       }
-    })
-    logger.ready(`Cached url: ${request.url}`);
+    }
   } else {
     logger.warn(`Not Cached url: ${request.url}`);
   }
+
   logger.group.end();
   return response;
 }
@@ -431,6 +617,8 @@ async function progress(res) {
 }
 
 function createPromiseAny() {
+  // 仅在环境不支持 Promise.any 时定义 polyfill
+  if (typeof Promise.any === 'function') return;
   Promise.any = function (promises) {
     return new Promise((resolve, reject) => {
       promises = Array.isArray(promises) ? promises : []
