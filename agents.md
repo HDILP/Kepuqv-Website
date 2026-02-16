@@ -67,7 +67,7 @@ Service Worker 的职责只有三件事：
 
 2）runtime（全局）
 
-不带版本号
+带版本号
 由真实访问自然生长
 永不在 activate 阶段清空
 
@@ -188,9 +188,8 @@ bing.jpg： Stale-While-Revalidate
 1）缓存结构
 
 precache 必须带版本号
-runtime 必须为全局 cache，不带版本号
+runtime 必须为全局 cache，带版本号
 activate 阶段只能删除旧 precache
-runtime 永远不得删除
 
 2）更新流程
 

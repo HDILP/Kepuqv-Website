@@ -7,8 +7,8 @@ const cacheSuffixVersion = '00000020-::cacheSuffixVersion::';
 // 1. 缓存结构设计：双池模型
 // CACHE_PRECACHE: 包含核心资源，带版本号，更新时重新构建
 const CACHE_PRECACHE = prefix + '-v' + cacheSuffixVersion + '-precache';
-// CACHE_RUNTIME: 包含静态资源，全局不带版本号，永久保留（除非配额溢出）
-const CACHE_RUNTIME = prefix + '-runtime';
+// CACHE_RUNTIME: 包含静态资源，带版本号
+const CACHE_RUNTIME = prefix + '-v' + cacheSuffixVersion + '-runtime';
 
 // 2. Precache 列表 (设计稿 V.3)
 const PreCachlist = [
