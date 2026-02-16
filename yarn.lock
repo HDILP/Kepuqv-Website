@@ -2598,14 +2598,13 @@ gulp-cli@^3.1.0:
     v8flags "^4.0.0"
     yargs "^16.2.0"
 
-gulp-html-minifier-terser@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.npmmirror.com/gulp-html-minifier-terser/-/gulp-html-minifier-terser-7.1.0.tgz#dda30d58dad610c833c5ec1928bed833d4bcb846"
-  integrity sha512-5aZUMmF2NhQ+eBxfK3YNhYXcqgdbAQfrIe9Nq4BbI5p4AO9zbk3Kz7teZTyyvNizWRI8eA22Q25H4yE+a+3B+g==
+gulp-html-minifier-terser@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/gulp-html-minifier-terser/-/gulp-html-minifier-terser-8.0.0.tgz#0c8e0a40f57ad20aa632b878e174376ce9abc12d"
+  integrity sha512-KRUL4I+UVczM4YwcPrZGF6PgZMjn+fEYmbMmniSLlx1zt+JOqpqNb9w6C9ffFbyCDGV/gTeHYF3bjWqs+e/EYA==
   dependencies:
     html-minifier-terser "^7.1.0"
     plugin-error "^2.0.0"
-    through2 "^4.0.2"
 
 gulp-htmlclean@^2.7.22:
   version "2.7.22"
