@@ -1,186 +1,186 @@
- // 张苹果博客：https://zhangpingguo.com/
- // 创建并添加元素
+// 创建并添加元素
 function createDengContainer() {
     const container = document.createElement('div');
     container.className = 'deng-container';
 
-    // 从当前脚本的 URL 获取参数
     const scriptSrc = document.currentScript.src;
-    const urlParams = new URLSearchParams(scriptSrc.split('?')[1]); // 获取 '?'
-    const customText = urlParams.get('text'); // 获取参数名为'text'的值
-
-    // 将获取的文本分割为字符数组，如果没有提供文本，则使用默认的“新年快乐”
+    const urlParams = new URLSearchParams(scriptSrc.split('?')[1]);
+    const customText = urlParams.get('text');
     const texts = customText ? customText.split('') : ['新', '年', '快', '乐'];
 
     texts.forEach((text, index) => {
         const box = document.createElement('div');
         box.className = `deng-box deng-box${index + 1}`;
 
-        const deng = document.createElement('div');
-        deng.className = 'deng';
+        const line = document.createElement('div');
+        line.className = 'deng-line';
 
-        const xian = document.createElement('div');
-        xian.className = 'xian';
+        const card = document.createElement('div');
+        card.className = 'deng-card';
 
-        const dengA = document.createElement('div');
-        dengA.className = 'deng-a';
+        const shine = document.createElement('div');
+        shine.className = 'deng-shine';
 
-        const dengB = document.createElement('div');
-        dengB.className = 'deng-b';
+        const textSpan = document.createElement('span');
+        textSpan.className = 'deng-text';
+        textSpan.textContent = text;
 
-        const dengT = document.createElement('div');
-        dengT.className = 'deng-t';
-        dengT.textContent = text;
+        const tassel = document.createElement('div');
+        tassel.className = 'deng-tassel';
 
-        dengB.appendChild(dengT);
-        dengA.appendChild(dengB);
-        deng.appendChild(xian);
-        deng.appendChild(dengA);
-
-        const shuiA = document.createElement('div');
-        shuiA.className = 'shui shui-a';
-
-        const shuiC = document.createElement('div');
-        shuiC.className = 'shui-c';
-        const shuiB = document.createElement('div');
-        shuiB.className = 'shui-b';
-
-        shuiA.appendChild(shuiC);
-        shuiA.appendChild(shuiB);
-        deng.appendChild(shuiA);
-        box.appendChild(deng);
+        card.appendChild(shine);
+        card.appendChild(textSpan);
+        card.appendChild(tassel);
+        
+        box.appendChild(line);
+        box.appendChild(card);
         container.appendChild(box);
     });
 
     document.body.appendChild(container);
 }
 
-// 添加CSS样式
+// 添加完整 CSS 样式
 function addStyles() {
     const style = document.createElement('style');
     style.type = 'text/css';
     style.textContent = `
+        :root {
+            --deng-red: #E63946;
+            --deng-gold: #FFD166;
+            --deng-white: #F1FAEE;
+        }
+
         .deng-container {
             position: relative;
-            top: 10px;
-            opacity: 0.9;
             z-index: 9999;
             pointer-events: none;
         }
+
         .deng-box {
             position: fixed;
-            right: 10px;
+            top: -20px; /* 稍微埋进顶部一点点，更自然 */
+            transform-origin: top center;
+            animation: swing 4s infinite ease-in-out;
         }
-        .deng-box1 { position: fixed; top: 15px; left: 20px; }
-        .deng-box2 { position: fixed; top: 12px; left: 130px; }
-        .deng-box3 { position: fixed; top: 10px; right: 110px; }
-        .deng-box4 { position: fixed; top: 15px; right: 10px; }
-        .deng {
+
+        /* 桌面端间距与位置 */
+        .deng-box1 { left: 5%; }
+        .deng-box2 { left: calc(5% + 100px); animation-delay: 0.4s; }
+        .deng-box3 { right: calc(5% + 100px); animation-delay: 0.8s; }
+        .deng-box4 { right: 5%; animation-delay: 1.2s; }
+
+        /* 加长版提线 - 避开导航栏 */
+        .deng-line {
+            width: 2px;
+            height: 100px; /* 增加到100px，让灯笼下沉 */
+            background-color: var(--deng-gold);
+            margin: 0 auto;
             position: relative;
-            width: 120px;
-            height: 90px;
-            background: rgba(216, 0, 15, .8);
-            border-radius: 50% 50%;
-            animation: swing 3s infinite ease-in-out;
-            box-shadow: -5px 5px 50px 4px #fa6c00;
         }
-        .deng-a { 
-            width: 100px; 
-            height: 90px; 
-            background: rgba(216, 0, 15, .1); 
-            border-radius: 50%;  
-            border: 2px solid #dc8f03; 
-            margin-left: 7px; 
-            display: flex; 
-            justify-content: center; 
+        /* 顶部挂钩装饰 */
+        .deng-line::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -4px;
+            width: 10px;
+            height: 2px;
+            background: var(--deng-gold);
+            border-radius: 2px;
         }
-        .deng-b { 
-            width: 65px; 
-            height: 83px; 
-            background: rgba(216, 0, 15, .1); 
-            border-radius: 60%; 
-            border: 2px solid #dc8f03; 
+
+        /* 灯笼主体 */
+        .deng-card {
+            position: relative;
+            width: 85px;
+            height: 75px;
+            background-color: var(--deng-red);
+            border-radius: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1); 
+            border: 3px solid var(--deng-gold);
         }
-        .xian { 
-            position: absolute; 
-            top: -20px; 
-            left: 60px; 
-            width: 2px; 
-            height: 20px; 
-            background: #dc8f03; 
+
+        .deng-card::before, .deng-card::after {
+            content: '';
+            position: absolute;
+            width: 45px;
+            height: 8px;
+            background-color: var(--deng-gold);
+            border-radius: 4px;
+            left: 50%;
+            transform: translateX(-50%);
         }
-        .shui-a { 
-            position: relative; 
-            width: 5px; 
-            height: 20px; 
-            margin: -5px 0 0 59px; 
-            animation: swing 4s infinite ease-in-out; 
-            transform-origin: 50% -45px; 
-            background: orange; 
-            border-radius: 0 0 5px 5px; 
+        .deng-card::before { top: -5px; }
+        .deng-card::after { bottom: -5px; }
+
+        .deng-shine {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255,255,255,0.25);
+            border-radius: 50%;
         }
-        .shui-b { 
-            position: absolute; 
-            top: 14px; 
-            left: -2px; 
-            width: 10px; 
-            height: 10px; 
-            background: #dc8f03; 
-            border-radius: 50%; 
+
+        .deng-text {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--deng-white);
+            user-select: none;
         }
-        .shui-c { 
-            position: absolute; 
-            top: 18px; 
-            left: -2px; 
-            width: 10px; 
-            height: 35px; 
-            background: orange; 
-            border-radius: 0 0 0 5px; 
+
+        /* 几何穗子 */
+        .deng-tassel {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 35px;
+            background-color: var(--deng-gold);
         }
-        .deng:before, .deng:after { 
-            content: " "; 
-            display: block; 
-            position: absolute; 
-            border-radius: 5px; 
-            border: solid 1px #dc8f03; 
-            background: linear-gradient(to right, #dc8f03, orange, #dc8f03, orange, #dc8f03); 
+        .deng-tassel::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            background-color: var(--deng-red);
+            border-radius: 4px; /* 方形圆角，更现代 */
+            border: 2px solid var(--deng-gold);
         }
-        .deng:before { 
-            top: -7px; left: 29px; height: 12px; width: 60px; z-index: 999; 
+
+        /* 摆动动画 - 角度缩小，更显高级 */
+        @keyframes swing {
+            0% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+            100% { transform: rotate(-5deg); }
         }
-        .deng:after { 
-            bottom: -7px; left: 10px; height: 12px; width: 60px; margin-left: 20px; 
-        }
-        .deng-t { 
-            font-family: '华文行楷', Arial, Lucida Grande, Tahoma, sans-serif; 
-            font-size: 3.2rem; 
-            color: #dc8f03; 
-            font-weight: 700; 
-            line-height: 85px; 
-            text-align: center; 
-        }
-        @media (max-width: 768px) { 
-            .deng-t { font-size: 2.5rem; }  
-            .deng-box { transform: scale(0.5); top: -15px; }  
-            .deng-box1 { left: -22%; }  
-            .deng-box2 { left: 0px; }  
-            .deng-box3 { right: 50px; }  
-            .deng-box4 { right: -10px; }  
-        }
-        @keyframes swing { 
-            0% { transform: rotate(-10deg); }  
-            50% { transform: rotate(10deg); }  
-            100% { transform: rotate(-10deg); }  
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .deng-box { transform: scale(0.6); top: -30px; }
+            .deng-line { height: 70px; } /* 移动端绳子稍短一点，避免挡住手机屏内容 */
+            .deng-box1 { left: 2%; }
+            .deng-box2 { left: 18%; }
+            .deng-box3 { right: 18%; }
+            .deng-box4 { right: 2%; }
         }
     `;
     document.head.appendChild(style);
 }
 
-// 引入时调用
 function init() {
     addStyles();
     createDengContainer();
 }
 
-// 调用初始化函数
 init();

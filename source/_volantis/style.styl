@@ -68,14 +68,41 @@
   
 // 侧边栏 Widget · 磨砂玻璃
 #l_side .widget
-  background rgba(255, 255, 255, 0.35) !important
-  background-color rgba(255, 255, 255, 0.35) !important
-  background-image none !important
+  // 1. 更加通透的底色，甚至带一点点渐变
+  background: linear-gradient(
+    180deg, 
+    rgba(255, 255, 255, 0.25) 0%, 
+    rgba(255, 255, 255, 0.15) 100%
+  ) !important
+  
+  // 2. 增强饱和度与对比度，让背景风景在侧边栏里像“滤镜过后的糖果色”
+  backdrop-filter: blur(10px) saturate(180%) contrast(1.1) brightness(1.05)
+  -webkit-backdrop-filter: blur(10px) saturate(180%) contrast(1.1) brightness(1.05)
 
-  backdrop-filter blur(14px) saturate(120%)
-  -webkit-backdrop-filter blur(14px) saturate(120%)
+  // 3. 核心差异化设计：【不对称光感边框】
+  // 只给顶部和左侧加高光，模拟光线照在冰块棱角上的感觉
+  border-top: 1.5px solid rgba(255, 255, 255, 0.45) !important
+  border-left: 1.5px solid rgba(255, 255, 255, 0.45) !important
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important
+  
+  // 4. 让侧边栏更“软”一点：更大的圆角和呼吸感
+  border-radius: 20px
+  margin-bottom: 16px
+  
+  // 5. 极轻的悬浮阴影，避免喧宾夺主
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04)
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1)
 
-  // border 1px solid rgba(255, 255, 255, 0.35)
-  border-radius 16px
+  // 6. 解决“目录显示”的对比度问题
+  // 侧边栏内的链接和文字，增加一点点字重，防止在透出的风景里看花眼
+  .widget-title, .toc-link, a
+    color: rgba(0, 0, 0, 0.8)
+    font-weight: 500
+    text-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, 0.2) // 极细的护眼底色
 
-  box-shadow 0 6px 24px rgba(0, 0, 0, 0.08)
+  // 7. 交互：鼠标划过时，侧边栏稍微变亮并“聚焦”
+  &:hover
+    background: rgba(255, 255, 255, 0.4) !important
+    backdrop-filter: blur(15px) saturate(200%)
+    transform: translateX(4px) // 小动作：往右边轻轻挪一点，像被推了一下
