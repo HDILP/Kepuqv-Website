@@ -1,4 +1,4 @@
-/* 🌸 Service Worker 更新提示 · 极简温柔版 */
+/* 🌸 Service Worker 更新提示 · 极简温柔修复版 */
 
 .iziToast.sw-update-toast {
   border-radius: 16px;
@@ -6,6 +6,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 
+  /* 这种淡粉色调真的很温柔 */
   background: rgba(255, 245, 248, 0.88);
   box-shadow:
     0 14px 32px rgba(255, 170, 190, 0.2),
@@ -13,7 +14,12 @@
 
   color: #5a3b45;
   font-family: inherit;
-  position: relative;
+  
+  /* 核心修复：确保在移动端不会偏移出界 */
+  left: 50% !important;
+  transform: translateX(-50%) !important; 
+  max-width: 90vw; /* 避免在极窄屏幕贴边 */
+  box-sizing: border-box;
 }
 
 /* 标题 */
@@ -22,6 +28,7 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
+  display: block;
 }
 
 /* 正文 */
@@ -37,23 +44,21 @@
   margin-top: 12px;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 /* 按钮本身 */
 .iziToast.sw-update-toast .iziToast-btn {
   border-radius: 999px;
-  padding: 6px 16px;
+  padding: 6px 18px;
   font-size: 13px;
   font-weight: 500;
   border: none;
   cursor: pointer;
   background: linear-gradient(135deg, #ffaab2, #ffb7c4);
-  color: #fff;
+  color: #fff !important;
   box-shadow: 0 4px 14px rgba(255, 170, 190, 0.45);
-  transition:
-    background 0.25s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: all 0.25s ease;
 }
 
 .iziToast.sw-update-toast .iziToast-btn:hover {
@@ -61,65 +66,30 @@
   box-shadow: 0 6px 18px rgba(255, 170, 190, 0.6);
 }
 
-/* 🌬 浮动动画：像云雾轻轻落下 */
+/* 🌬 动画修复：统一使用 translateX(-50%) 保持居中 */
 @keyframes sw-toast-float-in {
   0% {
     opacity: 0;
-    transform: translate(-50%, -8px) scale(0.985);
-    filter: blur(2px);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0);
+    transform: translate(-50%, 10px) scale(0.98); /* 从下方轻轻升起更自然 */
+    filter: blur(4px);
   }
   100% {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
+    filter: blur(0);
   }
 }
 
-.iziToast.sw-update-toast {
-  animation: sw-toast-float-in 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 阴影轻柔出现 */
-.iziToast.sw-update-toast::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: 0 14px 32px rgba(255, 170, 190, 0.2);
-  opacity: 0;
-  animation: sw-toast-shadow-in 0.9s ease forwards;
-}
-
-@keyframes sw-toast-shadow-in {
-  40% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-/* 🌬 小精灵晃动动画 */
+/* 🌬 呼吸晃动：保持水平居中的前提下小幅摆动 */
 @keyframes sw-toast-floating {
-  0% {
-    transform: translate(-50%, 0) rotate(-1deg);
-  }
-  25% {
-    transform: translate(-50%, -1px) rotate(1deg);
-  }
-  50% {
-    transform: translate(-50%, 0) rotate(-1deg);
-  }
-  75% {
-    transform: translate(-50%, 1px) rotate(1deg);
-  }
-  100% {
-    transform: translate(-50%, 0) rotate(0deg);
-  }
+  0% { transform: translate(-50%, 0) rotate(-0.5deg); }
+  50% { transform: translate(-50%, -3px) rotate(0.5deg); }
+  100% { transform: translate(-50%, 0) rotate(-0.5deg); }
 }
 
-/* 给浮动动画叠加晃动 */
 .iziToast.sw-update-toast {
-  animation: sw-toast-float-in 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-             sw-toast-floating 4s ease-in-out infinite alternate;
+  /* 合并动画：第一个是入场，第二个是持续呼吸 */
+  animation: 
+    sw-toast-float-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    sw-toast-floating 4s ease-in-out infinite 0.8s;
 }
