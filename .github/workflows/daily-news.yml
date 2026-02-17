@@ -1,0 +1,43 @@
+name: Daily News Update
+
+on:
+  schedule:
+    # 北京时间 6:00, 8:00, 10:00 各运行一次 (对应 UTC 22:00, 0:00, 2:00)
+    - cron: '0 22 * * *' 
+    - cron: '0 0 * * *'
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    timezone: Asia/Shanghai
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name": "hexo-news", "version": "1.0.0"}' > package.json
+          fi
+
+      - name: Fetch News Data
+        env:
+          ALAPI_TOKEN: ${{ secrets.ALAPI_TOKEN }}
+        # 【修改点】这里的路径也要对应更新
+        run: node .github/scripts/fetch-news.js
+
+      - name: Commit and Push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add source/zaobao/data.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update daily news data" && git push)
