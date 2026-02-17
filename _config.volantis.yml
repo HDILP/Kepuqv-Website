@@ -148,6 +148,9 @@ cover:
     - name: 文档
       img: volantis-static/media/twemoji/assets/svg/1f516.svg
       url: /docs/what-is-kepuqv/
+    - name: 早报
+      img: volantis-static/media/twemoji/assets/svg/1f305.svg
+      url: /zaobao/
 ############################### Cover ############################### > end
 
 pages:
