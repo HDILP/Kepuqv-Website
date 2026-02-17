@@ -1702,7 +1702,7 @@ gulp-cli@^3.1.0:
 
 gulp-html-minifier-terser@^8.0.0:
   version "8.0.0"
-  resolved "https://registry.npmmirror.com/gulp-html-minifier-terser/-/gulp-html-minifier-terser-8.0.0.tgz#0c8e0a40f57ad20aa632b878e174376ce9abc12d"
+  resolved "https://registry.yarnpkg.com/gulp-html-minifier-terser/-/gulp-html-minifier-terser-8.0.0.tgz#0c8e0a40f57ad20aa632b878e174376ce9abc12d"
   integrity sha512-KRUL4I+UVczM4YwcPrZGF6PgZMjn+fEYmbMmniSLlx1zt+JOqpqNb9w6C9ffFbyCDGV/gTeHYF3bjWqs+e/EYA==
   dependencies:
     html-minifier-terser "^7.1.0"
