@@ -15,8 +15,7 @@ const PreCachlist = [
   "/",
   "/css/style.css",
   "/js/app.js",
-  "/js/search/hexo.js",
-  "/bing.jpg"
+  "/js/search/hexo.js"
 ];
 
 let debug = false;
@@ -313,44 +312,19 @@ const installFunction = async () => {
       PreCachlist.map(url => {
         logger.wait(`Precaching ${url}`);
 
-        let fetchURL;
-        let cacheKey;
-
-        if (url === '/bing.jpg') {
-          // 从远程抓
-          const remote = 'https://bing-wallpaper.hdilp.top/bing.jpg';
-          const u = new URL(remote);
-          u.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
-          fetchURL = new Request(u.toString(), { cache: 'no-store' });
-
-          // 但写入本地 key
-          cacheKey = new Request('/bing.jpg');
-        } else {
-          const precacheURL = new URL(url, self.location.origin);
-          precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
-          fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
-
-          cacheKey = new Request(url);
-        }
+        const precacheURL = new URL(url, self.location.origin);
+        precacheURL.searchParams.set('nocache', `sw-precache-${cacheSuffixVersion}`);
+        const fetchURL = new Request(precacheURL.toString(), { cache: 'no-store' });
+        const cacheKey = new Request(url);
 
         return fetch(fetchURL).then((response) => {
           if (!(response instanceof Response) || !(response.ok || response.type === 'opaque')) {
-            if (url === '/bing.jpg') {
-              logger.warn('[precache] optional resource failed: /bing.jpg');
-              return null;
-            }
             throw new Error(`Precache failed: ${url}`);
           }
           return cache.put(cacheKey, response.clone()).then(() => {
             logger.ready(`Precaching ${url}`);
             return response;
           });
-        }).catch((error) => {
-          if (url === '/bing.jpg') {
-            logger.warn('[precache] optional resource skipped: /bing.jpg, reason: ' + (error && (error.message || error)));
-            return null;
-          }
-          throw error;
         });
       })
     ).then(() => {
@@ -498,22 +472,25 @@ const CacheAlways = async (event) => {
 }
 
 const StaleWhileRevalidate = async (event) => {
-  return matchCacheWithPriority(event.request).then(function (resp) {
-    logger.group.info('StaleWhileRevalidate: ' + new URL(event.request.url).pathname);
-    logger.wait('service worker fetch: ' + event.request.url)
-    if (resp) {
-      logger.group.ready(`Cache Hit`);
-      console.log(resp)
-      logger.group.end();
-      logger.group.end();
-      event.waitUntil(CacheRuntime(event.request))
-      return resp;
-    } else {
-      logger.warn(`Cache Miss`);
-      logger.group.end();
-      return CacheRuntime(event.request)
-    }
-  })
+  logger.group.info('StaleWhileRevalidate: ' + new URL(event.request.url).pathname);
+  logger.wait('service worker fetch: ' + event.request.url)
+
+  const cached = await matchCacheWithPriority(event.request);
+
+  if (cached) {
+    logger.group.ready(`Cache Hit`);
+    console.log(cached)
+    logger.group.end();
+    logger.group.end();
+    // 后台更新
+    event.waitUntil(CacheRuntime(event.request));
+    return cached;
+  }
+
+  logger.warn(`Cache Miss`);
+  logger.group.end();
+  // 首次访问：直接走网络并缓存
+  return CacheRuntime(event.request);
 }
 
 async function CacheRuntime(request) {
