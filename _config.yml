@@ -140,3 +140,13 @@ import:
   body_end:
     - <script>"serviceWorker"in navigator&&navigator.serviceWorker.register("/volantis-sw.js").catch(e=>console.log("SW register failed:",e));</script>
     - <script src="/js/sw-update-listener.js"></script>
+    
+restful:
+  site: true          # 生成站点元数据
+  posts_size: 10      # 文章列表分页大小 (0为不分页)
+  posts_props:        # 列表里包含哪些属性
+    title: true
+    date: true
+    path: true
+    excerpt: true     # 摘要
+    content: false    # 列表通常不含正文，减小体积
