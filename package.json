@@ -1,6 +1,9 @@
 {
   "name": "hexo-site",
   "version": "0.0.0",
+  "engines": {
+  "node": ">=24"
+  },
   "private": true,
   "scripts": {
     "start": "hexo clean && hexo g && gulp",
