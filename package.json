@@ -1,6 +1,9 @@
 {
   "name": "hexo-site",
   "version": "0.0.0",
+  "engines": {
+  "node": ">=24"
+  },
   "private": true,
   "scripts": {
     "start": "hexo clean && hexo g && gulp",
@@ -24,6 +27,7 @@
     "hexo-generator-feed": "^4.0.0",
     "hexo-generator-index": "^4.0.0",
     "hexo-generator-json-content": "^4.2.3",
+    "hexo-generator-restful": "^0.2.3",
     "hexo-generator-sitemap": "^3.0.1",
     "hexo-generator-tag": "^2.0.0",
     "hexo-renderer-ejs": "^2.0.0",
