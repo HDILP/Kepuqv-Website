@@ -1,0 +1,42 @@
+.hero-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100vh;
+  padding: 0 12vw;
+  font-size: clamp(32px, 6vw, 72px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.line {
+  opacity: 0;
+  filter: blur(10px);
+  transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+}
+
+/* 左 */
+.line.left {
+  transform: translateX(-100px);
+}
+
+/* 右 */
+.line.right {
+  transform: translateX(100px);
+}
+
+/* 激活 */
+.hero-container.show .line {
+  opacity: 1;
+  transform: translateX(0);
+  filter: blur(0);
+}
+
+/* 错开节奏（关键） */
+.hero-container.show .left {
+  transition-delay: 0.2s;
+}
+.hero-container.show .right {
+  transition-delay: 0.45s;
+}
