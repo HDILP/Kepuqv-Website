@@ -1,4 +1,3 @@
-<script>
 window.addEventListener('load', () => {
   const hero = document.getElementById('hero');
 
@@ -25,4 +24,3 @@ window.addEventListener('load', () => {
     hero.classList.add('show');
   }, 200);
 });
-</script>
