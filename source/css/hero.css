@@ -47,8 +47,8 @@
 /* 中文标题行 */
 .title-line {
   display: block;
-  font-family: 'Noto Serif SC', 'Songti SC', serif;
-  font-weight: 300;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  font-weight: 200;
   color: rgba(255,255,255,0.85);
   -webkit-font-smoothing: antialiased;
   line-height: 1.18;
@@ -65,7 +65,7 @@
 
 /* 第二行：右移，flex 让落款自然跟随 */
 .title-line-2 {
-  padding-left: 72px;
+  padding-left: 104px;
   margin-top: 8px;
   animation: slideInRight 1.2s 0.15s cubic-bezier(0.22,1,0.36,1) both;
   display: inline-flex;
@@ -102,7 +102,7 @@
 .colophon-text {
   font-family: 'Noto Serif SC', serif;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 200;
   letter-spacing: 0.30em;
   color: rgba(240,237,228,0.72);
   writing-mode: vertical-rl;
@@ -126,7 +126,7 @@
   display: block;
   font-family: 'Jost', 'Inter', 'Helvetica Neue', Arial, sans-serif;
   font-size: 7px;
-  font-weight: 300;
+  font-weight: 200;
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: rgba(200,196,184,1);
@@ -158,7 +158,7 @@
 @media (max-width: 640px) {
   .hero { padding-top: 48px; }
   .title-line { font-size: 24px; letter-spacing: 0.20em; }
-  .title-line-2 { padding-left: 40px; }
+  .title-line-2 { padding-left: 64px; }
   .colophon { margin-bottom: -38px; }
   .colophon-text { font-size: 10px; }
   .title-en { font-size: 6px; margin-top: 14px; }
