@@ -1,89 +1,169 @@
+/* ════════════════════════════════════════
+   HERO — 仿 web2a4
+   布局与动画一比一对照
+════════════════════════════════════════ */
+
+/* 引入 web2a4 同款字体 */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400&family=Noto+Serif+SC:wght@200;300;400&display=swap');
+
 .hero {
-  font-family: "Noto Serif SC", serif;
   position: relative;
-  height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 10vw;
-  color: rgba(255,255,255,0.85);
-  font-size: clamp(28px, 5vw, 60px);
-  font-weight: 300;
-  letter-spacing: 0.35em;
+  justify-content: flex-start;
+  padding-top: 80px;
+  overflow: hidden;
 }
 
-/* 两行文字 */
-.hero-line {
+/* ── Headline ── */
+.headline-wrap {
+  position: relative;
+  z-index: 10;
+  padding: 16px 0 0;
+  overflow: visible;
   display: flex;
-  gap: 0.35em;
-  margin: 0.25em 0;
+  flex-direction: column;
+  align-items: center;
 }
 
-.line-top {
-  transform: translateX(-2vw);
-}
-.line-bottom {
-  transform: translateX(2vw);
-}
-
-/* 每个字的“显影” */
-.hero-line span {
-  opacity: 0;
-  filter: blur(12px);
-  transform: translateY(20px) scale(0.95);
-  transition:
-    opacity 1.6s ease,
-    transform 1.6s ease,
-    filter 1.6s ease;
-  transition-delay: var(--delay);
+/* 双语排版：
+   两行文字构成不对称对角线，
+   通过第一行左偏移与第二行右偏移视觉居中。
+   整个块通过 .title-block 的 margin:auto 居中。
+*/
+.title-block {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 auto;
 }
 
-/* 激活 */
-.hero.show span {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0) scale(1);
+.title-block-outer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 24px;
 }
 
-/* 英文小字 */
-.hero-sub {
-  margin-top: 1.5em;
-  font-size: 0.22em;
-  letter-spacing: 0.4em;
-  opacity: 0;
-  transition: opacity 2s ease;
-  transition-delay: 1.6s;
+/* 中文标题行 */
+.title-line {
+  display: block;
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-weight: 200;
+  color: rgba(255,255,255,0.85);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.18;
+  white-space: nowrap;
+  font-size: 36px;
+  letter-spacing: 0.26em;
 }
 
-.hero.show .hero-sub {
-  opacity: 0.6;
+/* 第一行：锚定在块左侧 */
+.title-line-1 {
+  padding-left: 0;
+  animation: slideInLeft 1.1s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-/* 右侧竖排 */
-.hero-sign {
-  position: absolute;
-  right: 4vw;
-  top: 50%;
-  transform: translateY(-50%);
+/* 第二行：右移，flex 让落款自然跟随 */
+.title-line-2 {
+  padding-left: 72px;
+  margin-top: 8px;
+  animation: slideInRight 1.2s 0.15s cubic-bezier(0.22,1,0.36,1) both;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+/* ── Colophon 落款 ──
+   挂在第二行末尾下方，像古典诗词的落款。
+*/
+.colophon {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 14px;
+  margin-bottom: -52px;
+  animation: colophonDrop 1.5s 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* 连接线 */
+.colophon-bridge {
+  display: block;
+  width: 1px;
+  height: 20px;
+  background: linear-gradient(
+    to bottom,
+    rgba(240,237,228,0.50) 0%,
+    rgba(240,237,228,0.18) 100%
+  );
+  margin-bottom: 6px;
+}
+
+/* 竖排落款文字 */
+.colophon-text {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.30em;
+  color: rgba(240,237,228,0.72);
   writing-mode: vertical-rl;
-  font-size: 0.28em;
-  letter-spacing: 0.2em;
-  opacity: 0;
-  transition: opacity 2s ease;
-  transition-delay: 2s;
+  text-orientation: mixed;
+  line-height: 1.0;
+  -webkit-font-smoothing: antialiased;
 }
 
-.hero.show .hero-sign {
-  opacity: 0.5;
+/* 底部小圆点 */
+.colophon-dot {
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(240,237,228,0.38);
+  margin-top: 8px;
 }
 
-/* 很轻的“呼吸” */
-.hero.show .line-bottom {
-  animation: floatY 6s ease-in-out infinite;
+/* 英文副标题 */
+.title-en {
+  display: block;
+  font-family: 'Jost', sans-serif;
+  font-size: 7px;
+  font-weight: 300;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(200,196,184,1);
+  text-align: center;
+  margin-top: 18px;
+  opacity: 0.68;
+  animation: fadeIn 1.5s 0.7s cubic-bezier(0.22,1,0.36,1) both;
 }
 
-@keyframes floatY {
-  0% { transform: translateX(2vw) translateY(0); }
-  50% { transform: translateX(2vw) translateY(6px); }
-  100% { transform: translateX(2vw) translateY(0); }
+/* ── Animations ── */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes colophonDrop {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 0.68; }
+}
+
+/* ── 响应式适配 ── */
+@media (max-width: 640px) {
+  .hero { padding-top: 48px; }
+  .title-line { font-size: 24px; letter-spacing: 0.20em; }
+  .title-line-2 { padding-left: 40px; }
+  .colophon { margin-bottom: -38px; }
+  .colophon-text { font-size: 10px; }
+  .title-en { font-size: 6px; margin-top: 14px; }
+  .headline-wrap { padding: 12px 0 0; }
 }
