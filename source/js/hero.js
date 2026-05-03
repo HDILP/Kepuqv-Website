@@ -1,26 +1,44 @@
 window.addEventListener('load', () => {
   const hero = document.getElementById('hero');
 
-  // 1. 文本内容（你之后可以随便改）
-  const leftText = "在细碎之间";
-  const rightText = "遇见万物";
+  const line1 = "在细碎之间";
+  const line2 = "遇见万物";
+  const sub = "YOU MAY BEGIN ANYWHERE"; // 英文小字（可改可删）
+  const sign = "科普区"; // 右侧署名（可以换）
 
-  // 2. 创建结构
-  hero.classList.add('hero-container');
+  hero.classList.add('hero');
 
-  const left = document.createElement('span');
-  left.className = 'line left';
-  left.innerText = leftText;
+  function createLine(text, className, delayBase = 0) {
+    const line = document.createElement('div');
+    line.className = 'hero-line ' + className;
 
-  const right = document.createElement('span');
-  right.className = 'line right';
-  right.innerText = rightText;
+    text.split('').forEach((char, i) => {
+      const span = document.createElement('span');
+      span.innerText = char;
+      span.style.setProperty('--delay', `${delayBase + i * 0.08}s`);
+      line.appendChild(span);
+    });
 
-  hero.appendChild(left);
-  hero.appendChild(right);
+    return line;
+  }
 
-  // 3. 触发动画（稍微延迟一下更有“呼吸感”）
+  // 主两行
+  hero.appendChild(createLine(line1, 'line-top', 0));
+  hero.appendChild(createLine(line2, 'line-bottom', 0.6));
+
+  // 英文副标题
+  const subEl = document.createElement('div');
+  subEl.className = 'hero-sub';
+  subEl.innerText = sub;
+  hero.appendChild(subEl);
+
+  // 右侧竖排
+  const signEl = document.createElement('div');
+  signEl.className = 'hero-sign';
+  signEl.innerText = sign;
+  hero.appendChild(signEl);
+
   setTimeout(() => {
     hero.classList.add('show');
-  }, 200);
+  }, 300);
 });

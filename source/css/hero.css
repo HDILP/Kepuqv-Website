@@ -1,42 +1,89 @@
-.hero-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.hero {
+  font-family: "Noto Serif SC", serif;
+  position: relative;
   height: 100vh;
-  padding: 0 12vw;
-  font-size: clamp(32px, 6vw, 72px);
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10vw;
+  color: rgba(255,255,255,0.85);
+  font-size: clamp(28px, 5vw, 60px);
+  font-weight: 300;
+  letter-spacing: 0.35em;
 }
 
-.line {
+/* 两行文字 */
+.hero-line {
+  display: flex;
+  gap: 0.35em;
+  margin: 0.25em 0;
+}
+
+.line-top {
+  transform: translateX(-2vw);
+}
+.line-bottom {
+  transform: translateX(2vw);
+}
+
+/* 每个字的“显影” */
+.hero-line span {
   opacity: 0;
-  filter: blur(10px);
-  transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-  white-space: nowrap;
-}
-
-/* 左 */
-.line.left {
-  transform: translateX(-100px);
-}
-
-/* 右 */
-.line.right {
-  transform: translateX(100px);
+  filter: blur(12px);
+  transform: translateY(20px) scale(0.95);
+  transition:
+    opacity 1.6s ease,
+    transform 1.6s ease,
+    filter 1.6s ease;
+  transition-delay: var(--delay);
 }
 
 /* 激活 */
-.hero-container.show .line {
+.hero.show span {
   opacity: 1;
-  transform: translateX(0);
   filter: blur(0);
+  transform: translateY(0) scale(1);
 }
 
-/* 错开节奏（关键） */
-.hero-container.show .left {
-  transition-delay: 0.2s;
+/* 英文小字 */
+.hero-sub {
+  margin-top: 1.5em;
+  font-size: 0.22em;
+  letter-spacing: 0.4em;
+  opacity: 0;
+  transition: opacity 2s ease;
+  transition-delay: 1.6s;
 }
-.hero-container.show .right {
-  transition-delay: 0.45s;
+
+.hero.show .hero-sub {
+  opacity: 0.6;
+}
+
+/* 右侧竖排 */
+.hero-sign {
+  position: absolute;
+  right: 4vw;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-size: 0.28em;
+  letter-spacing: 0.2em;
+  opacity: 0;
+  transition: opacity 2s ease;
+  transition-delay: 2s;
+}
+
+.hero.show .hero-sign {
+  opacity: 0.5;
+}
+
+/* 很轻的“呼吸” */
+.hero.show .line-bottom {
+  animation: floatY 6s ease-in-out infinite;
+}
+
+@keyframes floatY {
+  0% { transform: translateX(2vw) translateY(0); }
+  50% { transform: translateX(2vw) translateY(6px); }
+  100% { transform: translateX(2vw) translateY(0); }
 }
