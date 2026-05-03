@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 80px;
-  overflow: hidden;
+  /* overflow:hidden 会裁掉 colophon 底部 */
 }
 
 /* ── Headline ── */
@@ -48,7 +48,7 @@
 .title-line {
   display: block;
   font-family: 'Noto Serif SC', 'Songti SC', serif;
-  font-weight: 200;
+  font-weight: 300;
   color: rgba(255,255,255,0.85);
   -webkit-font-smoothing: antialiased;
   line-height: 1.18;
@@ -124,7 +124,7 @@
 /* 英文副标题 */
 .title-en {
   display: block;
-  font-family: 'Jost', sans-serif;
+  font-family: 'Jost', 'Inter', 'Helvetica Neue', Arial, sans-serif;
   font-size: 7px;
   font-weight: 300;
   letter-spacing: 0.26em;
