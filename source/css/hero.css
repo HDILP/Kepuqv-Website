@@ -47,7 +47,7 @@
 /* 中文标题行 */
 .title-line {
   display: block;
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif !important;
   font-weight: 200;
   color: rgba(255,255,255,0.85);
   -webkit-font-smoothing: antialiased;
@@ -100,7 +100,7 @@
 
 /* 竖排落款文字 */
 .colophon-text {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Noto Serif SC', serif !important;
   font-size: 12px;
   font-weight: 200;
   letter-spacing: 0.30em;
@@ -124,7 +124,7 @@
 /* 英文副标题 */
 .title-en {
   display: block;
-  font-family: 'Jost', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Jost', 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
   font-size: 7px;
   font-weight: 200;
   letter-spacing: 0.26em;
