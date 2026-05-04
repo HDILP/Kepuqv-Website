@@ -1833,10 +1833,10 @@ hasown@^2.0.0, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
-hexo-blog-encrypt@^3.1.9:
-  version "3.1.9"
-  resolved "https://registry.npmmirror.com/hexo-blog-encrypt/-/hexo-blog-encrypt-3.1.9.tgz"
-  integrity sha512-dzuZiW5mD8t1FOhJXqc+IgV1Tc45YtatJb/w8k4PyT9McQxsROQXsBw+zbDembzuqMnbnkCeT2SapZ/r9AgAcw==
+hexo-blog-encrypt@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/hexo-blog-encrypt/-/hexo-blog-encrypt-4.0.0.tgz#4b0e289463c9de34201fefc3f5d42cd517b0c285"
+  integrity sha512-ApdnqKxk1p2zqB/GjwnqaiOQh4DhcrwL+BYDP02p4PpwUE7lFd0GCkBP5E0Kp0ZIjeOMZgriHqH1WIq7nOnITw==
 
 hexo-bunyan@^1.0.0:
   version "1.0.0"
