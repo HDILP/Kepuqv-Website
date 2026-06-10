@@ -2047,10 +2047,10 @@ hexo-tag-aplayer@^3.0.4:
     hexo-util "^0.1.7"
     meting "^1.2.0"
 
-hexo-theme-volantis@^6.0.3:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-6.0.3.tgz#bd61e09ae93c06f6fa330484251ad5e2409a2c4a"
-  integrity sha512-YB7XsKWa/PoGUTF6k0CPdPdc6NoZk7P55yvyNoQNv6Ss9DxwBTOzpdudtRN148ALLUyNukFYQqARx+iSGc+WwQ==
+hexo-theme-volantis@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-6.0.4.tgz#c7e4d0b376eedca691da11095181ee3b65d70b0e"
+  integrity sha512-/PZPaqPrJn6h0TPAbdGruIMkw2l0cW46Erno0gLUjiuoXWA/cxyEe76XosY2KzRpv+bZ5ZnGiQWva50Tf0rJhA==
   dependencies:
     hexo "^8.1.1"
     hexo-generator-json-content "^4.2.3"
