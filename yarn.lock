@@ -2039,10 +2039,10 @@ hexo-tag-aplayer@^3.0.4:
     hexo-util "^0.1.7"
     meting "^1.2.0"
 
-hexo-theme-volantis@^6.0.5:
-  version "6.0.5"
-  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-6.0.5.tgz#ae91b75571c9f3cedd3f5f2ce38c248f5b4f1e27"
-  integrity sha512-HtcItc8bd12isPFTcBGkIxnqXjgAbUQ6qgKyUcIwU1x0x8e0g+QJa6hBnFbg0+E6cSmbtICowtAuYl/am5qquA==
+hexo-theme-volantis@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/hexo-theme-volantis/-/hexo-theme-volantis-6.3.0.tgz#1029586ba152dd97a5f1d377b6394c3a3d5ea34a"
+  integrity sha512-LtosQy5VdA9Dk6MrkNODG6nIWyXC+1Vyg5rbic4s1L+y6J8evHBDwSeqmKZNz891EcGliLkivrd8RtFX2S8YDw==
   dependencies:
     hexo "^8.1.1"
     hexo-generator-json-content "^4.2.3"
