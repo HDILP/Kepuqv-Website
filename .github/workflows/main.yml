@@ -42,8 +42,12 @@ jobs:
 
 
     - name: Close issue
-      if: github.event.issue != null
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh issue close "${{ github.event.issue.number }}" --reason completed
+        ISSUE_NUM="${PROCESSED_ISSUE:-}"
+        if [ -n "$ISSUE_NUM" ]; then
+          gh issue close "$ISSUE_NUM" --reason completed
+        else
+          echo "No issue to close"
+        fi

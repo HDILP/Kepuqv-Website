@@ -119,27 +119,42 @@ def getIssues():
         "Accept": "application/vnd.github.v3+json",
     }
     response = requests.get(api_url, params={
+        'state': 'open',
         'sort': 'created',
         'direction': 'desc',
-        'per_page': 1
+        'per_page': 30,
     }, headers=headers)
 
     if response.status_code == 200:
         issues = response.json()
         if issues:
-            latest_issue = issues[0]
-            print("最新 Issue 标题:", latest_issue['title'])
-            print("正文内容:", latest_issue['body'])
-            post_url = re.findall('<url: (.*?)>', latest_issue['body'])[0]
-            author = re.findall('<author: (.*?)>', latest_issue['body'])[0]
-            date = re.findall('<date: (.*?)>', latest_issue['body'])[0]
-            categories = re.findall('<category: (.*?)>', latest_issue['body'])[0]
-            categories = f'[{categories}]'
-            return post_url, author, date, categories
+            # 只处理 open 且非 dependabot 创建的文章 issue，
+            # 跳过自动依赖更新产生的 Bump issue，避免误抓
+            for issue in issues:
+                if issue.get('user', {}).get('login') == 'dependabot[bot]':
+                    print("跳过 dependabot issue:", issue['title'])
+                    continue
+                print("最新 Issue 标题:", issue['title'])
+                print("正文内容:", issue['body'])
+                # 记录本次实际处理的 issue number，供 workflow 关闭残留 issue 使用
+                github_env = os.getenv('GITHUB_ENV')
+                if github_env:
+                    with open(github_env, 'a') as f:
+                        f.write(f"PROCESSED_ISSUE={issue['number']}\n")
+                post_url = re.findall('<url: (.*?)>', issue['body'])[0]
+                author = re.findall('<author: (.*?)>', issue['body'])[0]
+                date = re.findall('<date: (.*?)>', issue['body'])[0]
+                categories = re.findall('<category: (.*?)>', issue['body'])[0]
+                categories = f'[{categories}]'
+                return post_url, author, date, categories
+            print("没有找到待处理的文章 Issue（已全部处理或仅剩 dependabot Issue）。")
+            sys.exit(1)
         else:
             print("该仓库没有 Issue。")
+            sys.exit(1)
     else:
         print(f"请求失败，状态码: {response.status_code}")
+        sys.exit(1)
 
 
 url, author, date, categories = getIssues()
