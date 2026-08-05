@@ -42,9 +42,8 @@ jobs:
 
 
     - name: Close issue
-      uses: actions-cool/issues-helper@v3
-      with:
-        actions: 'close-issue'
-        token: ${{ secrets.GITHUB_TOKEN }}
-        issue-number: ${{ github.event.issue.number }}
-        close-reason: 'completed'
+      if: github.event.issue != null
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh issue close "${{ github.event.issue.number }}" --reason completed
